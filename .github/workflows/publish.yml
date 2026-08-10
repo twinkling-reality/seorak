@@ -137,4 +137,6 @@ jobs:
       - name: Publish with provenance
         env:
           TARBALL: ${{ needs.build.outputs.tarball }}
-        run: npm publish "dist-pack/${TARBALL}" --access public --provenance
+        # The ./ is load-bearing: npm parses a bare "dir/file.tgz" as the
+        # GitHub shorthand owner/repo and tries to git clone it.
+        run: npm publish "./dist-pack/${TARBALL}" --access public --provenance

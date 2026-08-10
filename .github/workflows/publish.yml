@@ -33,6 +33,8 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # TEMPORARY AUTH PROBE. Reverted immediately after this run.
+    environment: npm-publish
     steps:
       # npm binds a trusted publisher to a workflow FILENAME, not to a ref, so a
       # branch carrying a rewritten publish.yml would still match. Refuse to run
@@ -74,8 +76,7 @@ jobs:
             console.log(entry.name + " " + entry.version);
           ')"
           if npm view "${name}@${version}" version >/dev/null 2>&1; then
-            echo "${name}@${version} is already published; npm versions are immutable"
-            exit 1
+            echo "PROBE: ${name}@${version} already published; expecting EPUBLISHCONFLICT if OIDC auth works"
           fi
           echo "${name}@${version} is not on the registry yet"
       - name: Publish with provenance

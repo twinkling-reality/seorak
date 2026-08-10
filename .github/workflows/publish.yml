@@ -1,5 +1,15 @@
-# Publishes the three public packages with npm provenance via trusted publishing.
-# Bound on npmjs.com to this repository after C3 create. Do not add a classic token.
+# Publishes the three public packages with npm provenance.
+#
+# Provenance and registry auth are independent. Provenance needs GitHub Actions
+# plus id-token: write plus --access public; it never inspects how you
+# authenticated. So the first publish of a not-yet-existing package can carry
+# full provenance using a short-lived granular token in NPM_TOKEN.
+#
+# npm refuses to bind a trusted publisher to a package that does not exist, so
+# the order is: publish 0.1.0 with NPM_TOKEN -> bind trusted publishing on
+# npmjs.com -> revoke the token -> drop the NODE_AUTH_TOKEN line below. From
+# then on this workflow authenticates over OIDC with no secret at all.
+# Never add a classic automation token.
 name: publish
 
 on:
@@ -9,10 +19,13 @@ on:
         description: "Workspace to publish"
         required: true
         type: choice
+        # Dependency order. @seorak/collector depends on @seorak/dashboard at an
+        # exact 0.1.0 and on @seorak/types at ^0.1.0, so collector publishes last
+        # or a registry install of it resolves nothing.
         options:
           - "@seorak/types"
-          - "@seorak/collector"
           - "@seorak/dashboard"
+          - "@seorak/collector"
 
 permissions:
   contents: read
@@ -23,12 +36,55 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      # npm binds a trusted publisher to a workflow FILENAME, not to a ref, so a
+      # branch carrying a rewritten publish.yml would still match. Refuse to run
+      # anywhere but main.
+      - name: Refuse to publish off main
+        run: |
+          test "${GITHUB_REF}" = "refs/heads/main" \
+            || { echo "publish only runs on main, got ${GITHUB_REF}"; exit 1; }
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # Lifecycle scripts run during npm ci; do not leave a usable
+          # GITHUB_TOKEN in .git/config for them to read.
+          persist-credentials: false
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
-          node-version: "22"
-          cache: npm
+          # Node 24, not 22. Trusted publishing needs npm >= 11.5.1 and no Node 22
+          # release bundles npm 11.x (22.23.2 ships 10.9.8); 24.19.0 ships 11.17.0.
+          node-version: "24"
+          # No dependency cache in a release build: a poisoned cache entry would
+          # be inside the tarball that provenance then attests to.
           registry-url: https://registry.npmjs.org
+      - name: Assert npm can do OIDC
+        run: |
+          npm_v="$(npm --version)"
+          echo "npm ${npm_v}"
+          node -e "const v=process.argv[1];const [a,b]=v.split('.').map(Number);if(a<11||(a===11&&b<5))throw new Error('npm >= 11.5 required for OIDC, got '+v)" "${npm_v}"
       - run: npm ci
+      - name: Refuse to republish an existing version
+        env:
+          PKG: ${{ inputs.package }}
+        run: |
+          # npm pkg get --workspace returns {"<workspace>":{...}}, so parse the
+          # JSON rather than stripping punctuation out of it.
+          read -r name version <<<"$(node -e '
+            const { execFileSync } = require("child_process");
+            const raw = execFileSync("npm", ["pkg", "get", "name", "version", "--workspace", process.env.PKG], { encoding: "utf8" });
+            const parsed = JSON.parse(raw);
+            const entry = parsed[process.env.PKG] || parsed;
+            console.log(entry.name + " " + entry.version);
+          ')"
+          if npm view "${name}@${version}" version >/dev/null 2>&1; then
+            echo "${name}@${version} is already published; npm versions are immutable"
+            exit 1
+          fi
+          echo "${name}@${version} is not on the registry yet"
       - name: Publish with provenance
-        run: npm publish --workspace "${{ inputs.package }}" --access public --provenance
+        # PKG goes through env, not direct ${{ }} interpolation into the shell.
+        env:
+          PKG: ${{ inputs.package }}
+          # Remove NODE_AUTH_TOKEN once trusted publishing is bound; OIDC then
+          # authenticates this step with no secret.
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --workspace "$PKG" --access public --provenance

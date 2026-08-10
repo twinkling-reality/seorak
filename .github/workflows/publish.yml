@@ -131,7 +131,8 @@ jobs:
           VERSION: ${{ needs.build.outputs.version }}
         run: |
           if npm view "${NAME}@${VERSION}" version >/dev/null 2>&1; then
-            echo "PROBE3: ${NAME}@${VERSION} already published; EPUBLISHCONFLICT means the split-job tarball publish authenticated"
+            echo "${NAME}@${VERSION} is already published; npm versions are immutable"
+            exit 1
           fi
           echo "${NAME}@${VERSION} is not on the registry yet"
       - name: Publish with provenance

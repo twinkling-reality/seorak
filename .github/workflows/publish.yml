@@ -33,12 +33,16 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    # TEMPORARY AUTH PROBE. Reverted immediately after this run.
+    # This is the control that pins the ref, not the guard below. GitHub issues
+    # the OIDC token only after the environment's branch policy admits the run,
+    # so a run off main never obtains the environment and its token carries no
+    # environment claim for npm to match.
     environment: npm-publish
     steps:
-      # npm binds a trusted publisher to a workflow FILENAME, not to a ref, so a
-      # branch carrying a rewritten publish.yml would still match. Refuse to run
-      # anywhere but main.
+      # Defence in depth only. workflow_dispatch runs the copy of this file on
+      # the dispatched branch, so a branch that deletes this step still runs,
+      # and npm matches on workflow FILENAME rather than ref. The environment
+      # above is what actually refuses a run off main.
       - name: Refuse to publish off main
         run: |
           test "${GITHUB_REF}" = "refs/heads/main" \
@@ -76,7 +80,8 @@ jobs:
             console.log(entry.name + " " + entry.version);
           ')"
           if npm view "${name}@${version}" version >/dev/null 2>&1; then
-            echo "PROBE: ${name}@${version} already published; expecting EPUBLISHCONFLICT if OIDC auth works"
+            echo "${name}@${version} is already published; npm versions are immutable"
+            exit 1
           fi
           echo "${name}@${version} is not on the registry yet"
       - name: Publish with provenance

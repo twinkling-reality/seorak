@@ -80,7 +80,8 @@ jobs:
             console.log(entry.name + " " + entry.version);
           ')"
           if npm view "${name}@${version}" version >/dev/null 2>&1; then
-            echo "PROBE2: ${name}@${version} already published; EPUBLISHCONFLICT means the environment claim authenticated"
+            echo "${name}@${version} is already published; npm versions are immutable"
+            exit 1
           fi
           echo "${name}@${version} is not on the registry yet"
       - name: Publish with provenance

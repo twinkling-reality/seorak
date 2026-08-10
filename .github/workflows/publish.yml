@@ -1,13 +1,19 @@
 # Publishes the three public packages with npm provenance over trusted
 # publishing. No secret: npm authenticates this workflow by OIDC, bound on
-# npmjs.com for all three packages to twinkling-reality/seorak and this
-# filename. Never add a token of any kind back.
+# npmjs.com for all three packages to twinkling-reality/seorak, this filename,
+# and the npm-publish environment. Never add a token of any kind back.
 #
-# Provenance and registry auth stay independent either way. Provenance needs
-# GitHub Actions plus id-token: write plus --access public and never inspects
-# how you authenticated, which is why 0.1.0 could carry it on 2026-08-10 while
-# trusted publishing was still unbindable: npm refuses to bind a trusted
-# publisher to a package that does not yet exist.
+# Two jobs on purpose. build runs npm ci, which executes lifecycle scripts from
+# every transitive dependency, and it holds no id-token permission, so none of
+# that code can mint an OIDC token. publish holds id-token: write but installs
+# nothing and runs no third-party code at all: it uploads a tarball built by the
+# other job. Do not merge them back into one job.
+#
+# Provenance and registry auth stay independent. Provenance needs GitHub Actions
+# plus id-token: write plus --access public and never inspects how you
+# authenticated, which is why 0.1.0 could carry it on 2026-08-10 while trusted
+# publishing was still unbindable: npm refuses to bind a trusted publisher to a
+# package that does not yet exist.
 name: publish
 
 on:
@@ -27,26 +33,19 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    # This is the control that pins the ref, not the guard below. GitHub issues
-    # the OIDC token only after the environment's branch policy admits the run,
-    # so a run off main never obtains the environment and its token carries no
-    # environment claim for npm to match.
-    environment: npm-publish
+    # No id-token here. This job runs untrusted dependency code.
+    permissions:
+      contents: read
+    outputs:
+      name: ${{ steps.pack.outputs.name }}
+      version: ${{ steps.pack.outputs.version }}
+      tarball: ${{ steps.pack.outputs.tarball }}
     steps:
-      # Defence in depth only. workflow_dispatch runs the copy of this file on
-      # the dispatched branch, so a branch that deletes this step still runs,
-      # and npm matches on workflow FILENAME rather than ref. The environment
-      # above is what actually refuses a run off main.
-      - name: Refuse to publish off main
-        run: |
-          test "${GITHUB_REF}" = "refs/heads/main" \
-            || { echo "publish only runs on main, got ${GITHUB_REF}"; exit 1; }
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           # Lifecycle scripts run during npm ci; do not leave a usable
@@ -60,13 +59,9 @@ jobs:
           # No dependency cache in a release build: a poisoned cache entry would
           # be inside the tarball that provenance then attests to.
           registry-url: https://registry.npmjs.org
-      - name: Assert npm can do OIDC
-        run: |
-          npm_v="$(npm --version)"
-          echo "npm ${npm_v}"
-          node -e "const v=process.argv[1];const [a,b]=v.split('.').map(Number);if(a<11||(a===11&&b<5))throw new Error('npm >= 11.5 required for OIDC, got '+v)" "${npm_v}"
       - run: npm ci
-      - name: Refuse to republish an existing version
+      - name: Pack the workspace
+        id: pack
         env:
           PKG: ${{ inputs.package }}
         run: |
@@ -79,13 +74,67 @@ jobs:
             const entry = parsed[process.env.PKG] || parsed;
             console.log(entry.name + " " + entry.version);
           ')"
-          if npm view "${name}@${version}" version >/dev/null 2>&1; then
-            echo "${name}@${version} is already published; npm versions are immutable"
-            exit 1
-          fi
-          echo "${name}@${version} is not on the registry yet"
-      - name: Publish with provenance
-        # PKG goes through env, not direct ${{ }} interpolation into the shell.
+          mkdir -p dist-pack
+          npm pack --workspace "${PKG}" --pack-destination dist-pack
+          tarball="$(ls dist-pack)"
+          test -n "${tarball}" || { echo "npm pack produced nothing"; exit 1; }
+          echo "name=${name}" >> "${GITHUB_OUTPUT}"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          echo "tarball=${tarball}" >> "${GITHUB_OUTPUT}"
+          echo "packed ${name}@${version} as ${tarball}"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: package-tarball
+          path: dist-pack/
+          retention-days: 1
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # This is the control that pins the ref, not the guard below. GitHub issues
+    # the OIDC token only after the environment's branch policy admits the run,
+    # so a run off main never obtains the environment and its token carries no
+    # environment claim for npm to match.
+    environment: npm-publish
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      # Defence in depth only. workflow_dispatch runs the copy of this file on
+      # the dispatched branch, so a branch that deletes this step still runs,
+      # and npm matches on workflow FILENAME rather than ref. The environment
+      # above is what actually refuses a run off main.
+      - name: Refuse to publish off main
+        run: |
+          test "${GITHUB_REF}" = "refs/heads/main" \
+            || { echo "publish only runs on main, got ${GITHUB_REF}"; exit 1; }
+      # Deliberately no checkout and no npm ci. This job must not execute any
+      # third-party code while it holds id-token: write.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+      - name: Assert npm can do OIDC
+        run: |
+          npm_v="$(npm --version)"
+          echo "npm ${npm_v}"
+          node -e "const v=process.argv[1];const [a,b]=v.split('.').map(Number);if(a<11||(a===11&&b<5))throw new Error('npm >= 11.5 required for OIDC, got '+v)" "${npm_v}"
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: package-tarball
+          path: dist-pack
+      - name: Refuse to republish an existing version
         env:
-          PKG: ${{ inputs.package }}
-        run: npm publish --workspace "$PKG" --access public --provenance
+          NAME: ${{ needs.build.outputs.name }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          if npm view "${NAME}@${VERSION}" version >/dev/null 2>&1; then
+            echo "PROBE3: ${NAME}@${VERSION} already published; EPUBLISHCONFLICT means the split-job tarball publish authenticated"
+          fi
+          echo "${NAME}@${VERSION} is not on the registry yet"
+      - name: Publish with provenance
+        env:
+          TARBALL: ${{ needs.build.outputs.tarball }}
+        run: npm publish "dist-pack/${TARBALL}" --access public --provenance

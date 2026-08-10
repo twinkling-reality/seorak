@@ -1,0 +1,504 @@
+.lens {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.headline {
+  margin: 0;
+  max-width: 70ch;
+  color: var(--ink);
+  font-size: var(--text-base);
+  line-height: 1.45;
+}
+
+.empty {
+  margin: 0;
+  max-width: 60ch;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.coverage {
+  margin: 0;
+  color: var(--soft);
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-stat);
+}
+
+.facts {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  min-width: 0;
+}
+
+.fact {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-stat);
+}
+
+.factLabel {
+  color: var(--soft);
+}
+
+.factValue {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.fact[data-tone='negative'] .factValue {
+  color: var(--warn);
+}
+
+/* ── ranked bars ──────────────────────────────────────────────────── */
+
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+
+.bar {
+  min-width: 0;
+}
+
+.barButton,
+.barStatic {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 4px 6px;
+  border-radius: var(--radius-2xs);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  min-width: 0;
+}
+
+.barButton {
+  cursor: pointer;
+}
+
+.barButton:hover,
+.barButton:focus-visible {
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+.barButton:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.barHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.barLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-sm);
+}
+
+.barValue {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-stat);
+}
+
+.barTrack {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  overflow: hidden;
+}
+
+.barFill {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--accent) 58%, transparent);
+}
+
+.barFill[data-tone='warning'] {
+  background: color-mix(in srgb, var(--warn) 62%, transparent);
+}
+
+.barFill[data-tone='negative'] {
+  background: color-mix(in srgb, var(--warn) 78%, var(--ink));
+}
+
+.barFill[data-tone='positive'] {
+  background: color-mix(in srgb, var(--success) 58%, transparent);
+}
+
+/* ── timeline marks ───────────────────────────────────────────────── */
+
+.marksBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.markRail {
+  position: relative;
+  height: 16px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.mark {
+  position: absolute;
+  bottom: 0;
+  width: 2px;
+  height: 12px;
+  border-radius: 1px;
+  transform: translateX(-50%);
+  background: color-mix(in srgb, var(--ink) 34%, var(--page-bg));
+}
+
+.mark[data-tone='warning'] {
+  background: color-mix(in srgb, var(--warn) 72%, var(--ink));
+}
+
+.mark[data-tone='negative'] {
+  background: var(--warn);
+}
+
+.mark[data-tone='positive'] {
+  background: color-mix(in srgb, var(--success) 70%, var(--ink));
+}
+
+.markList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+
+.markRow {
+  display: grid;
+  grid-template-columns: 72px 8px minmax(0, auto) minmax(0, 1fr);
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 5px 6px;
+  border-radius: var(--radius-2xs);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.markRow:hover,
+.markRow:focus-visible {
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+.markRow:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.markTime {
+  color: var(--soft);
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-stat);
+}
+
+.markDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  align-self: center;
+  background: color-mix(in srgb, var(--ink) 34%, var(--page-bg));
+}
+
+.markDot[data-tone='warning'] {
+  background: color-mix(in srgb, var(--warn) 72%, var(--ink));
+}
+
+.markDot[data-tone='negative'] {
+  background: var(--warn);
+}
+
+.markDot[data-tone='positive'] {
+  background: color-mix(in srgb, var(--success) 70%, var(--ink));
+}
+
+.markLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-sm);
+}
+
+/* ── distribution ─────────────────────────────────────────────────── */
+
+.distribution {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.distributionTrack {
+  display: flex;
+  height: 10px;
+  border-radius: var(--radius-2xs);
+  overflow: hidden;
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+.distributionBand,
+.distributionSwatch {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.distributionBand[data-band='1'],
+.distributionSwatch[data-band='1'] {
+  background: color-mix(in srgb, var(--accent) 38%, transparent);
+}
+
+.distributionBand[data-band='2'],
+.distributionSwatch[data-band='2'] {
+  background: color-mix(in srgb, var(--accent) 54%, transparent);
+}
+
+.distributionBand[data-band='3'],
+.distributionSwatch[data-band='3'] {
+  background: color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+.distributionBand[data-band='4'],
+.distributionSwatch[data-band='4'] {
+  background: color-mix(in srgb, var(--ink) 46%, transparent);
+}
+
+.distributionKey {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.distributionItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+/* A band that never happened reads as absent, not as a faint presence. */
+.distributionItem:has(.distributionValue[data-empty='true']) {
+  opacity: 0.45;
+}
+
+.distributionSwatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+
+.distributionLabel {
+  font-size: var(--text-sm);
+}
+
+.distributionValue {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-stat);
+}
+
+/* ── table / compare ──────────────────────────────────────────────── */
+
+.table {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tableHead,
+.tableRow {
+  display: grid;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.tableHead {
+  padding: 0 6px 6px;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--soft);
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+}
+
+.tableRow {
+  border-bottom: 1px solid color-mix(in srgb, var(--hairline) 55%, transparent);
+  padding: 0 6px;
+}
+
+.tableRow:hover {
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+}
+
+.tableNumeric {
+  justify-self: end;
+  text-align: right;
+}
+
+.tableName {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 34px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tableName:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+  border-radius: var(--radius-2xs);
+}
+
+.tableLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-sm);
+}
+
+.tableShare {
+  position: absolute;
+  left: 0;
+  bottom: 3px;
+  height: 2px;
+  max-width: 100%;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--accent) 42%, transparent);
+}
+
+.tableCell {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-stat);
+}
+
+.tableCell[data-tone='negative'],
+.tableCell[data-tone='warning'] {
+  color: var(--warn);
+}
+
+.tableCell[data-tone='positive'] {
+  color: var(--success);
+}
+
+/* ── stat grid ────────────────────────────────────────────────────── */
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: 14px 20px;
+  margin: 0;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.stat dt {
+  color: var(--soft);
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+}
+
+.stat dd {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: var(--text-xl);
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat dd[data-tone='warning'],
+.stat dd[data-tone='negative'] {
+  color: var(--warn);
+}
+
+/* ── secondary section ────────────────────────────────────────────── */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hairline);
+  min-width: 0;
+}
+
+.sectionLabel {
+  margin: 0;
+  color: var(--soft);
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  font-weight: 400;
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+}

@@ -1,0 +1,133 @@
+.legendWrap {
+  margin: 10px 0 0;
+  margin-left: var(--chart-margin-left, 36px);
+  margin-right: var(--chart-margin-right, 16px);
+  padding-top: 2px;
+}
+
+.legend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  margin: 0;
+  padding: 0;
+}
+
+.legendCollapsed {
+  max-height: none;
+}
+
+.legendScrollable {
+  max-height: min(148px, 42vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+.legendButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: min(240px, calc(100vw - 48px));
+  min-height: 30px;
+  padding: 4px 10px 4px 5px;
+  border: none;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--ink);
+  transition:
+    background var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease,
+    transform var(--motion-fast) ease;
+}
+
+.legendButton:disabled {
+  cursor: default;
+}
+
+.legendButton:not(:disabled):hover,
+.legendButton:not(:disabled):focus-visible,
+.legendButtonActive {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.legendButton:not(:disabled):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.legendButtonUnselected {
+  opacity: 0.42;
+  color: var(--muted);
+}
+
+.legendButtonUnselected:hover,
+.legendButtonUnselected:focus-visible {
+  opacity: 0.72;
+  color: var(--ink);
+}
+
+.legendSquircle {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.legendLabel {
+  display: inline-flex;
+  align-items: flex-start;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.legendText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legendCount {
+  /* Anchor hover tint below. */
+}
+
+.legendButton:not(:disabled):hover .legendCount,
+.legendButtonActive .legendCount {
+  color: color-mix(in srgb, var(--accent) 58%, var(--muted));
+}
+
+.legendMoreButton {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--soft);
+  cursor: pointer;
+  transition:
+    background var(--motion-fast) ease,
+    color var(--motion-fast) ease;
+}
+
+.legendMoreButton:hover,
+.legendMoreButton:focus-visible {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}

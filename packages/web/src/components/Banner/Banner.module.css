@@ -1,0 +1,204 @@
+/* ── Banner: reusable squircle notification bar ── */
+
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  animation: bannerIn var(--motion-base) var(--motion) both;
+}
+
+@keyframes bannerIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Variant backgrounds ── */
+
+.error {
+  background: linear-gradient(
+    135deg,
+    var(--danger-bg) 0%,
+    color-mix(in srgb, var(--danger) 3%, transparent) 50%,
+    var(--warn-bg) 100%
+  );
+}
+
+.info {
+  background: linear-gradient(
+    135deg,
+    var(--info-bg) 0%,
+    color-mix(in srgb, var(--info) 3%, transparent) 50%,
+    var(--info-bg) 100%
+  );
+}
+
+.success {
+  background: linear-gradient(
+    135deg,
+    var(--success-bg) 0%,
+    color-mix(in srgb, var(--success) 3%, transparent) 50%,
+    var(--success-bg) 100%
+  );
+}
+
+/* ── Inner layout ── */
+
+.body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--space-sm);
+  min-width: 0;
+  flex: 1 1 auto;
+  text-align: center;
+}
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  flex: 0 0 auto;
+}
+
+.error .eyebrow {
+  color: var(--danger);
+}
+
+.info .eyebrow {
+  color: var(--info);
+}
+
+.success .eyebrow {
+  color: var(--success);
+}
+
+.text {
+  font-size: var(--text-sm);
+  color: var(--ink);
+  font-weight: 400;
+}
+
+.meta {
+  font-size: var(--text-sm);
+  color: var(--soft);
+}
+
+/* ── Actions ── */
+
+.action {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  opacity: 0.72;
+  transition: opacity var(--motion-fast) ease;
+}
+
+.action:hover {
+  opacity: 1;
+}
+
+.error .action {
+  color: var(--danger);
+}
+
+.info .action {
+  color: var(--info);
+}
+
+.success .action {
+  color: var(--success);
+}
+
+.dismiss {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--soft);
+  opacity: 0.5;
+  padding: 2px;
+  display: flex;
+  transition:
+    color var(--motion-fast) var(--motion),
+    opacity var(--motion-fast) var(--motion);
+}
+
+.dismiss:hover {
+  color: var(--ink);
+  opacity: 1;
+}
+
+/* ── Compact (bottom floaters) ── */
+
+.compact {
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 10px 12px 10px 20px;
+}
+
+.compact .body {
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  align-items: center;
+  text-align: left;
+  gap: 12px;
+}
+
+.compact .eyebrow {
+  flex-shrink: 0;
+}
+
+.compact .text {
+  min-width: 0;
+}
+
+.compact .dismiss {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* ── Mobile ── */
+
+@media (max-width: 768px) {
+  .banner {
+    padding: 10px 16px;
+    border-radius: var(--radius-xs);
+    gap: var(--space-md);
+  }
+
+  .body {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .compact .body {
+    flex-wrap: wrap;
+    align-items: baseline;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banner {
+    animation: none;
+  }
+}

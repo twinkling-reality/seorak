@@ -1,0 +1,106 @@
+/* Glass surface primitives — the single home for the two glass mechanics that
+ * were previously copy-pasted per component (marketing carries the same
+ * recipes in ~9 modules; ChatPanel carried three inline rims before this
+ * file). Values come from the theme-aware --surface-glass-* tokens
+ * (styles/tokens.css); this file owns only the mechanics.
+ *
+ * Apply from TSX alongside the component's own layout class:
+ *
+ *   className={clsx(styles.strip, glass.sheet, glass.rim)}
+ *
+ * .sheet — refractive fill + backdrop blur for a floating chrome surface.
+ *   Carries the @supports fallback: without backdrop-filter the see-through
+ *   fill would be low-contrast mush over live dashboard content, so it falls
+ *   back to a near-solid fill. No rim and no shadow here: a rimmed full-height
+ *   sheet reads as a solid drawer again (ChatPanel material notes), and each
+ *   consumer keeps its own place on the existing shadow ladder.
+ *
+ * .sheetStrong — same mechanics at the reading-surface fill grade
+ *   (--surface-glass-fill-strong). For menus and panels whose rows carry
+ *   text: the widget catalog panel, the demo picker, the repo filter. Still
+ *   no rim on the catalog-size (480px) panels; the smaller menu cards may
+ *   pair it with .rim, mirroring the marketing .menuCard.
+ *
+ * .rim — the 1px iridescent masked edge. SMALL CONTROLS ONLY per
+ *   DESIGN_LANGUAGE.md (command strips, inputs, chips) — pair with .sheet on
+ *   chrome that floats directly over the page, or with a plain
+ *   --surface-glass-fill-ctrl fill on controls that already sit on glass.
+ *   Draws via ::before with border-radius: inherit, so it needs no radius of
+ *   its own; consumers keep border: none so the rim is the only edge.
+ *   CONTRACT: the consumer must be its own positioned box (relative/fixed/
+ *   absolute). .rim deliberately does not set `position` — these classes
+ *   share specificity with consumer classes, so any overlapping property
+ *   would be decided by bundle order, which is not guaranteed.
+ *
+ * Backdrop-filter pitfalls (verified in ChatPanel, keep honoring them here):
+ * never animate or fill-hold opacity on a PARENT of the .sheet element — the
+ * parent becomes a backdrop root and the blur silently vanishes. Animating
+ * opacity on the .sheet element itself is safe (applied after backdrop
+ * sampling). And resting glass must read the static --accent, never an
+ * animated tint: a per-frame tint change repaints the whole blur region.
+ */
+
+.sheet {
+  background: var(--surface-glass-fill);
+  backdrop-filter: var(--surface-glass-blur);
+  -webkit-backdrop-filter: var(--surface-glass-blur);
+}
+
+.sheetStrong {
+  background: var(--surface-glass-fill-strong);
+  backdrop-filter: var(--surface-glass-blur);
+  -webkit-backdrop-filter: var(--surface-glass-blur);
+}
+
+/* .sheetNote — the annotation card's grade: the reading-surface fill with a
+ * CATEGORY WASH laid over it, tinted by the consumer's --glass-tint (defaulting to
+ * the lavender accent, so an untinted consumer gets today's look). The tint rides a
+ * second background layer rather than a consumer-side `background`, because these
+ * classes share specificity with consumer classes and an overlapping property would
+ * be settled by bundle order — the same contract .rim documents above.
+ *
+ * DESIGN_LANGUAGE.md sanctions glass for "short contextual annotations", which this
+ * is, and forbids it for "dense data tables". The moment a note grows past a
+ * sentence and a few cited lines it is no longer an annotation and must go solid.
+ * The wash says WHICH EVIDENCE the note belongs to; it is not decoration, and it
+ * must never be the only thing carrying that meaning. */
+.sheetNote {
+  --glass-note-wash: linear-gradient(
+    168deg,
+    color-mix(in srgb, var(--glass-tint, var(--accent)) 26%, transparent) 0%,
+    color-mix(in srgb, var(--glass-tint, var(--accent)) 8%, transparent) 58%,
+    color-mix(in srgb, var(--glass-tint, var(--accent)) 2%, transparent) 100%
+  );
+  background: var(--glass-note-wash), var(--surface-glass-fill-strong);
+  backdrop-filter: var(--surface-glass-blur);
+  -webkit-backdrop-filter: var(--surface-glass-blur);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .sheet,
+  .sheetStrong {
+    background: var(--surface-glass-fallback);
+  }
+
+  .sheetNote {
+    background: var(--glass-note-wash), var(--surface-glass-fallback);
+  }
+}
+
+.rim::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--surface-glass-rim);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}

@@ -1,0 +1,102 @@
+/* ChurnBar: two line-volume flows (added, removed) as bars on a common
+ * baseline + scale, with the net as the residual beneath. Neutral ink only —
+ * removing lines is not a failure, so no red/green; the +/- signs carry
+ * direction. Same track/fill idiom as BenchmarkBars, without a reference line. */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 68px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  animation: churnRowIn 0.3s var(--motion) both;
+  animation-delay: calc(var(--row-index) * 0.05s);
+}
+
+.label {
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+.track {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--ghost);
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s var(--motion);
+}
+
+.value {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-sm);
+  color: var(--ink);
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* Net: the residual the two flows leave. Divider above so it reads as a sum,
+ * not a third flow. */
+.netRow {
+  display: grid;
+  grid-template-columns: 68px 1fr auto;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 2px;
+  padding-top: 8px;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.netLabel {
+  grid-column: 1;
+  font-family: var(--sans);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  color: var(--soft);
+}
+
+.netValue {
+  grid-column: 3;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  text-align: right;
+}
+
+@keyframes churnRowIn {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row {
+    animation: none;
+  }
+  .fill {
+    transition: none;
+  }
+}

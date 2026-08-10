@@ -1,0 +1,283 @@
+/* Shared command strip, search bar, and scroll fade primitives for customize overlays. */
+
+.strip {
+  position: fixed;
+  bottom: 12px;
+  right: 24px;
+  height: 40px;
+  border-radius: var(--control-radius);
+  background:
+    radial-gradient(
+      120% 95% at 82% -25%,
+      color-mix(in srgb, var(--accent) 24%, rgba(255, 255, 255, 0.72)) 0%,
+      rgba(255, 255, 255, 0) 58%
+    ),
+    linear-gradient(
+      176deg,
+      color-mix(in srgb, var(--accent) 13%, rgba(255, 255, 255, 0.76)) 0%,
+      rgba(255, 255, 255, 0.58) 58%,
+      rgba(248, 248, 252, 0.54) 100%
+    );
+  backdrop-filter: var(--surface-glass-blur);
+  -webkit-backdrop-filter: var(--surface-glass-blur);
+  box-shadow:
+    0 18px 52px rgba(18, 19, 23, 0.1),
+    0 2px 10px rgba(18, 19, 23, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.62);
+  z-index: 202;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  gap: 2px;
+  animation: stripIn 0.2s ease both;
+}
+
+:global([data-theme='dark']) .strip {
+  background:
+    radial-gradient(
+      120% 95% at 82% -25%,
+      color-mix(in srgb, var(--accent) 20%, rgba(240, 240, 242, 0.12)) 0%,
+      rgba(240, 240, 242, 0) 58%
+    ),
+    linear-gradient(
+      176deg,
+      color-mix(in srgb, var(--accent) 14%, rgba(18, 19, 24, 0.76)) 0%,
+      rgba(14, 15, 17, 0.68) 58%,
+      rgba(12, 13, 15, 0.66) 100%
+    );
+  box-shadow:
+    0 18px 52px rgba(0, 0, 0, 0.42),
+    0 2px 10px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .strip {
+    background: var(--surface-glass-fallback);
+  }
+}
+
+@keyframes stripIn {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stripAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: none;
+  padding: 5px 8px;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--ink);
+  letter-spacing: var(--tracking-stat);
+  cursor: pointer;
+  border-radius: var(--radius-xs);
+  transition:
+    color 0.12s ease,
+    background 0.12s ease,
+    box-shadow 0.12s ease,
+    transform 0.12s ease;
+  white-space: nowrap;
+}
+
+.stripAction:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface-glass-fill-ctrl));
+}
+
+:global([data-theme='dark']) .stripAction:hover {
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-glass-fill-ctrl));
+}
+
+.stripActionActive {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface-glass-fill-ctrl));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.48),
+    0 6px 16px rgba(18, 19, 23, 0.06);
+  transform: translateY(-1px);
+}
+
+:global([data-theme='dark']) .stripActionActive {
+  background: color-mix(in srgb, var(--accent) 20%, var(--surface-glass-fill-ctrl));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+.stripDivider {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--ghost);
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+
+/* State the strip reports rather than an action it offers. Same type as the
+   actions so the row stays one object; muted and inert so it does not read as
+   something to press. */
+.stripLabel {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 8px;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-stat);
+  color: var(--soft);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: var(--ghost);
+  border-radius: var(--radius-2xs);
+  font-family: var(--mono);
+  font-size: var(--text-3xs);
+  color: var(--soft);
+  line-height: 1;
+}
+
+.kbdGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.searchBar {
+  position: fixed;
+  z-index: 203;
+  right: 24px;
+  width: 480px;
+  border-radius: var(--control-radius);
+  box-shadow: var(--shadow-lg), var(--shadow-xs);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: searchIn 0.12s ease both;
+  transition: box-shadow 0.15s ease;
+}
+
+.searchBar:focus-within {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent),
+    var(--shadow-lg),
+    var(--shadow-xs);
+}
+
+@keyframes searchIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.searchIcon {
+  width: 14px;
+  height: 14px;
+  color: var(--soft);
+  flex-shrink: 0;
+}
+
+.searchInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: var(--mono);
+  font-size: var(--text-sm);
+  color: var(--ink);
+  outline: none;
+  letter-spacing: var(--tracking-stat);
+}
+
+.searchInput::placeholder {
+  color: var(--soft);
+}
+
+.searchHint {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+  flex-shrink: 0;
+}
+
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.listFadeTop {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 16px);
+}
+
+.listFadeBottom {
+  -webkit-mask-image: linear-gradient(to top, transparent 0, #000 16px);
+  mask-image: linear-gradient(to top, transparent 0, #000 16px);
+}
+
+.listFadeBoth {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 16px,
+    #000 calc(100% - 16px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 16px,
+    #000 calc(100% - 16px),
+    transparent 100%
+  );
+}
+
+@media (max-width: 640px) {
+  .strip {
+    right: 8px;
+    left: 8px;
+    width: auto;
+  }
+
+  .searchBar {
+    right: 8px;
+    left: 8px;
+    width: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .strip,
+  .searchBar {
+    animation: none;
+  }
+}

@@ -1,0 +1,86 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(120px, 190px) 1fr;
+  gap: 16px;
+  align-items: center;
+  animation: rowReveal 0.3s var(--motion) both;
+  animation-delay: calc(var(--row-index, 0) * 35ms);
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  color: var(--ink);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The bar and its value share one positioned cell: the fill lays down the
+ * magnitude, the value hugs its right edge (inside when the fill is wide,
+ * trailing just past it when narrow). */
+.barCell {
+  position: relative;
+  height: 26px;
+  min-width: 0;
+}
+
+.track {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-xs);
+  background: var(--faint);
+}
+
+.fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  border-radius: var(--radius-xs);
+  background: var(--ink);
+}
+
+.valueInside {
+  padding: 0 10px;
+  font-family: var(--mono);
+  font-size: var(--text-sm);
+  color: var(--page-bg);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.valueOutside {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+  font-family: var(--mono);
+  font-size: var(--text-sm);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.meta {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--soft);
+  letter-spacing: 0.01em;
+}

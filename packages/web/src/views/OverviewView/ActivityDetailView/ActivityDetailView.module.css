@@ -1,0 +1,18 @@
+/* ActivityDetailView, the temporal lens on activity ("when do you code").
+ *
+ * One tab, When (the coding-rhythm heatmap + its day-of-week and hour-of-day
+ * marginals). The old mix / effective-hours tabs were dropped: the contract
+ * carries no edit classification or effectiveness grade, so their locked "--"
+ * was a dead control, not an honest empty. This module owns only the one bit
+ * of chrome the shared FocusedDetailView shell and viz primitives don't: the
+ * empty-state copy.
+ */
+
+.empty {
+  display: block;
+  padding: var(--space-lg) 0;
+  font-family: var(--mono);
+  font-size: var(--text-sm);
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+}

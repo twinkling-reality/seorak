@@ -1,0 +1,23 @@
+/* File-type mark: a fixed-size squircle so it reads as a sibling of the house
+ * ProjectSquircle (same 22px / 7px-radius as its md size) and keeps filenames
+ * aligned down the column. The icon is filled with the category color (via
+ * currentColor, mixed toward --ink so it stays legible in both themes) and sits
+ * on a soft wash of the same color. --ft is the category fill token, set inline
+ * per file. */
+.mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--ft) 14%, transparent);
+  color: color-mix(in srgb, var(--ft) 60%, var(--ink));
+}
+
+.icon {
+  width: 14px;
+  height: 14px;
+  display: block;
+}

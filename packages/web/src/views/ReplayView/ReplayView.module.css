@@ -1,0 +1,80 @@
+.page {
+  animation: dashboardViewFadeIn 0.25s var(--motion) both;
+  min-width: 0;
+}
+
+/* Replay pins its cockpit to the viewport and never scrolls the page, so the
+   shell's 88px end-of-read padding is not breathing room at the end of a read
+   — it is 88px of screen the stage is forbidden to use. Pull the page's bottom
+   edge into that padding, leaving a gutter. `useViewportFill` walks ancestor
+   margins, so it measures this and hands the cockpit the height back.
+
+   Gated on the same thresholds that hook uses (its defaults: minWidth 900,
+   minHeight 640). Below them it returns null, the cockpit falls back to
+   document flow, and the page scrolls again — and a scrolling page still wants
+   the full padding at the end. Change one, change the other. */
+@media (min-width: 900px) and (min-height: 640px) {
+  .page {
+    margin-bottom: calc(var(--content-pad-y-bottom-pinned) - var(--content-pad-y-bottom));
+  }
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin: 24px 0 clamp(34px, 5vw, 54px);
+}
+
+.playerPanel {
+  min-width: 0;
+  position: relative;
+}
+
+.playerPanel::before {
+  content: '';
+  display: block;
+  height: 1px;
+  margin-bottom: 16px;
+  background: var(--hairline);
+}
+
+.titleBreadcrumb {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.22em;
+  min-width: 0;
+}
+
+.titleCrumb {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.22em;
+  min-width: 0;
+}
+
+.titleCrumbButton {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: color-mix(in srgb, var(--ink) 58%, var(--soft));
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.titleCrumbButton:hover,
+.titleCrumbButton:focus-visible {
+  color: var(--ink);
+}
+
+.titleCrumbButton:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 4px;
+  border-radius: var(--radius-2xs);
+}
+
+.titleSeparator {
+  color: var(--soft);
+}

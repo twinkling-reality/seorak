@@ -1,0 +1,54 @@
+/* OutcomesDetailView — styles for the outcomes detail surface.
+ *
+ * Structure mirrors UsageDetailView: DetailView shell + DetailSection
+ * blocks. This module owns only viz-specific chrome (the detail ring,
+ * the scope scale at detail size, empty states). Spacing and typography
+ * come from shared tokens.
+ */
+
+.empty {
+  display: block;
+  padding: var(--space-lg) 0;
+  font-family: var(--mono);
+  font-size: var(--text-sm);
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+}
+
+/* ── Intervention watch panel (the wedge, §6c) ────── */
+
+.watch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+/* A watch limit's trip value in the reference table. Mono because it is a
+ * measurement (a dollar cap, a duration, a count), aligned with the rest of the
+ * evidence type. */
+.limit {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+/* Supporting cell copy (a fired event's time, a limit's "why"). Muted so it
+ * stays subordinate to the signal and the number it explains. */
+.subtle {
+  color: var(--muted);
+}
+
+/* Muted honest-empty line under the watch-limits table. Mono + soft so it
+ * reads as a system note, not a fired event. */
+.watchNote {
+  margin: var(--space-sm) 0 0;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+}
+
+/* The per-row Replay affordance is no longer bespoke here: both outcomes tables
+ * moved to the shared EntityTable, whose actionLabel renders the widget-shared
+ * viewPill (row-hover invert + whole-row link). Nothing local left to style. */

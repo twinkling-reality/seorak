@@ -1,0 +1,340 @@
+/* OutcomeWidgets-only viz vocabulary.
+ *
+ * All layouts in this category are chromeless data surfaces: hierarchy
+ * comes from type weight, opacity, and semantic color rather than row
+ * boxes or card backgrounds. Stat-shaped
+ * outcomes (one-shot-rate, stuckness) reuse primitives from
+ * widget-shared.module.css.
+ *
+ * Tokens come from app.css / tokens.css — never hardcode hex.
+ */
+
+.cadenceFrame {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-sm);
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Compact sparkline face — centered in the cell, no flex-grow dead zone. */
+.sparkFrame {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-sm);
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.sparkChart {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  min-width: 0;
+}
+
+/* ── Outcomes widget ──────────────────────────────────
+ * StripFaceHead (full width) + ring (compact) + table (flex fill).
+ * Leader labels off on the ring — the table is the legend.
+ */
+
+.outcomeWrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: 100%;
+  min-width: 0;
+}
+
+.outcomeFrame {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xl);
+  width: 100%;
+  min-width: 0;
+}
+
+.ringBlock {
+  width: 168px;
+  max-width: 168px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ringSvg {
+  width: 100%;
+  max-width: 168px;
+  height: auto;
+  overflow: visible;
+  display: block;
+}
+
+/* OUTCOME (dot + label) | COUNT | SHARE (bar + %). */
+.outcomeTable {
+  display: grid;
+  grid-template-columns:
+    minmax(160px, 1fr)
+    80px
+    minmax(0, 2fr);
+  column-gap: var(--space-lg);
+  align-content: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.outcomeHeadRow {
+  composes: tableHead from '../widget-shared.module.css';
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  padding: 0 14px 12px;
+  border-bottom: 1px solid var(--ghost);
+}
+
+.outcomeHeadNum {
+  text-align: right;
+}
+
+.outcomeDataRow {
+  composes: rowBase from '../widget-shared.module.css';
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  align-items: center;
+  padding: 12px 14px;
+  cursor: pointer;
+  animation-delay: calc(var(--row-index, 0) * 45ms);
+  transition: opacity 0.2s ease;
+}
+
+.outcomeDataRow:hover {
+  background: transparent;
+}
+
+.outcomeDataRowDim {
+  opacity: 0.35;
+}
+
+.outcomeCellOutcome {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.outcomeDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.outcomeLabel {
+  font-family: var(--sans);
+  font-size: var(--text-md);
+  font-weight: 400;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.outcomeCount {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  text-align: right;
+}
+
+.outcomeShareCell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.outcomeShareTrack {
+  composes: fillTrack from '../widget-shared.module.css';
+  flex: 1;
+  border-radius: var(--radius-2xs);
+  min-width: 40px;
+}
+
+.outcomeShareFill {
+  composes: fillBar from '../widget-shared.module.css';
+  transition:
+    width 0.4s var(--motion),
+    opacity 0.15s ease;
+}
+
+.outcomeShareValue {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 36px;
+  text-align: right;
+}
+
+.outcomeTrendCell {
+  display: flex;
+  align-items: center;
+  min-width: 72px;
+}
+
+.outcomeSparkline {
+  width: 100%;
+  height: 22px;
+  display: block;
+}
+
+.outcomeTrendBlank {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--soft);
+}
+
+.outcomeViewButton {
+  composes: viewPill from '../widget-shared.module.css';
+}
+
+/* Stack ring above the table on very narrow widgets (mobile). */
+@media (max-width: 760px) {
+  .outcomeFrame {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .ringBlock {
+    width: 100%;
+    max-width: 200px;
+    align-self: center;
+  }
+}
+
+/* ── Completion by scope (6×3) ─────────────────────────
+ *
+ * Scope terrace. Four same-style terraces form one ordinal terrain. The
+ * vertical step carries completion; labels live below in DOM typography.
+ */
+
+.scopeFrame {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-sm);
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  padding: 0;
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+}
+
+.scopeTerrace {
+  display: grid;
+  grid-template-rows: minmax(86px, 1fr) auto;
+  gap: var(--space-md);
+  width: 100%;
+  animation: rowReveal 0.3s var(--motion) both;
+}
+
+.scopeTerraceViz {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: end;
+  gap: 0;
+  min-height: 96px;
+}
+
+.scopeTerraceStep {
+  display: block;
+  align-self: end;
+  height: calc(100% - var(--scope-y));
+  min-height: 14px;
+  background: var(--scope-color);
+  opacity: 0.72;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  animation: rowReveal 0.3s var(--motion) both;
+  animation-delay: calc(var(--row-index, 0) * 45ms);
+  transition:
+    opacity var(--motion-fast) ease,
+    transform var(--motion-fast) var(--motion);
+}
+
+.scopeTerraceStep + .scopeTerraceStep {
+  margin-left: 3px;
+}
+
+.scopeFrame:hover .scopeTerraceStep,
+.scopeFrame:focus-visible .scopeTerraceStep {
+  opacity: 0.9;
+}
+
+.scopeTerraceLabels {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.scopeTerraceLabel {
+  display: grid;
+  grid-template-rows: auto auto;
+  justify-items: center;
+  gap: 4px;
+  min-width: 0;
+  position: relative;
+  animation: rowReveal 0.3s var(--motion) both;
+  animation-delay: calc(var(--row-index, 0) * 45ms);
+}
+
+.scopeTerraceRate {
+  font-family: var(--display);
+  font-size: var(--text-xl);
+  font-weight: 300;
+  letter-spacing: -0.06em;
+  font-variant-numeric: tabular-nums;
+  line-height: var(--display-line-value);
+}
+
+.scopeTerraceBucket {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .outcomeDataRow,
+  .scopeFrame,
+  .scopeTerrace,
+  .scopeTerraceStep,
+  .scopeTerraceLabel {
+    animation: none !important;
+  }
+  .outcomeDot,
+  .outcomeViewButton,
+  .scopeTerraceStep {
+    transition: none !important;
+  }
+}

@@ -1,0 +1,167 @@
+/* Demo data picker. Mirrors `WidgetCatalog.module.css` so the two dev
+   affordances are visual siblings:
+   - Same glass materials (glass.sheet/.sheetStrong/.rim composed in the TSX;
+     control chrome at --control-radius, panel at --control-radius-lg)
+   - Same shadow stack (`--shadow-lg`, `--shadow-xs`)
+   - Same panel surface and width
+   - Same z-index ladder
+   - Same fixed positioning convention
+   - Same bottom command strip with mono actions + kbd chips
+   - Same opt-in search bar appearing on the panel's outside edge
+
+   The catalog lives at bottom-right, anchored to its strip; the picker
+   mirrors to top-right, anchored to its trigger. The search bar in the
+   catalog appears above the panel (away from the strip); for the picker,
+   search appears below the panel (away from the trigger). */
+
+/* Glass control (sheet + rim in the TSX): the rim replaces the old 1px
+   border, so the border is gone rather than doubled. */
+.trigger {
+  position: fixed;
+  top: 12px;
+  right: 24px;
+  z-index: 202;
+  height: 32px;
+  padding: 0 var(--space-md);
+  border: none;
+  border-radius: var(--control-radius);
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 280px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+/* Glass hover: warm the fill toward the accent (a --ghost wash here would
+   REPLACE the glass fill and read as the control going empty). Same recipe
+   as ChatPanel's suggestion hover; tokenize if a third consumer appears. */
+.trigger:hover {
+  background: color-mix(in srgb, var(--accent) 14%, rgba(255, 255, 255, 0.6));
+}
+
+:global([data-theme='dark']) .trigger:hover {
+  background: color-mix(in srgb, var(--accent) 18%, rgba(240, 240, 242, 0.08));
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* Panel: fixed below trigger. Glass reading surface (glass.sheetStrong in
+   the TSX, no rim at this size), shadow + radius mirror the catalog panel. */
+.panel {
+  position: fixed;
+  top: 52px;
+  right: 24px;
+  z-index: 201;
+  width: 480px;
+  height: 420px;
+  border-radius: var(--control-radius-lg);
+  box-shadow: var(--shadow-lg), var(--shadow-xs);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.list {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: var(--space-xs) 0;
+}
+
+.empty {
+  padding: var(--space-lg);
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  color: var(--soft);
+  text-align: center;
+}
+
+.sectionLabel {
+  padding: var(--space-md) var(--space-lg) var(--space-xs);
+  font-family: var(--sans);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--soft);
+}
+
+.row {
+  display: block;
+  width: 100%;
+  padding: var(--space-sm) var(--space-lg);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--sans);
+}
+
+.row:hover,
+.rowHighlighted {
+  background: var(--ghost);
+}
+
+.rowName {
+  display: block;
+  font-size: var(--text-sm);
+  color: var(--ink);
+  font-weight: 400;
+}
+
+.rowDesc {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--soft);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rowActive .rowName {
+  font-weight: 600;
+}
+
+.rowActive .rowDesc {
+  color: var(--ink);
+}
+
+/* Bottom command strip: matches WidgetCatalog.strip exactly. Mono action
+   labels + kbd chips, dot dividers between groups. The strip lives inside
+   the panel as the panel's footer, the same way the catalog's strip lives
+   inside the catalog's chrome (the catalog renders its strip as a separate
+   fixed element because it persists when the panel is closed; the picker
+   only shows the strip when the panel is open, so it lives inside). */
+
+.strip {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  padding: 6px 8px;
+  border-top: 1px solid var(--ghost);
+  flex-shrink: 0;
+}
+
+.demoSearchBar {
+  position: fixed;
+  top: 480px;
+  right: 24px;
+  width: 480px;
+  z-index: 203;
+}
+
+@media (max-width: 640px) {
+  .trigger {
+    right: var(--space-md);
+  }
+  .panel,
+  .demoSearchBar {
+    right: var(--space-md);
+    width: calc(100vw - var(--space-md) * 2);
+  }
+}

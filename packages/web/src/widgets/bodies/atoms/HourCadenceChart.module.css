@@ -1,0 +1,59 @@
+/* 24-hour cadence pillars — when sessions wrap up across the clock. */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.stage {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 56px;
+  padding: 0 1px;
+}
+
+.cell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-width: 0;
+  height: 100%;
+}
+
+.pillar {
+  width: 100%;
+  min-height: 0;
+  border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+  transition:
+    opacity var(--motion-fast) ease,
+    height var(--motion-fast) var(--motion);
+}
+
+.pillarPeak {
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--viz-series) 65%, transparent);
+}
+
+.rim {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 2px;
+}
+
+.tick {
+  font-family: var(--mono);
+  font-size: var(--text-3xs);
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pillar {
+    transition: none;
+  }
+}

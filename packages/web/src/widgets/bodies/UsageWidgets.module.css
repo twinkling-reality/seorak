@@ -1,0 +1,225 @@
+/* TeamWidgets-only viz: subgrid table for the projects comparator.
+ * Mirrors the LiveAgents/Conflicts subgrid pattern in LiveWidgets.module.css
+ * — header + body rows share grid tracks via subgrid so the columns line up
+ * across the header and every row. The negative-margin / inset-padding
+ * trick gives the hover pill 14px of bleed past the visible content for
+ * the same "spans flush with the widget" look. */
+
+.projectsTable {
+  display: grid;
+  /* Project | Sessions | Active | Last active | View — the solo 5-column set.
+   * The team-oriented columns (Tools/Activity/Memories/Conflicts) are not part
+   * of the solo model and were dropped. Project absorbs leftover space but
+   * floors at 64px so the repo name never collapses to zero on a narrow tile;
+   * numeric/text columns size to content; View is a fixed-width pill on the
+   * right. */
+  grid-template-columns: minmax(64px, 1fr) auto auto auto 56px;
+  column-gap: var(--space-md);
+  row-gap: 0;
+  align-content: start;
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+.projectsTableHeader,
+.projectsTableRow {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+  margin: 0 -14px;
+}
+
+.projectsTableHeader {
+  composes: tableHead from '../widget-shared.module.css';
+  padding: 0 14px 10px;
+}
+
+.projectsHeaderNum {
+  text-align: right;
+}
+
+.projectsTableBody {
+  /* `display: contents` dissolves this wrapper so rows subgrid directly
+   * onto the parent's tracks. Same pattern as liveTableBody. */
+  display: contents;
+}
+
+.projectsTableRow {
+  composes: rowBase from '../widget-shared.module.css';
+  padding: 12px 14px;
+}
+
+/* Identity: project squircle + name — same vocabulary as repo activity and
+ * live sessions (projectGradient at chip scale). */
+.projectsIdentity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.projectsSquircle {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.projectsName {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.projectsCell {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Tools sub-cell ──────────────────────────
+ * Live state is signaled by full opacity vs dimmed idle — no overlay glyphs,
+ * no accent dot. The contrast carries the signal on its own. */
+.projectsTools {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.toolLive {
+  display: inline-flex;
+  align-items: center;
+}
+
+.toolIdle {
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+
+.toolOverflow {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--soft);
+  margin-left: 2px;
+}
+
+/* ── Activity sparkline cell ────────────────── */
+.projectsActivityCell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 20px;
+  min-width: 0;
+}
+
+.projectsActivityCell > svg {
+  width: 100%;
+}
+
+/* ── Numeric metric cell (memories, conflicts) ────────────── */
+.projectsNumCell {
+  display: inline-flex;
+  align-items: baseline;
+  justify-self: end;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.projectsNumValue {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.projectsEmpty {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--soft);
+}
+
+.projectsEmptyNum {
+  composes: projectsEmpty;
+  justify-self: end;
+  text-align: right;
+}
+
+.projectsViewButton {
+  composes: viewPill from '../widget-shared.module.css';
+}
+
+/* Explicit A/B compare entry — the reader chooses the pair in Compare. */
+.projectsCompare {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin: 4px -6px 0;
+  padding: 6px 6px;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-table);
+  text-transform: uppercase;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color var(--motion-fast) ease;
+}
+
+.projectsCompare:hover {
+  color: var(--ink);
+}
+
+/* ── trend (per-day sessions sparkline) ────────────── */
+.trendFrame {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-sm);
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+
+.trendHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.trendValue {
+  font-family: var(--display);
+  font-size: var(--text-xl);
+  font-weight: 300;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.trendChart {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .projectsTableRow {
+    animation: none !important;
+  }
+}

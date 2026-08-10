@@ -1,0 +1,110 @@
+/* ── Layout ── */
+.layout {
+  /* Min-height (not fixed height) so the layout fills the viewport when
+     content is short but grows with content when it's long. Document-level
+     scroll replaces the nested .main scroller. */
+  min-height: 100vh;
+  display: grid;
+  position: relative;
+  grid-template-columns: calc(var(--sidebar-width-expanded) + var(--sidebar-margin)) 1fr;
+  transition: grid-template-columns var(--motion-slow) var(--motion);
+}
+
+.layoutCollapsed {
+  grid-template-columns: calc(var(--sidebar-width-collapsed) + var(--sidebar-margin)) 1fr;
+}
+
+/* ── Main ── */
+.main {
+  min-width: 0;
+  background: var(--page-bg);
+}
+
+.content {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: var(--content-pad-y-top) var(--content-pad-x) var(--content-pad-y-bottom);
+}
+
+/* A view that pins itself to the viewport claims the end-of-read padding back
+   by pulling its own bottom edge into it — see `--content-pad-y-bottom-pinned`
+   and ReplayView's `.page`. The shell stays unaware of which view that is:
+   branching here would cost the DashboardApp chunk bytes it does not have. */
+
+.sharedEmpty {
+  display: grid;
+  gap: 5px;
+  margin: 0 0 24px;
+  padding: 15px 18px;
+  border: 1px solid color-mix(in srgb, var(--accent) 16%, var(--hairline));
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(
+      118deg,
+      color-mix(in srgb, var(--accent) 7%, transparent),
+      color-mix(in srgb, var(--surface-frost) 72%, transparent)
+    );
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.sharedEmpty strong {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.sharedEmptyEyebrow {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--soft);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+}
+
+/* Banner slot: centers the Banner component at the top of .main */
+.bannerSlot {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 14px var(--content-pad-x) 0;
+}
+
+/* ── Sidebar fallback ── */
+.sidebarFallback {
+  width: 100%;
+  min-width: 0;
+  padding: 18px 0 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sidebarFallbackIcon {
+  margin-bottom: 14px;
+  color: var(--ink);
+}
+
+.sidebarFallbackBtn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .layout,
+  .layoutCollapsed {
+    grid-template-columns: 1fr;
+  }
+  .content {
+    padding: 56px var(--content-pad-x-mobile) 64px;
+  }
+  .bannerSlot {
+    padding: 12px var(--content-pad-x-mobile) 0;
+  }
+}

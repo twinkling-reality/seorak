@@ -1,0 +1,58 @@
+{
+  "name": "seorak",
+  "version": "0.0.0",
+  "author": "Twinkling Reality",
+  "private": true,
+  "description": "Performance tracking for agentic development",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "postinstall": "npm run build:publish --workspace @seorak/types",
+    "bytes:check": "node scripts/check-source-bytes.mjs",
+    "bytes:test": "node --test scripts/check-source-bytes.test.mjs",
+    "copy:check": "node scripts/check-product-copy.mjs",
+    "copy:test": "node --test scripts/check-product-copy.test.mjs",
+    "git-isolation:check": "node scripts/check-isolated-git.mjs",
+    "git-isolation:test": "node --test scripts/check-isolated-git.test.mjs",
+    "test-timeouts:check": "node scripts/check-test-timeouts.mjs",
+    "test-timeouts:test": "node --test scripts/check-test-timeouts.test.mjs",
+    "local-artifacts:check": "node scripts/check-local-artifacts.mjs",
+    "local-artifacts:test": "node --test scripts/check-local-artifacts.test.mjs",
+    "advisories:check": "node scripts/check-dependency-advisories.mjs",
+    "advisories:test": "node --test scripts/check-dependency-advisories.test.mjs",
+    "boundaries:check": "node scripts/check-package-boundaries.mjs",
+    "boundaries:test": "node --test scripts/check-package-boundaries.test.mjs",
+    "open-core:check": "node scripts/check-open-core-boundaries.mjs",
+    "open-core:test": "node --test scripts/check-open-core-boundaries.test.mjs",
+    "types-boundary:check": "node scripts/check-types-publish-safety.mjs",
+    "types-boundary:test": "node --test scripts/check-types-publish-safety.test.mjs",
+    "union-parity:check": "node scripts/check-shared-union-parity.mjs",
+    "union-parity:test": "node --test scripts/check-shared-union-parity.test.mjs",
+    "file-set:test": "node --test scripts/one-public-file-set.test.mjs",
+    "governance:check": "node scripts/check-governance.mjs",
+    "governance:test": "node --test scripts/check-governance.test.mjs",
+    "vendored-assets:check": "node scripts/check-vendored-assets.mjs",
+    "vendored-assets:test": "node --test scripts/check-vendored-assets.test.mjs",
+    "coverage:test": "node --test scripts/check-coverage-floors.test.mjs",
+    "gate-coverage:check": "node scripts/check-gate-coverage.mjs",
+    "gate-coverage:test": "node --test scripts/check-gate-coverage.test.mjs",
+    "publication:check": "node scripts/check-publication-packages.mjs",
+    "publication:test": "node --test scripts/check-publication-packages.test.mjs",
+    "local-integration-activation:check": "node scripts/check-local-integration-activation.mjs",
+    "local-integration-activation:test": "node --test scripts/check-local-integration-activation.test.mjs",
+    "test": "npm run gate-coverage:test && npm run gate-coverage:check && npm run git-isolation:test && npm run git-isolation:check && npm run test-timeouts:test && npm run test-timeouts:check && npm run bytes:test && npm run bytes:check && npm run copy:test && npm run copy:check && npm run local-artifacts:test && npm run local-artifacts:check && npm run advisories:test && npm run advisories:check && npm run boundaries:test && npm run boundaries:check && npm run types-boundary:test && npm run types-boundary:check && npm run union-parity:test && npm run union-parity:check && npm run coverage:test && npm run publication:test && npm run publication:check && npm run local-integration-activation:test && npm run local-integration-activation:check && npm run open-core:test && npm run open-core:check && npm run file-set:test && npm run governance:test && npm run governance:check && npm run vendored-assets:test && npm run vendored-assets:check && npm run test --workspaces --if-present",
+    "typecheck": "npm run build:publish --workspace @seorak/types && npm run typecheck --workspaces --if-present",
+    "check": "npm run typecheck && npm run test",
+    "build:dashboard": "npm --workspace @seorak/web run build:dashboard",
+    "link:cli": "npm link --workspace @seorak/collector",
+    "dev:web": "npm --workspace @seorak/web run dev",
+    "dev:collector": "npm --workspace @seorak/collector run dev"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  },
+  "overrides": {
+    "brace-expansion": "5.0.9"
+  }
+}

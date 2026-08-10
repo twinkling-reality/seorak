@@ -1,0 +1,34 @@
+{
+  // THE DASHBOARD PROGRAM: `src` without `src/marketing` and `src/public`, which
+  // is the public core's half of this workspace.
+  //
+  // The exclusions are the point rather than a convenience. If the dashboard
+  // could typecheck against the marketing tree, an import into it would be a
+  // boundary violation nobody sees until the split. And `ImportMetaEnv` is
+  // declared in `src/marketing/vite-env.d.ts` now, so a dashboard file reading
+  // `import.meta.env.VITE_CONTROL_PLANE_URL` fails HERE, in the program that does
+  // not have it, rather than resolving because another entry declared it.
+  //
+  // The site's program is `tsconfig.site.json`, which includes everything.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": false,
+    "allowImportingTsExtensions": true,
+    "useDefineForClassFields": true,
+    "jsx": "react-jsx",
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "types": ["vite/client", "vitest/globals"]
+  },
+  "include": ["src", "vite.config.ts"],
+  "exclude": ["dist", "dist-dashboard", "node_modules", "src/marketing", "src/public"]
+}

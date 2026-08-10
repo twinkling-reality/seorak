@@ -1,0 +1,18 @@
+.root {
+  align-self: stretch;
+}
+
+.body {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: var(--text-base);
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.citations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
+}

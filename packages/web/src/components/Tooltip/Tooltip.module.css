@@ -1,0 +1,119 @@
+/* ── Tooltip ──
+ * Dark-fill pill that appears above (or below) the trigger on hover/focus,
+ * with an optional keyboard-shortcut chip inline. The wrapper inherits
+ * the trigger's flow so it does not disturb surrounding layout.
+ */
+
+.wrapper {
+  display: inline-flex;
+  position: relative;
+}
+
+.tooltip {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  z-index: 200;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--ink);
+  color: var(--page-bg);
+  font-family: var(--sans);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  border-radius: var(--radius-2xs);
+  box-shadow:
+    0 8px 24px rgba(18, 19, 23, 0.18),
+    0 1px 2px rgba(18, 19, 23, 0.1);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease;
+}
+
+.tooltip.open {
+  opacity: 1;
+}
+
+.top {
+  bottom: calc(100% + 6px);
+}
+
+.top.open {
+  transform: translateX(-50%) translateY(0);
+}
+
+.bottom {
+  top: calc(100% + 6px);
+}
+
+.bottom.open {
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Portaled placement (see Tooltip.tsx): fixed coords come in via inline
+ * style; only the vertical centering + slide-in ride here. */
+.right {
+  position: fixed;
+  transform: translateY(-50%) translateX(-4px);
+}
+
+.right.open {
+  transform: translateY(-50%) translateX(0);
+}
+
+.label {
+  letter-spacing: 0.005em;
+}
+
+/* Definition-length labels (the `wrap` prop): a readable multi-line measure
+ * instead of a viewport-wide single line.
+ *
+ * `width: max-content` is load-bearing. The pill is absolutely positioned, so
+ * its shrink-to-fit width resolves against the WRAPPER, not the viewport. On a
+ * small trigger (an icon button) that available width is a handful of pixels,
+ * so the pill collapses to min-content -- one word per line -- and max-width
+ * never binds. Sizing to max-content first lets max-width do its job. */
+.wrap {
+  white-space: normal;
+  width: max-content;
+  max-width: 240px;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.contentPanel {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 7px;
+  padding: 8px 10px;
+  white-space: normal;
+  min-width: 168px;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.kbd {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--page-bg);
+  border: 1px solid rgba(240, 240, 242, 0.22);
+  border-radius: 3px;
+  padding: 2px 5px;
+  line-height: 1;
+}
+
+/* Suppress on touch-primary devices: hover tooltips on touch are awkward
+ * (they require a long-press hack and tend to flash on first tap). */
+@media (hover: none) {
+  .tooltip {
+    display: none;
+  }
+}

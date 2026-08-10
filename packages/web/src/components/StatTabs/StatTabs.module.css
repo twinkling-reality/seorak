@@ -1,0 +1,169 @@
+/*
+ * StatTabs: the canonical "uppercase mono label / large display value"
+ * tab row. Used by per-project hero and detail-view stat strips.
+ *
+ * One value size everywhere (no count-responsive shrink) so a stat row
+ * carries the same visual weight regardless of how many siblings it has.
+ * Density on narrow viewports is solved by grid wrapping, not by
+ * shrinking typography.
+ *
+ * Column count is data-driven via the `data-count` attribute on .row.
+ */
+
+.row {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.row[data-count='1'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+.row[data-count='2'] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.row[data-count='3'] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.row[data-count='4'] {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.row[data-count='5'] {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.row[data-count='6'] {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.button {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  animation: fadeSlideIn 0.35s var(--motion) both;
+  animation-delay: calc(var(--idx, 0) * 60ms);
+  outline: none;
+  min-width: 0;
+}
+
+.label {
+  position: relative;
+  display: inline-flex;
+  align-self: flex-start;
+  padding: var(--space-xs) var(--space-sm);
+  margin-left: calc(-1 * var(--space-sm));
+  border-radius: var(--radius-xs);
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  background: transparent;
+  white-space: nowrap;
+  transition:
+    background var(--motion-fast) ease,
+    color var(--motion-fast) ease;
+}
+
+.button:hover .label {
+  background: var(--hover-bg);
+}
+
+.active .label {
+  background: var(--ghost);
+  color: var(--ink);
+}
+
+.value {
+  font-size: 2.25rem;
+  font-weight: 300;
+  letter-spacing: -0.025em;
+  /* Glyph-containing leading so overflow:hidden (for the horizontal ellipsis)
+   * doesn't clip digit tops or descenders on short prose values (e.g. handles). */
+  line-height: 1.2;
+  padding-block-end: 0.06em;
+  color: var(--soft);
+  transition: color var(--motion-base) var(--motion);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* Trailing room so the negative letter-spacing + overflow:hidden don't clip the
+   * last glyph's right edge. Exceeds |--display-spacing|, which is the whole
+   * requirement: the tracking after the final glyph is what pulls the box in. */
+  padding-inline-end: 0.2em;
+}
+
+.active .value {
+  color: var(--ink);
+}
+
+/* Configuration tabs: ViewHeader-style display title instead of a KPI. */
+.valueSection {
+  font-family: var(--display);
+  font-size: var(--display-page);
+  font-weight: 300;
+  letter-spacing: var(--display-spacing);
+  line-height: var(--display-line);
+  padding-block-end: 0;
+}
+
+/* Period-comparison annotation. Small mono caption beneath the value;
+ * the position implies "vs prior period" so text can stay terse. Color
+ * is hinted by the consumer (success / danger / muted). */
+.delta {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.01em;
+  color: var(--soft);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+/* Live-only accent: reserved for live data by the design language.
+ * Historical tabs pass no `tone` so this class is never applied. */
+.accent {
+  color: color-mix(in srgb, var(--live) 40%, var(--soft));
+}
+
+.active .accent {
+  color: var(--live);
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .row[data-count='4'],
+  .row[data-count='5'],
+  .row[data-count='6'] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 16px;
+  }
+
+  .row[data-count='3'] {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 12px;
+  }
+
+  .value {
+    font-size: 1.75rem;
+  }
+
+  .valueSection {
+    font-size: 2rem;
+  }
+}

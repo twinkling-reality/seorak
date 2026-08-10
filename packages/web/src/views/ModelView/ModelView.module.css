@@ -1,0 +1,371 @@
+/* Per-facet categorical palette — each facet its own muted hue so the
+   categories read at a glance. Facet colour encodes CATEGORY; the pulled/open
+   STATE is carried by the highlight + connector, never by colour alone
+   (DESIGN_LANGUAGE.md: lavender stays the reserved live/selected accent).
+
+   Four facets alias the shared narrativePalette ramp (Agents draws the same
+   values for its sections); focus is the accent itself, which is not a ramp hue.
+   The aliases need no dark override — the composed dark rule switches the ramp
+   underneath them. */
+.page {
+  composes: narrativeHues from '../../styles/narrativePalette.module.css';
+  --facet-rhythm: var(--narrative-amber);
+  --facet-stack: var(--narrative-blue);
+  --facet-shape: var(--narrative-violet);
+  --facet-payoff: var(--narrative-green);
+  --facet-focus: var(--accent);
+  --facet-volume: var(--narrative-amber);
+  --facet-cost: var(--narrative-violet);
+  animation: dashboardViewFadeIn 0.25s var(--motion) both;
+  min-width: 0;
+}
+
+/* ── Controls row — the scope and window pickers above the read, left-aligned to
+   match the Agents/Compare toolbar convention. ── */
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 26px 0 8px;
+}
+
+/* ── Reading area — top-aligned editorial column, not a centered gadget ── */
+
+/* Flush-left with the ViewHeader — the annotation lane owns the right, so the
+   read hugs the same left edge as the page title instead of floating indented. */
+.body {
+  display: flex;
+  justify-content: flex-start;
+  padding-top: clamp(6px, 2vh, 20px);
+  padding-inline: 0;
+}
+
+.status {
+  margin: clamp(24px, 8vh, 96px) auto 0;
+  font-family: var(--display);
+  font-size: 1.05rem;
+  letter-spacing: var(--display-spacing);
+  color: color-mix(in srgb, var(--ink) 58%, transparent);
+}
+
+/* ── Forming-read skeleton ──
+   The read's loading state is a forming paragraph, not a stat grid: a shimmering
+   lead over a few skeleton measures, aligned to the same editorial column the real
+   read uses so nothing jumps when the portrait lands. */
+
+.skeletonLead {
+  margin: 0 0 clamp(18px, 3vh, 30px);
+  font-family: var(--display);
+  font-size: clamp(1.5rem, 2.5vw, 2.05rem);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: normal;
+}
+
+.skeletonLines {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 1.8vh, 22px);
+}
+
+/* The read spans the whole content width so a pulled annotation has a lane;
+   the prose itself stays a narrow editorial measure inside .column. */
+.read {
+  position: relative;
+  width: 100%;
+}
+
+.column {
+  position: relative;
+  width: 100%;
+  max-width: 37rem;
+}
+
+.prose {
+  position: relative;
+  z-index: 1;
+}
+
+/* A reading measure, not a headline — drop the tight display tracking that
+   crushes the word gaps at this size, and open the spaces slightly. */
+.proseLine {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(1.5rem, 2.5vw, 2.05rem);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: normal;
+  word-spacing: 0.04em;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.proseLine + .proseLine {
+  margin-top: 1.1em;
+}
+
+.identityLead {
+  display: inline;
+  white-space: normal;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+}
+
+.identityAvatar {
+  display: inline-block;
+  vertical-align: -0.08em;
+  width: 0.82em !important;
+  height: 0.82em !important;
+  min-width: 0.82em;
+  min-height: 0.82em;
+  margin: 0 0.28em 0 0.06em;
+  border-radius: 0.22em !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+/* ── Insight terms — one annotation, two states ──
+   rest  = quiet facet underline → "there's a hidden annotation here"
+   shown = facet highlight → "open, its value is revealed in the lane"        */
+
+.term {
+  display: inline;
+  margin: 0;
+  padding: 0.02em 0.1em;
+  border: none;
+  border-radius: 0.3em;
+  background: none;
+  color: var(--insight-accent, var(--accent));
+  font: inherit;
+  text-align: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.18em;
+  cursor: pointer;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  transition:
+    color 0.15s var(--motion),
+    background 0.18s var(--motion),
+    text-decoration-color 0.15s var(--motion);
+}
+
+.term:hover,
+.term:focus-visible {
+  color: color-mix(in srgb, var(--insight-accent, var(--accent)) 80%, var(--ink));
+  background: color-mix(in srgb, var(--insight-accent, var(--accent)) 10%, transparent);
+  outline: none;
+}
+
+/* The one pulled term lifts from underline to highlight — the "open" state. */
+.termShown,
+.termShown:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--insight-accent, var(--accent)) 26%, transparent);
+  text-decoration-color: transparent;
+}
+
+.termFacet_rhythm { --insight-accent: var(--facet-rhythm); }
+.termFacet_focus { --insight-accent: var(--facet-focus); }
+.termFacet_stack { --insight-accent: var(--facet-stack); }
+.termFacet_shape { --insight-accent: var(--facet-shape); }
+.termFacet_payoff { --insight-accent: var(--facet-payoff); }
+.termFacet_volume { --insight-accent: var(--facet-volume); }
+.termFacet_cost { --insight-accent: var(--facet-cost); }
+
+/* ── Connector — the pulled term's line into the lane, one at a time ── */
+
+.connectorSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 2;
+  animation: connectorIn 0.24s var(--motion) both;
+}
+
+.connectorPath {
+  fill: none;
+  stroke: var(--insight-accent, var(--accent));
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  opacity: 0.5;
+}
+
+.connectorDot {
+  fill: var(--insight-accent, var(--accent));
+}
+
+/* ── Cited detail — soft environment, hard evidence ──
+   The same annotation card Agents carries, and it was flat for the same reasons: a
+   fill and a blur, with no edge, no depth, and none of the facet hue its own term and
+   connector already wear. It gets the shared glass grade (glass.sheetNote) plus the
+   rim and the shadow ladder every other floating glass surface in the app is on.
+
+   Unlike Agents' card this one still floats over the page field rather than over
+   evidence, so its backdrop has little to refract — the hue, the rim and the depth
+   are what make it a material here. Seating evidence beside the Model read is the
+   same open question that Agents answered with its split. */
+
+.detail {
+  position: relative;
+  --glass-tint: var(--insight-accent, var(--accent));
+  padding: clamp(15px, 2vw, 20px);
+  border-radius: 16px;
+  box-shadow:
+    var(--shadow-lg),
+    var(--shadow-xs),
+    inset 0 1px 0 var(--note-inset);
+  overflow: hidden;
+}
+
+.detailLane {
+  position: absolute;
+  z-index: 3;
+  animation: modelDetailIn 0.26s var(--motion) both;
+}
+
+.detailBelow {
+  margin-top: clamp(18px, 3.5vh, 28px);
+  max-width: 30rem;
+  animation: modelDetailIn 0.26s var(--motion) both;
+}
+
+.detailPeek {
+  pointer-events: none;
+}
+
+.detailHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Identity chip — iridescent mesh squircle for a real repo (ProjectSquircle),
+   a flat facet swatch for the abstract facets. Reserving the mesh for repos
+   says "this is a project" vs "this is a lens". */
+.detailSwatch {
+  flex-shrink: 0;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px;
+  min-height: 20px;
+  border-radius: 6px !important;
+}
+
+.detailSwatchFacet {
+  background: linear-gradient(
+    140deg,
+    var(--sw, var(--accent)),
+    color-mix(in srgb, var(--sw, var(--accent)) 55%, white)
+  );
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.detailSwatchFacet[data-facet='rhythm'] { --sw: var(--facet-rhythm); }
+.detailSwatchFacet[data-facet='focus'] { --sw: var(--facet-focus); }
+.detailSwatchFacet[data-facet='stack'] { --sw: var(--facet-stack); }
+.detailSwatchFacet[data-facet='shape'] { --sw: var(--facet-shape); }
+.detailSwatchFacet[data-facet='payoff'] { --sw: var(--facet-payoff); }
+.detailSwatchFacet[data-facet='volume'] { --sw: var(--facet-volume); }
+.detailSwatchFacet[data-facet='cost'] { --sw: var(--facet-cost); }
+
+.detailTitle {
+  flex: 1;
+  margin: 0;
+  font-family: var(--display);
+  font-size: 0.98rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.detailBody {
+  margin: 13px 0 0;
+  font-family: var(--display);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--ink) 74%, transparent);
+}
+
+.detailCitations {
+  margin: 11px 0 0;
+  padding: 0 0 0 1.1em;
+  font-family: var(--display);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--ink) 66%, transparent);
+}
+
+.detailCitations li + li {
+  margin-top: 5px;
+}
+
+/* The PEEK tier — one line, before the reader has committed to a click. No
+   bullets: a hover along a paragraph should stay a skim. It DOES carry the count
+   behind the claim, because a card-shaped surface with a connector pointing at it
+   and no number in it reads as broken rather than as restraint; what waits for a
+   click is the citation trail, the boundary and the derivation. */
+.detailPeekLines {
+  margin: 9px 0 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--display);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--ink) 70%, transparent);
+}
+
+.detailPeekLines li + li {
+  margin-top: 4px;
+  color: color-mix(in srgb, var(--ink) 52%, transparent);
+}
+
+.detailGradientTrack {
+  height: 6px;
+  margin-top: 15px;
+  border-radius: 99px;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  overflow: hidden;
+}
+
+.detailGradient {
+  height: 100%;
+  border-radius: 99px;
+  opacity: 0.9;
+}
+
+@keyframes modelDetailIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes connectorIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page,
+  .detailLane,
+  .detailBelow,
+  .connectorSvg {
+    animation: none;
+  }
+}

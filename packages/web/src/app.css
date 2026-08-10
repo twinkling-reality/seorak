@@ -1,0 +1,416 @@
+/* ═══════════════════════════════════════════
+   Seorak dashboard: global styles
+   Clean, minimal, Apple-inspired.
+   ═══════════════════════════════════════════ */
+
+@import './styles/tokens.css';
+@import './motion/tokens.css';
+
+/* Figtree (OFL-1.1, self-hosted): product sans + display across marketing and
+   dashboard. Weights shipped: 300 Light, 400 Regular, 500 Medium, 600 SemiBold.
+   Files in public/fonts/, byte-identical to the pinned `@fontsource/figtree`
+   cuts so the package build can prove what it redistributes. IBM Plex Mono
+   400/500 is bundled from its OFL-licensed Fontsource package for commands,
+   values, and chrome labels.
+
+   These files are served, not just built: the control plane's `[assets]` root is
+   this package's `public/`, so its own stylesheet names these same four URLs and
+   moves with them. */
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/fonts/Figtree-Light.woff') format('woff');
+}
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/Figtree-Regular.woff') format('woff');
+}
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/Figtree-Medium.woff') format('woff');
+}
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/Figtree-SemiBold.woff') format('woff');
+}
+
+:root {
+  color-scheme: light;
+
+  --sans: 'Figtree', -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  --display: 'Figtree', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  --mono: 'IBM Plex Mono', 'SF Mono', ui-monospace, monospace;
+
+  --text-3xs: 0.5625rem;
+  --text-2xs: 0.625rem;
+  --text-xs: 0.6875rem;
+  --text-sm: 0.75rem;
+  --text-base: 0.8125rem;
+  --text-md: 0.875rem;
+  --text-lg: 1rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+
+  --display-hero: 3.6rem;
+  --display-page: 2.8rem;
+  --display-section: 2.2rem;
+  --display-inline: 2.4rem;
+  /* Tight (sub-1) leading for display type is intentional. The ratio is against
+   * FONT-SIZE, and Figtree matches the previous face's cap height (700) and
+   * x-height (500) exactly, so the same 0.96 puts successive display baselines
+   * in the same place. Re-verified rather than assumed; it is the one tuned
+   * value the substitution left alone on purpose. */
+  --display-line: 0.96;
+  /* Sub-1 leading clips a single-line numeric VALUE inside overflow:hidden (the
+   * horizontal-ellipsis guard), so numeric value classes take this
+   * glyph-containing leading instead and headings keep --display-line.
+   *
+   * RE-DERIVED FOR FIGTREE, NOT CARRIED OVER. The previous face's number was
+   * 1.15. Measured by rasterising each value string into a line box of the
+   * candidate height and bisecting for the smallest box no lit pixel escapes:
+   * Figtree needs 0.9809 at --display-hero (worst string "1,284,000") and 0.9970
+   * at the small stat size (worst "1,632"). 1.02 is the larger bound plus
+   * headroom. Two cheaper instruments disagreed and both were wrong —
+   * scrollHeight counts descender space digits never use, and canvas ink metrics
+   * under-report the currency glyph — so this is measured off pixels.
+   *
+   * The old 1.15 was under-tuned for its OWN face: TT Commons Pro needed 1.2413
+   * once a value could contain a parenthesis. */
+  --display-line-value: 1.02;
+  /* Figtree's display tracking, derived from the previous face's -0.075em by the
+   * ratio of the two faces' mean lowercase advance (507.04 / 476.35 = 1.0644),
+   * so the optical tightness is held constant rather than the number. */
+  --display-spacing: -0.08em;
+
+  --opacity-primary: 0.92;
+  --opacity-secondary: 0.45;
+  --opacity-tertiary: 0.28;
+
+  --ink: #121317;
+  --muted: rgba(18, 19, 23, 0.58);
+  /* Secondary text still has to be text: this opacity clears WCAG AA for
+   * normal-sized copy against --page-bg. Keep decorative low-contrast marks on
+   * --faint/--ghost instead. */
+  --soft: rgba(18, 19, 23, 0.58);
+  --faint: rgba(18, 19, 23, 0.1);
+  --ghost: rgba(18, 19, 23, 0.035);
+  --hairline: rgba(18, 19, 23, 0.08);
+  /* Table header rule + row separators (DetailTable / EntityTable /
+   * FocusedDetailView). Same weight as the control hairline so every line in the
+   * product reads as one family. Was previously referenced but never defined, so
+   * every table silently rendered with no dividers. */
+  --divider: rgba(18, 19, 23, 0.08);
+  --page-bg: #ffffff;
+
+  /* Accent sourced from the logo's middle slab (lavender). Ties the
+   * brand mark to the UI accent so the UI reads as one object
+   * instead of a blue product stamped with a pastel logo. Lavender
+   * carries the horizontal/primary axis (stat tabs, top nav). */
+  --accent: #a896d4;
+  --accent-bg: rgba(168, 150, 212, 0.12);
+
+  /* Live = real-time data only.
+   *
+   * Aliased to --accent so the brand color stays identical, but the
+   * SEMANTICS split: anything that pulses, streams, or represents an
+   * agent currently active uses --live; anything that's just an active
+   * chrome state (selected tab, pressed button, focused row) uses --ink.
+   *
+   * This rule is the whole point of the design language: lavender means
+   * "something is happening right now," not "this is the active control."
+   * If you find yourself reaching for --accent on a static count, a
+   * selected pill, or a focus ring: it's --ink, not --live. */
+  --live: var(--accent);
+  --live-bg: var(--accent-bg);
+
+  /* Retrospective chart / strip fills. Ink-based — NOT --accent.
+   * Lavender (--live) is reserved for in-flight surfaces only (live sessions,
+   * streaming state). Widgets that summarize a past window use these tokens. */
+  --viz-fill: var(--ink);
+  --viz-ramp-base: var(--page-bg);
+  --viz-floor: color-mix(in srgb, var(--viz-fill) 5%, transparent);
+
+  /* Focus ring color. Defaults to --ink so keyboard focus reads as a
+   * neutral chrome state, NOT as live data. Components can override
+   * locally when an entity color (work-type, tool color) is contextually
+   * meaningful, but the default is ink. */
+  --focus-ring: var(--ink);
+
+  /* Alt accent: logo's top slab (dusty pink). Carries the vertical/
+   * secondary axis (the sidebar question list). Splitting the axes
+   * onto two logo colors makes the two navigations visually distinct
+   * at a glance, mirrors how the logo stacks three different pastels,
+   * and avoids the "every pill is the same lavender" sameness. Pink
+   * is distinguishable from --warn (#ff9b3f amber-orange) and --danger
+   * (#ff6b57 red-orange) because it's dusty/rose, not saturated warm. */
+  --accent-alt: #d49aae;
+  --accent-alt-bg: rgba(212, 154, 174, 0.14);
+  --success: #18b46f;
+  --success-bg: rgba(24, 180, 111, 0.08);
+  --warn: #ff9b3f;
+  --warn-bg: rgba(255, 155, 63, 0.08);
+  --danger: #ff6b57;
+  --danger-bg: rgba(255, 107, 87, 0.08);
+  --info: #5d58de;
+  --info-bg: rgba(93, 88, 222, 0.08);
+  --purple: #8a63ff;
+  --purple-bg: rgba(138, 99, 255, 0.08);
+
+  --shimmer-peak: rgba(18, 19, 23, 0.07);
+  /* Near-opaque frost for chart tooltips/chips and the mobile sidebar drawer.
+   * NOT part of the translucent --surface-glass-* chrome family
+   * (styles/tokens.css); this one prioritizes legibility over refraction. */
+  --surface-frost: rgba(255, 255, 255, 0.96);
+  --shadow-xs: 0 2px 8px rgba(18, 19, 23, 0.06);
+  --shadow-lg: 0 20px 60px rgba(18, 19, 23, 0.08);
+
+  /* Text color on filled accent / colored buttons. Constant across themes
+     because accent/success/danger fills stay saturated enough in dark mode that a
+     page-bg-relative "on-color" would fail contrast. */
+  --on-accent: #ffffff;
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-xs: 6px;
+  --control-radius: 14px;
+  --control-radius-lg: 18px;
+
+  --motion: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --motion-fast: 140ms;
+  --motion-base: 220ms;
+  --motion-slow: 320ms;
+
+  /* Expanded hugs label measure (icon + gap + ~124px name + padding).
+     Collapsed rail stays the deep-work default. */
+  --sidebar-width-expanded: 188px;
+  --sidebar-width-collapsed: 56px;
+  --sidebar-width: var(--sidebar-width-expanded);
+  --sidebar-margin: 10px;
+  --content-max-width: 1320px;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --ink: #f0f0f2;
+  --muted: rgba(240, 240, 242, 0.5);
+  --soft: rgba(240, 240, 242, 0.48);
+  --faint: rgba(240, 240, 242, 0.1);
+  --ghost: rgba(240, 240, 242, 0.035);
+  --hairline: rgba(240, 240, 242, 0.08);
+  --divider: rgba(240, 240, 242, 0.08);
+  --page-bg: #0e0f11;
+
+  /* Dark-mode accents lift slightly brighter for contrast on the dark
+   * page bg. Matches the bump pattern used for --muted and --soft. */
+  --accent: #b9a8e0;
+  --accent-bg: rgba(185, 168, 224, 0.14);
+  --live: var(--accent);
+  --live-bg: var(--accent-bg);
+  --viz-fill: var(--ink);
+  --viz-ramp-base: var(--page-bg);
+  --viz-floor: color-mix(in srgb, var(--viz-fill) 6%, transparent);
+  --viz-series: var(--viz-seq-1);
+  --focus-ring: var(--ink);
+  --accent-alt: #e0b4c4;
+  --accent-alt-bg: rgba(224, 180, 196, 0.16);
+  --success: #34d68a;
+  --success-bg: rgba(52, 214, 138, 0.1);
+  --warn: #ffb366;
+  --warn-bg: rgba(255, 179, 102, 0.1);
+  --danger: #ff8a7a;
+  --danger-bg: rgba(255, 138, 122, 0.1);
+  --info: #7e7af0;
+  --info-bg: rgba(126, 122, 240, 0.1);
+  --purple: #a585ff;
+  --purple-bg: rgba(165, 133, 255, 0.1);
+
+  --shimmer-peak: rgba(240, 240, 242, 0.07);
+  --surface-frost: rgba(14, 15, 17, 0.96);
+  --shadow-xs: 0 2px 8px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Thin scrollbars everywhere nested panels scroll. Matches the widget catalog
+ * picker list: 4px ghost thumb, transparent track. Firefox via scrollbar-*;
+ * WebKit via pseudo-elements. Components that hide scrollbars (e.g. mobile
+ * chip strips) override locally with scrollbar-width: none. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ghost) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--ghost);
+  border-radius: 2px;
+}
+
+/* On client navigation, routeEffects.ts moves focus to the new page's heading
+   (with tabindex="-1") so keyboard and screen-reader users don't silently
+   restart at the top. That heading is non-interactive, so suppress the UA focus
+   ring it would otherwise draw around the headline. Interactive controls are
+   never targeted here and keep their own :focus-visible rings. */
+:is(h1, h2, main, [role='main'])[tabindex='-1']:focus {
+  outline: none;
+}
+
+html,
+body {
+  /* Body-level scroll. The sidebar is sticky within .layout; the page
+     header is always at scrollTop=0. Avoid nested scroll on .main. */
+  min-height: 100%;
+}
+
+body {
+  background: var(--page-bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--text-md);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app,
+#root {
+  min-height: 100%;
+}
+
+/* Shared portal target for the minimized ChatBar FAB and contextual banners.
+ * Rendered statically in index.html so the lookup is synchronous,
+ * styled globally here so the children only need to be sized correctly
+ * to line up at the same baseline. */
+#bottom-floaters {
+  position: fixed;
+  bottom: 20px;
+  left: calc(50% + (var(--sidebar-width) + var(--sidebar-margin)) / 2);
+  transform: translateX(-50%);
+  z-index: 150;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  max-width: calc(100vw - 48px);
+}
+
+#bottom-floaters > * {
+  pointer-events: auto;
+}
+
+@media (max-width: 768px) {
+  #bottom-floaters {
+    left: 50%;
+    bottom: 16px;
+    max-width: calc(100vw - 24px);
+  }
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  font-weight: 400;
+  background: var(--ghost);
+  padding: 2px 6px;
+  border-radius: var(--radius-2xs);
+}
+
+/* Kill all gradient blobs */
+.page-gradients {
+  display: none;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dashboardViewFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Canonical list-row reveal (Y variant). Used with per-row --row-index
+   delays so rows stagger in. Prefer this global over redefining locally.
+   X-variant (translateX) used in drill / detail views remains local,
+   since it serves a different intent (slide-in vs fade-up). */
+@keyframes rowReveal {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes skeletonPulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

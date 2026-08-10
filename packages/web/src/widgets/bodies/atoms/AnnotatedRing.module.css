@@ -1,0 +1,36 @@
+/*
+ * Typography for AnnotatedRing.
+ *
+ * Sizes are in viewBox user units (260×260), not screen pixels — they
+ * scale with the SVG element. Picked to mirror the existing ring widgets'
+ * visual proportions so the migration to the shared primitive doesn't
+ * shift typography weights across the dashboard.
+ */
+
+.centerValue {
+  fill: var(--ink);
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 300;
+  letter-spacing: var(--display-spacing);
+}
+
+.centerEyebrow {
+  fill: var(--muted);
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+}
+
+.labelShare {
+  font-family: var(--display);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: -0.04em;
+}
+
+.labelName {
+  font-family: var(--sans);
+  font-size: 9px;
+  font-weight: 500;
+}

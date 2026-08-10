@@ -1,0 +1,14 @@
+/* ToolsDetailView — tool-call mix + errors (widget drill).
+ *
+ * Agent compare and models live on /dashboard/agents. This module owns only
+ * the empty-state copy for the remaining panels.
+ */
+
+.empty {
+  display: block;
+  padding: var(--space-lg) 0;
+  font-family: var(--mono);
+  font-size: var(--text-sm);
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+}

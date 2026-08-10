@@ -1,0 +1,90 @@
+/* Hero stat row: display-sized value over a mono label, optional viz
+ * sibling (e.g. DotMatrix) to the left. Used at the fold of detail
+ * panels (Sessions, Edits, Lines). Relies on the global `rowReveal`
+ * keyframe declared in app.css. */
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px 40px;
+}
+
+/* Vertical flow: used when the hero column needs to balance height
+ * against a denser neighbor across a topGrid (e.g. Sessions panel where
+ * BY TOOL on the right is a ring + table). Each stat gets the full
+ * column width and stacks with the row gap rotated to the y-axis. */
+.rowColumn {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 32px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+  animation: rowReveal 0.3s var(--motion) both;
+  animation-delay: calc(var(--row-index, 0) * 50ms);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Section heroes stay display-weighted but cap below the stat-tab size
+ * (2.25rem) so the row of tabs at the top retains its orientation role,
+ * a section's hero metric is subordinate to the tab that selected it. */
+.value {
+  font-family: var(--display);
+  font-size: 2rem;
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.unit {
+  font-family: var(--mono);
+  font-size: var(--text-base, 1rem);
+  font-weight: 400;
+  letter-spacing: 0;
+  opacity: 0.7;
+}
+
+.label {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Concrete ratio line beneath the label. Hierarchy reads value → label →
+ * context so the ratio never competes with the headline. */
+.sublabel {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--ghost-ink, var(--soft));
+  opacity: 0.75;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stat {
+    animation: none;
+  }
+}

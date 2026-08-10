@@ -1,0 +1,742 @@
+/*
+ * Shared widget primitives.
+ *
+ * Every class in this module is consumed by ≥2 widget bodies (or by
+ * widgets/bodies/shared.tsx). Single-body classes live next to their
+ * owning body file (e.g. bodies/LiveWidgets.module.css).
+ *
+ * Tokens come from app.css / tokens.css — never hardcode hex.
+ */
+
+/* ── Stat blocks (label + value) ──────────────────── */
+
+.heroStatValue {
+  font-family: var(--display);
+  font-size: var(--display-hero);
+  font-weight: 300;
+  letter-spacing: var(--display-spacing);
+  /* Glyph-containing leading so overflow:hidden (here for the horizontal ellipsis
+   * on long values) never clips a value's ink — see --display-line-value. */
+  line-height: var(--display-line-value);
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  /* The negative display letter-spacing is applied after the LAST glyph too, so
+   * the inline box ends |--display-spacing| inside that glyph's ink and
+   * overflow:hidden clips it on the right. Trailing padding extends the clip box
+   * past the ink (overflow clips at the padding edge). This compensates the
+   * TRACKING, not a sidebearing: measured at 100px, neither face puts any ink
+   * past the advance of a stat value, so the requirement is simply to exceed
+   * |--display-spacing|. */
+  padding-inline-end: 0.2em;
+}
+
+.heroStatInactive {
+  color: var(--soft);
+}
+
+.statSelectButton {
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Neutral ink on purpose: a delta reports direction (the arrow), never a
+ * verdict — success/danger paint on movement is a grade Seorak refuses. */
+.statInlineDelta {
+  font-size: var(--text-xs);
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: var(--space-sm);
+  letter-spacing: 0;
+  flex-shrink: 0;
+}
+
+/* Stat widget wrapped in a button — opens a shared category detail view.
+ * A muted trailing arrow glyph sits inline next to the value as an
+ * always-visible drill-in affordance. Persistent (works on touch, readable
+ * on first glance) but chromeless — it's a single character, not a button. */
+.statButton {
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  position: relative;
+  transition: transform var(--motion-fast) var(--motion);
+  transform-origin: left center;
+}
+
+/* Delta + drill arrow stay together when statButton wraps (wide currency
+ * values in colSpan-3 tiles). Without this, flex-wrap can orphan ↗ alone. */
+.statTrailing {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  gap: 10px;
+}
+
+/* Top-anchors the hero under the widget title (pairs with stat-viz flex-start
+ * on .widgetBody). Does not flex-grow — the value stays compact in tall cells. */
+.statFace {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.statButton:hover {
+  transform: scale(1.02);
+}
+
+.statButton:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 4px;
+  border-radius: var(--radius-xs);
+}
+
+.statDetailArrow {
+  font-family: var(--mono);
+  font-size: var(--text-sm);
+  font-weight: 400;
+  line-height: 1;
+  color: var(--soft);
+  opacity: 0.55;
+  flex-shrink: 0;
+  transition:
+    opacity var(--motion-fast) ease,
+    color var(--motion-fast) ease;
+}
+
+.statButton:hover .statDetailArrow,
+.statButton:focus-visible .statDetailArrow {
+  opacity: 1;
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .statButton,
+  .statDetailArrow {
+    transition: none;
+  }
+  .statButton:hover {
+    transform: none;
+  }
+}
+
+.statBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.statBlockValue {
+  font-family: var(--mono);
+  font-size: var(--text-lg);
+  font-weight: 400;
+  color: var(--ink);
+  letter-spacing: -0.03em;
+}
+
+.statBlockLabel {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+}
+
+.statRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  flex: 1;
+  align-content: flex-start;
+}
+
+/* ── Chart typography ────────────────────────────────
+ *
+ * For compact chart-centered numbers, labels, and sample metadata. These are
+ * smaller than StatWidget heroes but keep the same light display language.
+ */
+
+.chartRateValue {
+  font-family: var(--display);
+  font-size: clamp(var(--text-lg), 1.5vw, var(--text-xl));
+  font-weight: 300;
+  letter-spacing: var(--display-spacing);
+  line-height: var(--display-line-value);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.chartLabel {
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.chartMeta {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--soft);
+  font-weight: 400;
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ── Row interaction base ─────────────────────────────
+ *
+ * Canonical interaction shell for every clickable row across the widget
+ * catalog. Every widget table row class (`.dirDataRow`, `.beamRow`,
+ * `.outcomeDataRow`, `.projectsTableRow`, `.liveTableRow`, etc.)
+ * `composes: rowBase from '../widget-shared.module.css';` and adds only
+ * its own grid/flex layout on top.
+ *
+ * What this class owns:
+ *   - Button reset (so a row works identically as <div role="row"> or
+ *     <button>).
+ *   - Border radius for the hover background fill.
+ *   - Reveal animation with --row-index stagger (composing classes can
+ *     override the per-row delay multiplier if their density warrants).
+ *   - Hover and focus-visible states matching projects/live/memory.
+ *   - Background-color transition.
+ *
+ * What this class does NOT own (the composing class sets these):
+ *   - display: grid|flex, grid-template-columns, gap, padding, margin.
+ *   - Any layout-specific properties.
+ *
+ * Adding a new row class? Compose this; do not re-roll button reset or
+ * hover backgrounds. If you need a different hover idiom, that is a
+ * design discussion, not a per-widget override. */
+.rowBase {
+  border-radius: var(--radius-md);
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  width: 100%;
+  animation: rowReveal 0.3s var(--motion) both;
+  animation-delay: calc(var(--row-index, 0) * 35ms);
+  transition: background 0.12s ease;
+}
+
+button.rowBase {
+  cursor: pointer;
+}
+
+.rowBase:hover {
+  background: var(--hover-bg);
+}
+
+.rowBase:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* ── View pill (per-row drill affordance) ─────────────
+ *
+ * The dark-ink pill that anchors the right edge of a clickable row and
+ * inverts to accent on row hover, so the click target is unambiguous
+ * even when the row's own hover background is subtle.
+ *
+ * Used by every category that exposes per-row drill: projects, live
+ * agents/conflicts, codebase tables, outcomes table. Compose this
+ * primitive from your local pill class:
+ *
+ *   .projectsViewButton {
+ *     composes: viewPill from '../widget-shared.module.css';
+ *     // local-only overrides go here (rare).
+ *   }
+ *
+ * The hover-becomes-accent behavior is tied to `.rowBase` below — any
+ * row composing rowBase that contains an element composing viewPill
+ * inherits the hover for free. Don't re-roll the hover at the row's
+ * local class level. */
+.viewPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: end;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-family: var(--sans);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  background: var(--ink);
+  color: var(--page-bg);
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
+}
+
+.rowBase:hover .viewPill {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* ── Table header (column-label strip) ────────────────
+ *
+ * Typography for the column-header row that sits above a table primitive.
+ * Mono, 2xs, soft, uppercase, table-tracking — used everywhere a clickable
+ * row table is rendered (codebase tables, live, projects, memory, convo,
+ * outcomes).
+ *
+ * What this class owns:
+ *   - Font family / size / weight (via mono token).
+ *   - Letter spacing for the column-label tracking.
+ *   - Text transform (uppercase) and base color (soft).
+ *
+ * What this class does NOT own (each widget's local class adds these):
+ *   - Padding/margin (pairs with the row's own padding — 10px or 14px
+ *     depending on the table; mixing breaks header/row alignment).
+ *   - Grid layout (display: grid; grid-template-columns: subgrid;
+ *     grid-column: 1 / -1) — coupled to the parent table's track count.
+ *
+ * Adding a new table widget? Compose this; do not re-roll mono-uppercase
+ * column-header typography. */
+.tableHead {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-table);
+  color: var(--soft);
+}
+
+/* ── Proportional fill bar ────────────────────────────
+ *
+ * Track + fill pair for percent/share visualizations. The track is the
+ * empty "ghost" channel; the fill is sized inline (`width: X%`) and
+ * tinted inline by the widget. Used wherever a row needs a bar:
+ * directory completion, file beam intensity, cold-directory days,
+ * collision edit shares, outcome share, one-shot rate, work-type
+ * metric bars.
+ *
+ * Defaults: 8px tall track, 3px radius, ghost background. Fill inherits
+ * the track's border-radius. The track's `overflow: hidden` clips the
+ * fill regardless, so the inherited radius mostly matters for non-table
+ * uses or partial-fills.
+ *
+ * What this owns:
+ *   - Track background (ghost), border-radius (3px), overflow:hidden,
+ *     default height (8px).
+ *   - Fill display:block, height:100%, width transition.
+ *
+ * What composing classes typically override:
+ *   - height (4–14px depending on row density)
+ *   - border-radius (often paired with a different height)
+ *   - flex:1, min-width (when the track lives inside a flex row)
+ *   - fill background (inline) and opacity (inline or via
+ *     --opacity-bar-fill token). */
+
+.fillTrack {
+  background: var(--ghost);
+  border-radius: 3px;
+  overflow: hidden;
+  height: 8px;
+}
+
+.fillBar {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.4s var(--motion);
+}
+
+/* ── File path (filename + dir prefix) ─────────────────
+ *
+ * Canonical primitive for any widget that renders a file or directory
+ * path. Replaces the three local splitters (CodebaseWidgets `splitPath`,
+ * ConversationWidgets `splitFile`, LiveWidgets `splitFilePath` /
+ * `parentDirName`) and unifies the visual rules.
+ *
+ * Rules:
+ *   - Filename is ink, sans 500, NEVER truncates (`flex-shrink: 0`).
+ *     The filename is the load-bearing identifier in every consuming widget.
+ *   - Parent prefix is soft, mono xs, may truncate via ellipsis when the
+ *     row is too narrow to fit both.
+ *   - In `parent-first` order, the parent uses `direction: rtl` so the
+ *     ellipsis appears at the FRONT of the prefix on overflow — the
+ *     immediate-parent segment (closest to the filename, most informative
+ *     for disambiguation) survives. ASCII paths are unaffected by the
+ *     bidi reorder; `text-align: left` keeps the visible text aligned to
+ *     the left of its track.
+ *   - Native `title` carries the full path for hover/keyboard reveal.
+ *
+ * The wrapper is the cell element — composing widgets do not need their own
+ * `.fileCell` class. If a grid track expects this primitive, give the track
+ * `min-width: 0` so the parent can shrink.
+ */
+.filePath {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.filePathName {
+  font-size: var(--text-sm);
+  color: var(--ink);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.filePathParent {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--soft);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Parent-first variant: ellipsis from the front of the prefix when the
+ * cell is too narrow, so the immediate-parent segment survives. */
+.filePathParentLead {
+  direction: rtl;
+  text-align: left;
+}
+
+/* Cross-project disambiguator. Sits after the path on Overview live
+ * widgets where two router.ts rows from different repos would otherwise
+ * render identically. Same monospace as the parent prefix, --soft tone
+ * (one tier under the immediate parent), small size, prefixed with a
+ * thin space + middle dot for separation without a divider element. */
+.filePathTeam {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--soft);
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filePathTeam::before {
+  content: ', ';
+}
+
+/* ── Data rows (generic list rows) ────────────────── */
+
+.dataList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.dataRow {
+  composes: rowBase;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+}
+
+.dataName {
+  font-size: var(--text-sm);
+  color: var(--ink);
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.dataMeta {
+  display: flex;
+  gap: 16px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.dataStat {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--soft);
+  white-space: nowrap;
+}
+
+.dataStatValue {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* ── Horizontal metric bars ───────────────────────── */
+
+.metricBars {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.metricRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: rowReveal 0.3s var(--motion) both;
+  animation-delay: calc(var(--row-index, 0) * 35ms);
+}
+
+.metricLabel {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+  width: 80px;
+  flex-shrink: 0;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metricBarTrack {
+  composes: fillTrack;
+  flex: 1;
+  height: 14px;
+}
+
+.metricBarFill {
+  composes: fillBar;
+  background: var(--ink);
+  opacity: 0.4;
+}
+
+.metricValue {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  min-width: 48px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+/* ── Work-type proportional bar ──────────────────── */
+
+.workBar {
+  display: flex;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  gap: 2px;
+  margin-bottom: 12px;
+}
+
+.workSegment {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.4s var(--motion);
+}
+
+.workLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.workLegendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  animation: rowReveal 0.3s var(--motion) both;
+  animation-delay: calc(var(--row-index, 0) * 35ms);
+}
+
+.workDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.workLegendLabel {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+}
+
+.workLegendValue {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* ── Sparkline default sizing ─────────────────────────
+ * Default container styling for the shared `<Sparkline>` SVG and the
+ * `<GhostSparkline>` placeholder. Width fills the parent cell; SVG
+ * preserveAspectRatio="none" stretches paths to that width. Callers
+ * needing different sizing (a flex child with min-width, or a fixed
+ * pixel width) pass their own className. */
+
+.trendSvg {
+  width: 100%;
+  display: block;
+}
+
+/* ── Ghost / empty visualization states ─────────────
+ * "No data collected yet" (not loading). Shimmer on bar tracks suggests
+ * "this space will fill"; gentle pulse on stat/row ghosts keeps them
+ * feeling alive without implying active fetch. --shimmer-peak from app.css
+ * carries theme-aware peak brightness. */
+
+.ghostStatRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  animation: ghostPulse 2.4s ease-in-out infinite;
+}
+
+.ghostStatValue {
+  font-family: var(--mono);
+  font-size: var(--text-lg);
+  font-weight: 400;
+  color: var(--muted);
+  letter-spacing: -0.03em;
+}
+
+/* ── Coverage note ─────────────────────────────────
+ * Caption appended to a widget that's gated on missing capabilities.
+ * The viz-pinning rules below anchor the note to the bottom of stat-viz
+ * cells so the hero value stays at a consistent y-position. They live in
+ * this module because .coverageNote is hashed here. */
+
+.coverageNote {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--muted);
+  margin-top: 12px;
+  line-height: 1.6;
+}
+
+/* ── "+N more hidden" trailing line ─────────────────
+ * Surfaces the hidden tail of top-N capped list/bar widgets (tool-daily,
+ * tool-work-type, data-coverage waiting list). Same muted treatment as
+ * .coverageNote so the eye reads it as a quiet caption, not a list item. */
+.moreHidden {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--muted);
+  margin-top: 8px;
+  letter-spacing: var(--tracking-stat);
+}
+
+[data-widget-viz='stat'] .coverageNote,
+[data-widget-viz='stat-row'] .coverageNote {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
+  margin-top: 0;
+}
+
+/* Work-type strip card variant — pin above the coverage-note band so the
+ * breadth composition reads at the bottom of the card without displacing
+ * the centered stat value. Global selector (data-wts) because the class
+ * name inside the strip's own CSS module is hashed; the attribute is the
+ * stable contract between the strip primitive and this frame's layout. */
+[data-widget-viz='stat'] [data-wts='card'],
+[data-widget-viz='stat-row'] [data-wts='card'] {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 40px;
+}
+[data-widget-viz='stat']:not(:has(.coverageNote)) [data-wts='card'],
+[data-widget-viz='stat-row']:not(:has(.coverageNote)) [data-wts='card'] {
+  bottom: 20px;
+}
+
+/* ── Shared animations ───────────────────────────── */
+
+@keyframes ghostPulse {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.42;
+  }
+}
+
+/* ── Responsive ──────────────────────────────────── */
+
+/* Narrow desktops: a colSpan-3 KPI tile is too tight for a hero currency value
+ * (e.g. "$292.20") at the full --display-hero, so step the hero down a notch to
+ * prevent the value from truncating. The cost delta still wraps below the value
+ * via statButton's flex-wrap. Must precede the 640px block so the smaller
+ * small-screen size wins the cascade there. */
+@media (max-width: 1280px) {
+  .heroStatValue {
+    font-size: 2.6rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .statRow {
+    gap: 16px;
+  }
+  .dataMeta {
+    gap: 10px;
+  }
+  .metricLabel {
+    width: 60px;
+    font-size: var(--text-2xs);
+  }
+  .heroStatValue {
+    font-size: 2rem;
+  }
+}
+
+/* ── Reduced motion ──────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .dataRow,
+  .metricRow {
+    animation: none !important;
+  }
+  .ghostStatRow {
+    animation: none !important;
+    opacity: 0.3;
+  }
+  .workSegment,
+  .metricBarFill {
+    transition: none !important;
+  }
+}

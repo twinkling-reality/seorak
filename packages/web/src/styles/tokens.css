@@ -1,0 +1,225 @@
+/* ═══════════════════════════════════════════
+   Design tokens: shared values used across
+   3+ CSS module files. Supplements app.css.
+   ═══════════════════════════════════════════ */
+
+:root {
+  /* ── Spacing scale ── */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 18px;
+  --space-xl: 28px;
+  --space-2xl: 34px;
+
+  /* Full-background widget CTA geometry.
+     The bleed controls how far the hover surface extends past body content;
+     the inset controls chart breathing room inside that hover surface. */
+  --widget-clickable-bleed: 8px;
+  --widget-clickable-inset-y: 14px;
+  --widget-clickable-inset-x: 14px;
+  --widget-clickable-arrow-space: 2.25rem;
+
+  /* Dashboard page column + widget grid alignment.
+     Page text guide: eyebrow, title, control tray, widget titles share x=0
+     of the content column. Tile borders sit `--widget-shell-pad` left of that
+     guide; gridBleed pulls the grid outward so shell padding lands on the guide.
+     These values are the layout authority. */
+  --content-pad-x: 56px;
+  --content-pad-y-top: 28px;
+  --content-pad-y-bottom: 88px;
+  /* For a view that pins itself to the viewport and never scrolls, the 88px
+     is not breathing room at the end of a read — it is 88px of screen the
+     surface is forbidden to use. Such a view gets a gutter instead. */
+  --content-pad-y-bottom-pinned: 24px;
+  --content-pad-x-mobile: 20px;
+  --widget-shell-pad: 20px;
+  --widget-cell-gutter-half: 12px;
+  --dashboard-grid-bleed: calc(-1 * var(--widget-shell-pad));
+
+  /* ── Border radius ── */
+  --radius-pill: 999px;
+  --radius-circle: 50%;
+  --radius-md: 10px;
+  --radius-2xs: 4px;
+
+  /* ── Surfaces ── */
+  --hover-bg: rgba(18, 19, 23, 0.04);
+  --github-bg: #24292f;
+  --github-bg-hover: #1b1f23;
+
+  /* ── Letter spacing patterns ── */
+  --tracking-eyebrow: 0.14em;
+  --tracking-stat: 0.12em;
+  --tracking-action: 0.08em;
+  --tracking-table: 0.1em;
+
+  /* ── Breakpoints ──
+     CSS can't use custom props inside @media, so these are the source-of-truth
+     values copy-pasted into rules. Use EXACTLY these values:
+
+       --bp-mobile:  480px   (narrow phone)
+       --bp-small:   640px   (large phone / small tablet)
+       --bp-medium:  768px   (tablet, sidebar collapse threshold)
+       --bp-large:   900px   (small laptop)
+       --bp-wide:    980px   (standard desktop grid)
+
+     Any other value is a code smell; document the exception next to the @media
+     if you truly need it (e.g. a chart that only splits at 1100px because of
+     its intrinsic aspect ratio). */
+
+  /* ── Bar fill opacity ──
+     Single source of truth for the muted look that applies to the fill
+     bands of the comparative bar widgets (tool-outcomes, scope-complexity,
+     prompt-clarity, memory-outcomes, work-type-outcomes,
+     hourly-effectiveness). Hardcoded in 7+ places before consolidation. */
+  --opacity-bar-fill: 0.6;
+
+  /* ── Glass material (dashboard-adapted) ──
+     The marketing glass vocabulary (marketing/styles/tokens.css) re-tinted for
+     the dashboard theme. Values are lifted verbatim from the sanctioned glass
+     exception (chat/ChatPanel.module.css), so pointing that file at these
+     tokens is a zero-visual-change refactor. Scope: SMALL FLOATING CHROME ONLY
+     (command strips, search bars, menus, chips) per DESIGN_LANGUAGE.md — never
+     widget bodies, stat faces, tables, or any other evidence surface.
+
+     Unlike the marketing tokens (light-only, .marketingShell-scoped) this
+     family is theme-aware: the dark block below carries the dark recipes, so
+     consumers need no :global([data-theme='dark']) overrides of their own.
+     Mechanics (blur application, @supports fallback, the masked 1px rim) live
+     in components/surface/glass.module.css — compose those classes rather
+     than re-implementing the recipe.
+
+     Not part of this family: --surface-frost (app.css), the older near-opaque
+     frost used by the mobile sidebar drawer. */
+  --surface-glass-fill:
+    radial-gradient(120% 70% at 88% -6%, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 52%),
+    linear-gradient(
+      192deg,
+      color-mix(in srgb, var(--accent) 12%, rgba(255, 255, 255, 0.66)) 0%,
+      rgba(255, 255, 255, 0.52) 46%,
+      rgba(248, 248, 252, 0.5) 100%
+    );
+  --surface-glass-fill-ctrl: rgba(255, 255, 255, 0.55);
+  /* Reading-surface grade: menus and panels whose rows carry text (widget
+     catalog panel, repo filter). More opaque than the sheet fill so list
+     copy never fights the content underneath; recipe adapted from the
+     marketing nav's .menuCard. */
+  --surface-glass-fill-strong: linear-gradient(
+    168deg,
+    color-mix(in srgb, var(--accent) 8%, rgba(255, 255, 255, 0.78)) 0%,
+    color-mix(in srgb, var(--accent) 4%, rgba(249, 248, 253, 0.7)) 100%
+  );
+  --surface-glass-rim: linear-gradient(
+    145deg,
+    rgba(190, 198, 214, 0.5) 0%,
+    rgba(255, 255, 255, 0.95) 30%,
+    rgba(206, 198, 220, 0.46) 50%,
+    rgba(255, 255, 255, 0.92) 70%,
+    rgba(186, 194, 212, 0.5) 100%
+  );
+  --surface-glass-blur: blur(26px) saturate(135%);
+  --surface-glass-fallback: linear-gradient(
+    192deg,
+    color-mix(in srgb, var(--accent) 8%, rgba(255, 255, 255, 0.96)) 0%,
+    rgba(255, 255, 255, 0.95) 100%
+  );
+
+  /* ── Work-type palette ──
+     Categorical palette for the work-type widgets (work-types,
+     work-type-outcomes, tool-work-type). Aliases existing semantic
+     tokens so dark-mode handling is free. Namespaced --work-* so
+     future category palettes (--tool-*, --model-*) can follow the
+     same pattern without needing a generic --chart-N scheme.
+
+     No entry aliases var(--live): the live token is reserved strictly
+     for real-time surfaces. Frontend moves to --info (indigo, visibly
+     distinct from the live lavender); docs demotes to --muted
+     (neutral gray) since docs work is a less category-urgent signal
+     than frontend/backend/test/styling/config. */
+  --work-frontend: var(--info);
+  --work-backend: var(--success);
+  --work-test: var(--warn);
+  --work-styling: var(--purple);
+  --work-docs: var(--muted);
+  --work-config: var(--danger);
+  --work-other: var(--soft);
+
+  /* File-category fills for proportional strips (files-in-play), keyed by
+     the collector's FileCategory enum. VALIDATED palette (dataviz six-checks,
+     2026-07-02): light set passes with the CVD floor relieved by the strips'
+     inline labels + 2px gaps + drill table twin; dark set (below) passes all
+     checks outright. Never semantic-token aliases — a category must not
+     impersonate status (--work-config: var(--danger) above is the
+     counter-example, owned by the locked work-mix tile). --viz-cat-label is
+     the on-mark text color, flipped with the fills so contrast holds. */
+  --viz-cat-source: #5b9be0;
+  --viz-cat-test: #4db884;
+  --viz-cat-config: #d9a13c;
+  --viz-cat-styles: #d783b4;
+  --viz-cat-docs: #3fb5c4;
+  --viz-cat-data: #9d8ae0;
+  --viz-cat-other: hsl(222, 6%, 66%);
+
+  /* Ordinal strip palette — ranked composition faces (top files, tool-mix,
+     verification, file-rework). Six validated hues from the same dataviz
+     lineage as --viz-cat-*; cycles for >6 segments before the neutral tail.
+     Never --accent/--live (lavender = in-flight only). */
+  --viz-seq-1: var(--viz-cat-source);
+  --viz-seq-2: var(--viz-cat-test);
+  --viz-seq-3: var(--viz-cat-config);
+  --viz-seq-4: var(--viz-cat-styles);
+  --viz-seq-5: var(--viz-cat-docs);
+  --viz-seq-6: var(--viz-cat-data);
+
+  /* Default single-series density color (sparklines, heatmaps, cadence pillars). */
+  --viz-series: var(--viz-seq-1);
+}
+
+[data-theme='dark'] {
+  --hover-bg: rgba(240, 240, 242, 0.05);
+  --github-bg: #2d333b;
+  --github-bg-hover: #373e47;
+
+  /* Dark glass: flatter ink fills than light. Light mode's top-right corner
+     highlight reads as clean frosted sheen on white; the same corner radial on
+     a dark sheet + backdrop blur produced a muddy gray blob (ChatPanel). Use a
+     subtle top-center lift and a near-uniform vertical grade instead. */
+  --surface-glass-fill:
+    radial-gradient(110% 70% at 50% -18%, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 58%),
+    linear-gradient(
+      180deg,
+      rgba(20, 21, 26, 0.84) 0%,
+      rgba(14, 15, 17, 0.78) 100%
+    );
+  --surface-glass-fill-ctrl: rgba(240, 240, 242, 0.07);
+  --surface-glass-fill-strong: linear-gradient(
+    180deg,
+    rgba(22, 23, 28, 0.92) 0%,
+    rgba(14, 15, 17, 0.88) 100%
+  );
+  --surface-glass-rim: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.34) 30%,
+    rgba(206, 198, 220, 0.2) 50%,
+    rgba(255, 255, 255, 0.3) 70%,
+    rgba(255, 255, 255, 0.14) 100%
+  );
+  --surface-glass-fallback: linear-gradient(
+    180deg,
+    rgba(18, 19, 24, 0.98) 0%,
+    rgba(14, 15, 17, 0.97) 100%
+  );
+
+  /* Dark file-category fills: the DARK-selected steps (dataviz rule — dark is
+     its own validated set, not a flip of the light one). All six pass every
+     check on the dark surface. */
+  --viz-cat-source: #3a7cc4;
+  --viz-cat-test: #2f9e6d;
+  --viz-cat-config: #b57f24;
+  --viz-cat-styles: #c05c96;
+  --viz-cat-docs: #1a9cb0;
+  --viz-cat-data: #7f6bcc;
+  --viz-cat-other: hsl(222, 6%, 46%);
+}

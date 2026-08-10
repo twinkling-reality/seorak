@@ -1,0 +1,38 @@
+{
+  "name": "@seorak/dashboard",
+  "version": "0.1.0",
+  "author": "Twinkling Reality",
+  "license": "Apache-2.0",
+  "description": "Seorak's primary dashboard, built. The interface the collector's local data plane serves.",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "LICENSES"
+  ],
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/twinkling-reality/seorak.git",
+    "directory": "packages/dashboard"
+  },
+  "type": "module",
+  "exports": {
+    "./package.json": "./package.json",
+    "./dist/*": "./dist/*"
+  },
+  "scripts": {
+    "build:publish": "node scripts/build-package.mjs",
+    "prepack": "npm run build:publish",
+    "test": "node --test test/build-package.test.mjs"
+  },
+  "devDependencies": {
+    "@seorak/types": "*"
+  }
+}

@@ -1,0 +1,16 @@
+.legendRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.legendLabel {
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.projectMark {
+  flex-shrink: 0;
+}

@@ -1,0 +1,139 @@
+/* Hour × day-of-week heatmap. Cell opacity = volume normalized against the
+ * p95 of populated cells; fill uses --viz-fill (ink), never --accent/--live.
+ * Layout reads as a chart: y = day labels, x = hour labels. */
+
+.wrap {
+  width: 100%;
+  min-width: 0;
+}
+
+.wrapStretch {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.grid {
+  display: flex;
+  gap: 3px;
+}
+
+.gridStretch {
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+}
+
+.yLabels {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.yLabelsStretch {
+  height: 100%;
+}
+
+.yLabel {
+  font-family: var(--mono);
+  font-size: var(--text-3xs);
+  color: var(--soft);
+  display: flex;
+  align-items: center;
+  letter-spacing: var(--tracking-stat);
+  padding-right: 6px;
+  height: var(--cell-size, 14px);
+}
+
+.yLabelsStretch .yLabel {
+  flex: 1;
+  min-height: 0;
+}
+
+.cols {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  animation: rowReveal 0.3s var(--motion) both;
+  animation-delay: calc(var(--row-index, 0) * 18ms);
+}
+
+.cell {
+  height: var(--cell-size, 14px);
+  border-radius: 2px;
+  min-width: 4px;
+  transition:
+    outline-color 0.15s ease,
+    transform 0.15s var(--motion);
+}
+
+.cellStretch {
+  flex: 1;
+  min-height: 3px;
+  height: auto;
+}
+
+.cellEmpty {
+  background: var(--viz-floor);
+}
+
+.cellFilled {
+  background: var(--viz-series);
+}
+
+.cellPeak {
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--viz-series) 75%, transparent);
+  z-index: 1;
+}
+
+.cell:hover {
+  outline: 1px solid var(--viz-series);
+  outline-offset: 1px;
+  transform: translateY(-1px);
+}
+
+.xLabels {
+  display: flex;
+  gap: 2px;
+  padding-top: 4px;
+  padding-left: 28px;
+  flex-shrink: 0;
+}
+
+.xLabel {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: var(--text-3xs);
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .wrap {
+    overflow-x: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .col {
+    animation: none;
+  }
+  .cell {
+    transition: none;
+  }
+
+  .cell:hover {
+    transform: none;
+  }
+}

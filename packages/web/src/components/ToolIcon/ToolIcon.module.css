@@ -1,0 +1,46 @@
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-xs);
+  flex-shrink: 0;
+}
+
+.icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.favicon {
+  border-radius: 3px;
+}
+
+.monochrome img {
+  filter: grayscale(1) contrast(1.05) opacity(0.88);
+}
+
+.fallback {
+  color: var(--on-accent);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Inline-in-prose identity — mirrors ProjectSquircle's .inline treatment so a
+ * tool named in a sentence carries the same mark its table columns do. */
+.inline {
+  white-space: nowrap;
+}
+
+.inlineIcon {
+  vertical-align: -0.08em;
+  margin-right: 0.26em;
+}
+
+.inlineLabel {
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}

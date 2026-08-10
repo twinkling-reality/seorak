@@ -1,0 +1,138 @@
+/*
+ * Widget content zones.
+ *
+ * Every widget body rendered by WidgetRenderer is split into a fixed-height
+ * head strip and a body that fills the remaining cell. Using zones (instead
+ * of a flat flex column) keeps layout predictable per viz type.
+ *
+ * The visual frame (.widget, border sweep, hover menu) lives in
+ * components/WidgetGrid/WidgetGrid.module.css — that's the file that owns
+ * the cell wrapper. This module owns only the *content* zones inside the
+ * wrapper.
+ */
+
+.widgetHead {
+  flex-shrink: 0;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.widgetHeadTitle {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.widgetBody {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* KPI stat faces: top-anchor when a coverage note pins the bottom band;
+ * otherwise center in the cell — no phantom delta reservation (deltas are
+ * inline siblings, not a reserved row). Strip/share faces stay centered. */
+[data-widget-viz='stat'] .widgetBody,
+[data-widget-viz='stat-row'] .widgetBody,
+[data-widget-viz='stat'] .widgetBodyClickable,
+[data-widget-viz='stat-row'] .widgetBodyClickable {
+  position: relative;
+  justify-content: flex-start;
+}
+
+/* [data-coverage-note] not .coverageNote: that class is hashed inside
+ * widget-shared.module.css, so a class selector written here can never
+ * match it — which silently centered every noted stat on top of its
+ * bottom-pinned note. The attribute is the stable cross-module contract
+ * (same pattern as [data-wts='card']). */
+[data-widget-viz='stat'] .widgetBody:not(:has([data-coverage-note])),
+[data-widget-viz='stat-row'] .widgetBody:not(:has([data-coverage-note])),
+[data-widget-viz='stat'] .widgetBodyClickable:not(:has([data-coverage-note])),
+[data-widget-viz='stat-row'] .widgetBodyClickable:not(:has([data-coverage-note])) {
+  justify-content: center;
+}
+
+[data-widget-viz='proportional-bar'] .widgetBody,
+[data-widget-viz='proportional-bar'] .widgetBodyClickable {
+  justify-content: center;
+}
+
+[data-widget-viz='heatmap'] .widgetBody,
+[data-widget-viz='heatmap'] .widgetBodyClickable {
+  justify-content: stretch;
+}
+
+[data-widget-viz='sparkline'] .widgetBody,
+[data-widget-viz='sparkline'] .widgetBodyClickable {
+  justify-content: center;
+}
+
+[data-widget-viz='ring'] .widgetBody,
+[data-widget-viz='ring'] .widgetBodyClickable {
+  justify-content: center;
+  align-items: stretch;
+}
+
+/*
+ * Clickable wrapper for widgets with a `drillTarget`. Inherits the body
+ * frame (flex column, no min-height), adds a subtle hover lift via the
+ * existing --hover-bg token, and parks a small ↗ corner affordance so the
+ * surface reads as drillable without competing with the body's own
+ * typography. Geometry is tokenized in tokens.css: bleed controls the hover
+ * surface extension, inset controls chart breathing room, arrow-space keeps
+ * content out from under the ↗. Tables/stat widgets skip this wrapper via
+ * `ownsClick`, so this standard only applies to full-background CTA charts.
+ */
+.widgetBodyClickable {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  cursor: pointer;
+  /* Match the row-hover radius (rowBase uses --radius-md) so the card-level hover
+   * container reads identically to the row-level one — same token, not a hardcode. */
+  border-radius: var(--radius-md);
+  margin: calc(var(--widget-clickable-bleed) * -1);
+  padding: var(--widget-clickable-inset-y)
+    calc(var(--widget-clickable-inset-x) + var(--widget-clickable-arrow-space))
+    var(--widget-clickable-inset-y) var(--widget-clickable-inset-x);
+  transition: background 120ms ease;
+  outline: none;
+}
+
+.widgetBodyClickable:hover,
+.widgetBodyClickable:focus-visible {
+  background: var(--hover-bg);
+}
+
+.widgetBodyClickable:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
+
+.drillArrow {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-family: var(--mono);
+  font-size: var(--text-sm);
+  color: var(--soft);
+  opacity: 0.38;
+  transition:
+    opacity 120ms ease,
+    color 120ms ease;
+  pointer-events: none;
+  line-height: 1;
+}
+
+.widgetBodyClickable:hover .drillArrow,
+.widgetBodyClickable:focus-visible .drillArrow {
+  opacity: 1;
+  color: var(--ink);
+}

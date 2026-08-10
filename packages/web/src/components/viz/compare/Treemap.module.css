@@ -1,0 +1,82 @@
+/* Treemap — see Treemap.tsx. Ink tiles on the page, separated by page-coloured
+ * gutters (the tile border), sized by area. Tiles carry their label only when
+ * big enough (a container query, so it stays px-accurate at any render width). */
+
+.frame {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--page-bg);
+}
+
+.tile {
+  position: absolute;
+  box-sizing: border-box;
+  /* Page-coloured border = the gutter between adjacent tiles, so a solid field
+   * of ink reads as distinct rectangles without a second hue. */
+  border: 1.5px solid var(--page-bg);
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+  /* Each tile is its own size container so its label can hide itself when the
+   * tile is too small to hold it — no JS measurement, correct at any width. */
+  container-type: size;
+  animation: tileReveal 0.3s var(--motion) both;
+  animation-delay: calc(var(--tile-index, 0) * 18ms);
+}
+
+.tileContent {
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Reveal the label only in tiles with room for it; smaller tiles stay clean and
+ * report on hover (the title). Threshold ~ one label line + the value. */
+@container (min-width: 68px) and (min-height: 34px) {
+  .tileContent {
+    display: flex;
+  }
+}
+
+.tileLabel {
+  font-family: var(--sans);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tileValue {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  opacity: 0.82;
+  white-space: nowrap;
+}
+
+@keyframes tileReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile {
+    animation: none;
+  }
+}

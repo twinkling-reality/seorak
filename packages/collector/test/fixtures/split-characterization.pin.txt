@@ -1,0 +1,1437 @@
+
+## git: gitContext across every precedence branch
+gitContext(plain-dir) = "no-repo"
+gitContext(clean) = "clean"
+gitContext(no-remote) = "no-remote"
+gitContext(dirty) = "dirty-at-start"
+gitContext(detached) = "detached"
+gitContext(detached-dirty) = "detached"
+gitContext(dirty-no-remote) = "dirty-at-start"
+gitContext(empty) = "no-remote"
+gitContext(history) = "clean"
+gitContext(survival) = "clean"
+gitContext(nonexistent path) = "no-repo"
+
+## git: salt + saltedHash determinism
+readOrCreateSalt() = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+saltedHash("") = "<hash:1>"
+saltedHash("a") = "<hash:2>"
+saltedHash("session-1|3d") = "<hash:3>"
+saltedHash("unicode-é中") = "<hash:4>"
+saltedHash("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") = "<hash:5>"
+
+## git: repoIdentity / repoIdentityOrCwd
+repoIdentity(plain-dir) = null
+repoIdentityOrCwd(plain-dir) = {"repoId":"<hash:6>","repoLabel":"plain-dir"}
+repoIdentity(clean) = {"repoId":"<hash:7>","repoLabel":"clean"}
+repoIdentityOrCwd(clean) = {"repoId":"<hash:7>","repoLabel":"clean"}
+repoIdentity(no-remote) = {"repoId":"<hash:8>","repoLabel":"no-remote"}
+repoIdentityOrCwd(no-remote) = {"repoId":"<hash:8>","repoLabel":"no-remote"}
+repoIdentity(dirty) = {"repoId":"<hash:9>","repoLabel":"dirty"}
+repoIdentityOrCwd(dirty) = {"repoId":"<hash:9>","repoLabel":"dirty"}
+repoIdentity(detached) = {"repoId":"<hash:8>","repoLabel":"detached"}
+repoIdentityOrCwd(detached) = {"repoId":"<hash:8>","repoLabel":"detached"}
+repoIdentity(detached-dirty) = {"repoId":"<hash:8>","repoLabel":"detached-dirty"}
+repoIdentityOrCwd(detached-dirty) = {"repoId":"<hash:8>","repoLabel":"detached-dirty"}
+repoIdentity(dirty-no-remote) = {"repoId":"<hash:10>","repoLabel":"dirty-no-remote"}
+repoIdentityOrCwd(dirty-no-remote) = {"repoId":"<hash:10>","repoLabel":"dirty-no-remote"}
+repoIdentity(empty) = {"repoId":"<hash:11>","repoLabel":"empty"}
+repoIdentityOrCwd(empty) = {"repoId":"<hash:11>","repoLabel":"empty"}
+repoIdentity(history) = {"repoId":"<hash:12>","repoLabel":"history"}
+repoIdentityOrCwd(history) = {"repoId":"<hash:12>","repoLabel":"history"}
+repoIdentity(survival) = {"repoId":"<hash:13>","repoLabel":"survival"}
+repoIdentityOrCwd(survival) = {"repoId":"<hash:13>","repoLabel":"survival"}
+repoIdentity(clean) again = {"repoId":"<hash:7>","repoLabel":"clean"}
+repoIdentity(history) again = {"repoId":"<hash:12>","repoLabel":"history"}
+repoIdentity(plain-dir) again = null
+
+## git: repoToplevel / headSha / currentBranch / defaultBranch
+repoToplevel(plain-dir) = null
+headSha(plain-dir) = null
+currentBranch(plain-dir) = null
+defaultBranch(plain-dir) = null
+repoToplevel(clean) = "clean"
+headSha(clean) = "<sha:15>"
+currentBranch(clean) = "main"
+defaultBranch(clean) = "main"
+repoToplevel(no-remote) = "no-remote"
+headSha(no-remote) = "<sha:16>"
+currentBranch(no-remote) = "main"
+defaultBranch(no-remote) = "main"
+repoToplevel(dirty) = "dirty"
+headSha(dirty) = "<sha:17>"
+currentBranch(dirty) = "main"
+defaultBranch(dirty) = "main"
+repoToplevel(detached) = "detached"
+headSha(detached) = "<sha:18>"
+currentBranch(detached) = null
+defaultBranch(detached) = "main"
+repoToplevel(detached-dirty) = "detached-dirty"
+headSha(detached-dirty) = "<sha:18>"
+currentBranch(detached-dirty) = null
+defaultBranch(detached-dirty) = "main"
+repoToplevel(dirty-no-remote) = "dirty-no-remote"
+headSha(dirty-no-remote) = "<sha:19>"
+currentBranch(dirty-no-remote) = "main"
+defaultBranch(dirty-no-remote) = "main"
+repoToplevel(empty) = "empty"
+headSha(empty) = null
+currentBranch(empty) = "main"
+defaultBranch(empty) = null
+repoToplevel(history) = "history"
+headSha(history) = "<sha:20>"
+currentBranch(history) = "main"
+defaultBranch(history) = "main"
+repoToplevel(survival) = "survival"
+headSha(survival) = "<sha:21>"
+currentBranch(survival) = "main"
+defaultBranch(survival) = "main"
+
+## git: commitsBetween
+commitsBetween(clean, root, tip) = 2
+commitsBetween(clean, tip, root) = 0
+commitsBetween(clean, mid, mid) = 0
+commitsBetween(clean, '', tip) = null
+commitsBetween(clean, bogus, tip) = null
+commitsBetween(plain-dir, root, tip) = null
+
+## git: momentum env resolvers
+momentumEnabled[unset] = true
+momentumWindowDays[unset] = 7
+momentumIgnoreGlobs[unset] = ["package-lock.json","pnpm-lock.yaml","yarn.lock","dist/","build/","*.generated.*","*.snap","*.xcassets"]
+momentumEnabled[MOMENTUM=0] = false
+momentumWindowDays[MOMENTUM=0] = 7
+momentumIgnoreGlobs[MOMENTUM=0] = ["package-lock.json","pnpm-lock.yaml","yarn.lock","dist/","build/","*.generated.*","*.snap","*.xcassets"]
+momentumEnabled[MOMENTUM=1] = true
+momentumWindowDays[MOMENTUM=1] = 7
+momentumIgnoreGlobs[MOMENTUM=1] = ["package-lock.json","pnpm-lock.yaml","yarn.lock","dist/","build/","*.generated.*","*.snap","*.xcassets"]
+momentumEnabled[MOMENTUM=''] = true
+momentumWindowDays[MOMENTUM=''] = 7
+momentumIgnoreGlobs[MOMENTUM=''] = ["package-lock.json","pnpm-lock.yaml","yarn.lock","dist/","build/","*.generated.*","*.snap","*.xcassets"]
+momentumEnabled[MOMENTUM=no] = true
+momentumWindowDays[MOMENTUM=no] = 7
+momentumIgnoreGlobs[MOMENTUM=no] = ["package-lock.json","pnpm-lock.yaml","yarn.lock","dist/","build/","*.generated.*","*.snap","*.xcassets"]
+momentumEnabled[WINDOW=1] = true
+momentumWindowDays[WINDOW=1] = 1
+momentumIgnoreGlobs[WINDOW=1] = ["package-lock.json","pnpm-lock.yaml","yarn.lock","dist/","build/","*.generated.*","*.snap","*.xcassets"]
+momentumEnabled[WINDOW=90] = true
+momentumWindowDays[WINDOW=90] = 90
+momentumIgnoreGlobs[WINDOW=90] = ["package-lock.json","pnpm-lock.yaml","yarn.lock","dist/","build/","*.generated.*","*.snap","*.xcassets"]
+momentumEnabled[WINDOW=0] = true
+momentumWindowDays[WINDOW=0] = 7
+momentumIgnoreGlobs[WINDOW=0] = ["package-lock.json","pnpm-lock.yaml","yarn.lock","dist/","build/","*.generated.*","*.snap","*.xcassets"]
+momentumEnabled[WINDOW=-5] = true
+momentumWindowDays[WINDOW=-5] = 7
+momentumIgnoreGlobs[WINDOW=-5] = ["package-lock.json","pnpm-lock.yaml","yarn.lock","dist/","build/","*.generated.*","*.snap","*.xcassets"]
+momentumEnabled[WINDOW=abc] = true
+momentumWindowDays[WINDOW=abc] = 7
+momentumIgnoreGlobs[WINDOW=abc] = ["package-lock.json","pnpm-lock.yaml","yarn.lock","dist/","build/","*.generated.*","*.snap","*.xcassets"]
+momentumEnabled[WINDOW=''] = true
+momentumWindowDays[WINDOW=''] = 7
+momentumIgnoreGlobs[WINDOW=''] = ["package-lock.json","pnpm-lock.yaml","yarn.lock","dist/","build/","*.generated.*","*.snap","*.xcassets"]
+momentumEnabled[WINDOW=7.9] = true
+momentumWindowDays[WINDOW=7.9] = 7
+momentumIgnoreGlobs[WINDOW=7.9] = ["package-lock.json","pnpm-lock.yaml","yarn.lock","dist/","build/","*.generated.*","*.snap","*.xcassets"]
+momentumEnabled[IGNORE=a,b] = true
+momentumWindowDays[IGNORE=a,b] = 7
+momentumIgnoreGlobs[IGNORE=a,b] = ["package-lock.json","pnpm-lock.yaml","yarn.lock","dist/","build/","*.generated.*","*.snap","*.xcassets","a","b"]
+momentumEnabled[IGNORE=' x , ,y '] = true
+momentumWindowDays[IGNORE=' x , ,y '] = 7
+momentumIgnoreGlobs[IGNORE=' x , ,y '] = ["package-lock.json","pnpm-lock.yaml","yarn.lock","dist/","build/","*.generated.*","*.snap","*.xcassets","x","y"]
+momentumEnabled[IGNORE=''] = true
+momentumWindowDays[IGNORE=''] = 7
+momentumIgnoreGlobs[IGNORE=''] = ["package-lock.json","pnpm-lock.yaml","yarn.lock","dist/","build/","*.generated.*","*.snap","*.xcassets"]
+momentumEnabled[IGNORE=,,,] = true
+momentumWindowDays[IGNORE=,,,] = 7
+momentumIgnoreGlobs[IGNORE=,,,] = ["package-lock.json","pnpm-lock.yaml","yarn.lock","dist/","build/","*.generated.*","*.snap","*.xcassets"]
+
+## git: captureMomentum + the ignore-glob compiler through it
+captureMomentum(clean, w=7, globs=defaults) = {"commits":3,"filesTouched":2,"generatedLinesExcluded":6,"linesAdded":7,"linesDeleted":0,"windowDays":7}
+captureMomentum(clean, w=1, globs=defaults) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(clean, w=3650, globs=defaults) = {"commits":3,"filesTouched":2,"generatedLinesExcluded":6,"linesAdded":7,"linesDeleted":0,"windowDays":3650}
+captureMomentum(clean, w=7, globs=empty) = {"commits":3,"filesTouched":5,"generatedLinesExcluded":0,"linesAdded":12,"linesDeleted":1,"windowDays":7}
+captureMomentum(clean, w=1, globs=empty) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(clean, w=3650, globs=empty) = {"commits":3,"filesTouched":5,"generatedLinesExcluded":0,"linesAdded":12,"linesDeleted":1,"windowDays":3650}
+captureMomentum(clean, w=7, globs=dirOnly) = {"commits":3,"filesTouched":4,"generatedLinesExcluded":1,"linesAdded":11,"linesDeleted":1,"windowDays":7}
+captureMomentum(clean, w=1, globs=dirOnly) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(clean, w=3650, globs=dirOnly) = {"commits":3,"filesTouched":4,"generatedLinesExcluded":1,"linesAdded":11,"linesDeleted":1,"windowDays":3650}
+captureMomentum(clean, w=7, globs=starExt) = {"commits":3,"filesTouched":2,"generatedLinesExcluded":8,"linesAdded":4,"linesDeleted":1,"windowDays":7}
+captureMomentum(clean, w=1, globs=starExt) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(clean, w=3650, globs=starExt) = {"commits":3,"filesTouched":2,"generatedLinesExcluded":8,"linesAdded":4,"linesDeleted":1,"windowDays":3650}
+captureMomentum(clean, w=7, globs=multiStar) = {"commits":3,"filesTouched":4,"generatedLinesExcluded":1,"linesAdded":11,"linesDeleted":1,"windowDays":7}
+captureMomentum(clean, w=1, globs=multiStar) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(clean, w=3650, globs=multiStar) = {"commits":3,"filesTouched":4,"generatedLinesExcluded":1,"linesAdded":11,"linesDeleted":1,"windowDays":3650}
+captureMomentum(clean, w=7, globs=literalBase) = {"commits":3,"filesTouched":4,"generatedLinesExcluded":5,"linesAdded":7,"linesDeleted":1,"windowDays":7}
+captureMomentum(clean, w=1, globs=literalBase) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(clean, w=3650, globs=literalBase) = {"commits":3,"filesTouched":4,"generatedLinesExcluded":5,"linesAdded":7,"linesDeleted":1,"windowDays":3650}
+captureMomentum(clean, w=7, globs=literalFullPath) = {"commits":3,"filesTouched":5,"generatedLinesExcluded":0,"linesAdded":12,"linesDeleted":1,"windowDays":7}
+captureMomentum(clean, w=1, globs=literalFullPath) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(clean, w=3650, globs=literalFullPath) = {"commits":3,"filesTouched":5,"generatedLinesExcluded":0,"linesAdded":12,"linesDeleted":1,"windowDays":3650}
+captureMomentum(clean, w=7, globs=blankAndWhitespace) = {"commits":3,"filesTouched":4,"generatedLinesExcluded":2,"linesAdded":10,"linesDeleted":1,"windowDays":7}
+captureMomentum(clean, w=1, globs=blankAndWhitespace) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(clean, w=3650, globs=blankAndWhitespace) = {"commits":3,"filesTouched":4,"generatedLinesExcluded":2,"linesAdded":10,"linesDeleted":1,"windowDays":3650}
+captureMomentum(clean, w=7, globs=regexMetachars) = {"commits":3,"filesTouched":5,"generatedLinesExcluded":0,"linesAdded":12,"linesDeleted":1,"windowDays":7}
+captureMomentum(clean, w=1, globs=regexMetachars) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(clean, w=3650, globs=regexMetachars) = {"commits":3,"filesTouched":5,"generatedLinesExcluded":0,"linesAdded":12,"linesDeleted":1,"windowDays":3650}
+captureMomentum(clean, w=7, globs=everything) = {"commits":3,"filesTouched":0,"generatedLinesExcluded":13,"linesAdded":0,"linesDeleted":0,"windowDays":7}
+captureMomentum(clean, w=1, globs=everything) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(clean, w=3650, globs=everything) = {"commits":3,"filesTouched":0,"generatedLinesExcluded":13,"linesAdded":0,"linesDeleted":0,"windowDays":3650}
+captureMomentum(history, w=7, globs=defaults) = {"commits":7,"filesTouched":6,"generatedLinesExcluded":1,"linesAdded":10,"linesDeleted":1,"windowDays":7}
+captureMomentum(history, w=1, globs=defaults) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(history, w=3650, globs=defaults) = {"commits":8,"filesTouched":6,"generatedLinesExcluded":1,"linesAdded":11,"linesDeleted":1,"windowDays":3650}
+captureMomentum(history, w=7, globs=empty) = {"commits":7,"filesTouched":7,"generatedLinesExcluded":0,"linesAdded":11,"linesDeleted":1,"windowDays":7}
+captureMomentum(history, w=1, globs=empty) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(history, w=3650, globs=empty) = {"commits":8,"filesTouched":7,"generatedLinesExcluded":0,"linesAdded":12,"linesDeleted":1,"windowDays":3650}
+captureMomentum(history, w=7, globs=dirOnly) = {"commits":7,"filesTouched":7,"generatedLinesExcluded":0,"linesAdded":11,"linesDeleted":1,"windowDays":7}
+captureMomentum(history, w=1, globs=dirOnly) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(history, w=3650, globs=dirOnly) = {"commits":8,"filesTouched":7,"generatedLinesExcluded":0,"linesAdded":12,"linesDeleted":1,"windowDays":3650}
+captureMomentum(history, w=7, globs=starExt) = {"commits":7,"filesTouched":2,"generatedLinesExcluded":11,"linesAdded":1,"linesDeleted":0,"windowDays":7}
+captureMomentum(history, w=1, globs=starExt) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(history, w=3650, globs=starExt) = {"commits":8,"filesTouched":2,"generatedLinesExcluded":12,"linesAdded":1,"linesDeleted":0,"windowDays":3650}
+captureMomentum(history, w=7, globs=multiStar) = {"commits":7,"filesTouched":7,"generatedLinesExcluded":0,"linesAdded":11,"linesDeleted":1,"windowDays":7}
+captureMomentum(history, w=1, globs=multiStar) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(history, w=3650, globs=multiStar) = {"commits":8,"filesTouched":7,"generatedLinesExcluded":0,"linesAdded":12,"linesDeleted":1,"windowDays":3650}
+captureMomentum(history, w=7, globs=literalBase) = {"commits":7,"filesTouched":7,"generatedLinesExcluded":0,"linesAdded":11,"linesDeleted":1,"windowDays":7}
+captureMomentum(history, w=1, globs=literalBase) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(history, w=3650, globs=literalBase) = {"commits":8,"filesTouched":7,"generatedLinesExcluded":0,"linesAdded":12,"linesDeleted":1,"windowDays":3650}
+captureMomentum(history, w=7, globs=literalFullPath) = {"commits":7,"filesTouched":7,"generatedLinesExcluded":0,"linesAdded":11,"linesDeleted":1,"windowDays":7}
+captureMomentum(history, w=1, globs=literalFullPath) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(history, w=3650, globs=literalFullPath) = {"commits":8,"filesTouched":7,"generatedLinesExcluded":0,"linesAdded":12,"linesDeleted":1,"windowDays":3650}
+captureMomentum(history, w=7, globs=blankAndWhitespace) = {"commits":7,"filesTouched":7,"generatedLinesExcluded":0,"linesAdded":11,"linesDeleted":1,"windowDays":7}
+captureMomentum(history, w=1, globs=blankAndWhitespace) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(history, w=3650, globs=blankAndWhitespace) = {"commits":8,"filesTouched":7,"generatedLinesExcluded":0,"linesAdded":12,"linesDeleted":1,"windowDays":3650}
+captureMomentum(history, w=7, globs=regexMetachars) = {"commits":7,"filesTouched":7,"generatedLinesExcluded":0,"linesAdded":11,"linesDeleted":1,"windowDays":7}
+captureMomentum(history, w=1, globs=regexMetachars) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(history, w=3650, globs=regexMetachars) = {"commits":8,"filesTouched":7,"generatedLinesExcluded":0,"linesAdded":12,"linesDeleted":1,"windowDays":3650}
+captureMomentum(history, w=7, globs=everything) = {"commits":7,"filesTouched":0,"generatedLinesExcluded":12,"linesAdded":0,"linesDeleted":0,"windowDays":7}
+captureMomentum(history, w=1, globs=everything) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(history, w=3650, globs=everything) = {"commits":8,"filesTouched":0,"generatedLinesExcluded":13,"linesAdded":0,"linesDeleted":0,"windowDays":3650}
+captureMomentum(dirty, w=7, globs=defaults) = {"commits":1,"filesTouched":1,"generatedLinesExcluded":1,"linesAdded":4,"linesDeleted":0,"windowDays":7}
+captureMomentum(dirty, w=1, globs=defaults) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(dirty, w=3650, globs=defaults) = {"commits":1,"filesTouched":1,"generatedLinesExcluded":1,"linesAdded":4,"linesDeleted":0,"windowDays":3650}
+captureMomentum(dirty, w=7, globs=empty) = {"commits":1,"filesTouched":2,"generatedLinesExcluded":0,"linesAdded":5,"linesDeleted":0,"windowDays":7}
+captureMomentum(dirty, w=1, globs=empty) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(dirty, w=3650, globs=empty) = {"commits":1,"filesTouched":2,"generatedLinesExcluded":0,"linesAdded":5,"linesDeleted":0,"windowDays":3650}
+captureMomentum(dirty, w=7, globs=dirOnly) = {"commits":1,"filesTouched":2,"generatedLinesExcluded":0,"linesAdded":5,"linesDeleted":0,"windowDays":7}
+captureMomentum(dirty, w=1, globs=dirOnly) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(dirty, w=3650, globs=dirOnly) = {"commits":1,"filesTouched":2,"generatedLinesExcluded":0,"linesAdded":5,"linesDeleted":0,"windowDays":3650}
+captureMomentum(dirty, w=7, globs=starExt) = {"commits":1,"filesTouched":1,"generatedLinesExcluded":4,"linesAdded":1,"linesDeleted":0,"windowDays":7}
+captureMomentum(dirty, w=1, globs=starExt) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(dirty, w=3650, globs=starExt) = {"commits":1,"filesTouched":1,"generatedLinesExcluded":4,"linesAdded":1,"linesDeleted":0,"windowDays":3650}
+captureMomentum(dirty, w=7, globs=multiStar) = {"commits":1,"filesTouched":2,"generatedLinesExcluded":0,"linesAdded":5,"linesDeleted":0,"windowDays":7}
+captureMomentum(dirty, w=1, globs=multiStar) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(dirty, w=3650, globs=multiStar) = {"commits":1,"filesTouched":2,"generatedLinesExcluded":0,"linesAdded":5,"linesDeleted":0,"windowDays":3650}
+captureMomentum(dirty, w=7, globs=literalBase) = {"commits":1,"filesTouched":2,"generatedLinesExcluded":0,"linesAdded":5,"linesDeleted":0,"windowDays":7}
+captureMomentum(dirty, w=1, globs=literalBase) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(dirty, w=3650, globs=literalBase) = {"commits":1,"filesTouched":2,"generatedLinesExcluded":0,"linesAdded":5,"linesDeleted":0,"windowDays":3650}
+captureMomentum(dirty, w=7, globs=literalFullPath) = {"commits":1,"filesTouched":2,"generatedLinesExcluded":0,"linesAdded":5,"linesDeleted":0,"windowDays":7}
+captureMomentum(dirty, w=1, globs=literalFullPath) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(dirty, w=3650, globs=literalFullPath) = {"commits":1,"filesTouched":2,"generatedLinesExcluded":0,"linesAdded":5,"linesDeleted":0,"windowDays":3650}
+captureMomentum(dirty, w=7, globs=blankAndWhitespace) = {"commits":1,"filesTouched":2,"generatedLinesExcluded":0,"linesAdded":5,"linesDeleted":0,"windowDays":7}
+captureMomentum(dirty, w=1, globs=blankAndWhitespace) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(dirty, w=3650, globs=blankAndWhitespace) = {"commits":1,"filesTouched":2,"generatedLinesExcluded":0,"linesAdded":5,"linesDeleted":0,"windowDays":3650}
+captureMomentum(dirty, w=7, globs=regexMetachars) = {"commits":1,"filesTouched":2,"generatedLinesExcluded":0,"linesAdded":5,"linesDeleted":0,"windowDays":7}
+captureMomentum(dirty, w=1, globs=regexMetachars) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(dirty, w=3650, globs=regexMetachars) = {"commits":1,"filesTouched":2,"generatedLinesExcluded":0,"linesAdded":5,"linesDeleted":0,"windowDays":3650}
+captureMomentum(dirty, w=7, globs=everything) = {"commits":1,"filesTouched":0,"generatedLinesExcluded":5,"linesAdded":0,"linesDeleted":0,"windowDays":7}
+captureMomentum(dirty, w=1, globs=everything) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(dirty, w=3650, globs=everything) = {"commits":1,"filesTouched":0,"generatedLinesExcluded":5,"linesAdded":0,"linesDeleted":0,"windowDays":3650}
+captureMomentum(no-remote, w=7, globs=defaults) = {"commits":1,"filesTouched":1,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0,"windowDays":7}
+captureMomentum(no-remote, w=1, globs=defaults) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(no-remote, w=3650, globs=defaults) = {"commits":1,"filesTouched":1,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0,"windowDays":3650}
+captureMomentum(no-remote, w=7, globs=empty) = {"commits":1,"filesTouched":1,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0,"windowDays":7}
+captureMomentum(no-remote, w=1, globs=empty) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(no-remote, w=3650, globs=empty) = {"commits":1,"filesTouched":1,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0,"windowDays":3650}
+captureMomentum(no-remote, w=7, globs=dirOnly) = {"commits":1,"filesTouched":1,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0,"windowDays":7}
+captureMomentum(no-remote, w=1, globs=dirOnly) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(no-remote, w=3650, globs=dirOnly) = {"commits":1,"filesTouched":1,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0,"windowDays":3650}
+captureMomentum(no-remote, w=7, globs=starExt) = {"commits":1,"filesTouched":0,"generatedLinesExcluded":1,"linesAdded":0,"linesDeleted":0,"windowDays":7}
+captureMomentum(no-remote, w=1, globs=starExt) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(no-remote, w=3650, globs=starExt) = {"commits":1,"filesTouched":0,"generatedLinesExcluded":1,"linesAdded":0,"linesDeleted":0,"windowDays":3650}
+captureMomentum(no-remote, w=7, globs=multiStar) = {"commits":1,"filesTouched":1,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0,"windowDays":7}
+captureMomentum(no-remote, w=1, globs=multiStar) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(no-remote, w=3650, globs=multiStar) = {"commits":1,"filesTouched":1,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0,"windowDays":3650}
+captureMomentum(no-remote, w=7, globs=literalBase) = {"commits":1,"filesTouched":0,"generatedLinesExcluded":1,"linesAdded":0,"linesDeleted":0,"windowDays":7}
+captureMomentum(no-remote, w=1, globs=literalBase) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(no-remote, w=3650, globs=literalBase) = {"commits":1,"filesTouched":0,"generatedLinesExcluded":1,"linesAdded":0,"linesDeleted":0,"windowDays":3650}
+captureMomentum(no-remote, w=7, globs=literalFullPath) = {"commits":1,"filesTouched":1,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0,"windowDays":7}
+captureMomentum(no-remote, w=1, globs=literalFullPath) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(no-remote, w=3650, globs=literalFullPath) = {"commits":1,"filesTouched":1,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0,"windowDays":3650}
+captureMomentum(no-remote, w=7, globs=blankAndWhitespace) = {"commits":1,"filesTouched":1,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0,"windowDays":7}
+captureMomentum(no-remote, w=1, globs=blankAndWhitespace) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(no-remote, w=3650, globs=blankAndWhitespace) = {"commits":1,"filesTouched":1,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0,"windowDays":3650}
+captureMomentum(no-remote, w=7, globs=regexMetachars) = {"commits":1,"filesTouched":1,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0,"windowDays":7}
+captureMomentum(no-remote, w=1, globs=regexMetachars) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(no-remote, w=3650, globs=regexMetachars) = {"commits":1,"filesTouched":1,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0,"windowDays":3650}
+captureMomentum(no-remote, w=7, globs=everything) = {"commits":1,"filesTouched":0,"generatedLinesExcluded":1,"linesAdded":0,"linesDeleted":0,"windowDays":7}
+captureMomentum(no-remote, w=1, globs=everything) = {"commits":0,"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0,"windowDays":1}
+captureMomentum(no-remote, w=3650, globs=everything) = {"commits":1,"filesTouched":0,"generatedLinesExcluded":1,"linesAdded":0,"linesDeleted":0,"windowDays":3650}
+captureMomentum(empty, w=7, globs=defaults) = null
+captureMomentum(empty, w=1, globs=defaults) = null
+captureMomentum(empty, w=3650, globs=defaults) = null
+captureMomentum(empty, w=7, globs=empty) = null
+captureMomentum(empty, w=1, globs=empty) = null
+captureMomentum(empty, w=3650, globs=empty) = null
+captureMomentum(empty, w=7, globs=dirOnly) = null
+captureMomentum(empty, w=1, globs=dirOnly) = null
+captureMomentum(empty, w=3650, globs=dirOnly) = null
+captureMomentum(empty, w=7, globs=starExt) = null
+captureMomentum(empty, w=1, globs=starExt) = null
+captureMomentum(empty, w=3650, globs=starExt) = null
+captureMomentum(empty, w=7, globs=multiStar) = null
+captureMomentum(empty, w=1, globs=multiStar) = null
+captureMomentum(empty, w=3650, globs=multiStar) = null
+captureMomentum(empty, w=7, globs=literalBase) = null
+captureMomentum(empty, w=1, globs=literalBase) = null
+captureMomentum(empty, w=3650, globs=literalBase) = null
+captureMomentum(empty, w=7, globs=literalFullPath) = null
+captureMomentum(empty, w=1, globs=literalFullPath) = null
+captureMomentum(empty, w=3650, globs=literalFullPath) = null
+captureMomentum(empty, w=7, globs=blankAndWhitespace) = null
+captureMomentum(empty, w=1, globs=blankAndWhitespace) = null
+captureMomentum(empty, w=3650, globs=blankAndWhitespace) = null
+captureMomentum(empty, w=7, globs=regexMetachars) = null
+captureMomentum(empty, w=1, globs=regexMetachars) = null
+captureMomentum(empty, w=3650, globs=regexMetachars) = null
+captureMomentum(empty, w=7, globs=everything) = null
+captureMomentum(empty, w=1, globs=everything) = null
+captureMomentum(empty, w=3650, globs=everything) = null
+captureMomentum(plain-dir, w=7, globs=defaults) = null
+captureMomentum(plain-dir, w=1, globs=defaults) = null
+captureMomentum(plain-dir, w=3650, globs=defaults) = null
+captureMomentum(plain-dir, w=7, globs=empty) = null
+captureMomentum(plain-dir, w=1, globs=empty) = null
+captureMomentum(plain-dir, w=3650, globs=empty) = null
+captureMomentum(plain-dir, w=7, globs=dirOnly) = null
+captureMomentum(plain-dir, w=1, globs=dirOnly) = null
+captureMomentum(plain-dir, w=3650, globs=dirOnly) = null
+captureMomentum(plain-dir, w=7, globs=starExt) = null
+captureMomentum(plain-dir, w=1, globs=starExt) = null
+captureMomentum(plain-dir, w=3650, globs=starExt) = null
+captureMomentum(plain-dir, w=7, globs=multiStar) = null
+captureMomentum(plain-dir, w=1, globs=multiStar) = null
+captureMomentum(plain-dir, w=3650, globs=multiStar) = null
+captureMomentum(plain-dir, w=7, globs=literalBase) = null
+captureMomentum(plain-dir, w=1, globs=literalBase) = null
+captureMomentum(plain-dir, w=3650, globs=literalBase) = null
+captureMomentum(plain-dir, w=7, globs=literalFullPath) = null
+captureMomentum(plain-dir, w=1, globs=literalFullPath) = null
+captureMomentum(plain-dir, w=3650, globs=literalFullPath) = null
+captureMomentum(plain-dir, w=7, globs=blankAndWhitespace) = null
+captureMomentum(plain-dir, w=1, globs=blankAndWhitespace) = null
+captureMomentum(plain-dir, w=3650, globs=blankAndWhitespace) = null
+captureMomentum(plain-dir, w=7, globs=regexMetachars) = null
+captureMomentum(plain-dir, w=1, globs=regexMetachars) = null
+captureMomentum(plain-dir, w=3650, globs=regexMetachars) = null
+captureMomentum(plain-dir, w=7, globs=everything) = null
+captureMomentum(plain-dir, w=1, globs=everything) = null
+captureMomentum(plain-dir, w=3650, globs=everything) = null
+
+## git: buildGitMomentum full event
+buildGitMomentum(plain-dir)[unset] = undefined
+buildGitMomentum(plain-dir)[MOMENTUM=0] = undefined
+buildGitMomentum(plain-dir)[WINDOW=1] = undefined
+buildGitMomentum(plain-dir)[IGNORE=*.ts] = undefined
+buildGitMomentum(clean)[unset] = {"at":"2026-01-01T00:00:00.000Z","commits":3,"eventId":"evt-1","filesTouched":2,"generatedLinesExcluded":6,"gitContext":"clean","kind":"git.momentum","linesAdded":7,"linesDeleted":0,"repoId":"<hash:7>","repoLabel":"clean","repoShape":{"ageBand":"new","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":7}
+buildGitMomentum(clean)[MOMENTUM=0] = undefined
+buildGitMomentum(clean)[WINDOW=1] = {"at":"2026-01-01T00:00:00.000Z","commits":0,"eventId":"evt-1","filesTouched":0,"generatedLinesExcluded":0,"gitContext":"clean","kind":"git.momentum","linesAdded":0,"linesDeleted":0,"repoId":"<hash:7>","repoLabel":"clean","repoShape":{"ageBand":"new","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":1}
+buildGitMomentum(clean)[IGNORE=*.ts] = {"at":"2026-01-01T00:00:00.000Z","commits":3,"eventId":"evt-1","filesTouched":0,"generatedLinesExcluded":13,"gitContext":"clean","kind":"git.momentum","linesAdded":0,"linesDeleted":0,"repoId":"<hash:7>","repoLabel":"clean","repoShape":{"ageBand":"new","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":7}
+buildGitMomentum(no-remote)[unset] = {"at":"2026-01-01T00:00:00.000Z","commits":1,"eventId":"evt-1","filesTouched":1,"generatedLinesExcluded":0,"gitContext":"no-remote","kind":"git.momentum","linesAdded":1,"linesDeleted":0,"repoId":"<hash:8>","repoLabel":"no-remote","repoShape":{"ageBand":"new","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":7}
+buildGitMomentum(no-remote)[MOMENTUM=0] = undefined
+buildGitMomentum(no-remote)[WINDOW=1] = {"at":"2026-01-01T00:00:00.000Z","commits":0,"eventId":"evt-1","filesTouched":0,"generatedLinesExcluded":0,"gitContext":"no-remote","kind":"git.momentum","linesAdded":0,"linesDeleted":0,"repoId":"<hash:8>","repoLabel":"no-remote","repoShape":{"ageBand":"new","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":1}
+buildGitMomentum(no-remote)[IGNORE=*.ts] = {"at":"2026-01-01T00:00:00.000Z","commits":1,"eventId":"evt-1","filesTouched":0,"generatedLinesExcluded":1,"gitContext":"no-remote","kind":"git.momentum","linesAdded":0,"linesDeleted":0,"repoId":"<hash:8>","repoLabel":"no-remote","repoShape":{"ageBand":"new","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":7}
+buildGitMomentum(dirty)[unset] = {"at":"2026-01-01T00:00:00.000Z","commits":1,"eventId":"evt-1","filesTouched":1,"generatedLinesExcluded":1,"gitContext":"dirty-at-start","kind":"git.momentum","linesAdded":4,"linesDeleted":0,"repoId":"<hash:9>","repoLabel":"dirty","repoShape":{"ageBand":"new","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":7}
+buildGitMomentum(dirty)[MOMENTUM=0] = undefined
+buildGitMomentum(dirty)[WINDOW=1] = {"at":"2026-01-01T00:00:00.000Z","commits":0,"eventId":"evt-1","filesTouched":0,"generatedLinesExcluded":0,"gitContext":"dirty-at-start","kind":"git.momentum","linesAdded":0,"linesDeleted":0,"repoId":"<hash:9>","repoLabel":"dirty","repoShape":{"ageBand":"new","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":1}
+buildGitMomentum(dirty)[IGNORE=*.ts] = {"at":"2026-01-01T00:00:00.000Z","commits":1,"eventId":"evt-1","filesTouched":0,"generatedLinesExcluded":5,"gitContext":"dirty-at-start","kind":"git.momentum","linesAdded":0,"linesDeleted":0,"repoId":"<hash:9>","repoLabel":"dirty","repoShape":{"ageBand":"new","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":7}
+buildGitMomentum(detached)[unset] = {"at":"2026-01-01T00:00:00.000Z","commits":2,"eventId":"evt-1","filesTouched":2,"generatedLinesExcluded":0,"gitContext":"detached","kind":"git.momentum","linesAdded":2,"linesDeleted":0,"repoId":"<hash:8>","repoLabel":"detached","repoShape":{"ageBand":"new","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":7}
+buildGitMomentum(detached)[MOMENTUM=0] = undefined
+buildGitMomentum(detached)[WINDOW=1] = {"at":"2026-01-01T00:00:00.000Z","commits":0,"eventId":"evt-1","filesTouched":0,"generatedLinesExcluded":0,"gitContext":"detached","kind":"git.momentum","linesAdded":0,"linesDeleted":0,"repoId":"<hash:8>","repoLabel":"detached","repoShape":{"ageBand":"new","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":1}
+buildGitMomentum(detached)[IGNORE=*.ts] = {"at":"2026-01-01T00:00:00.000Z","commits":2,"eventId":"evt-1","filesTouched":0,"generatedLinesExcluded":2,"gitContext":"detached","kind":"git.momentum","linesAdded":0,"linesDeleted":0,"repoId":"<hash:8>","repoLabel":"detached","repoShape":{"ageBand":"new","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":7}
+buildGitMomentum(detached-dirty)[unset] = {"at":"2026-01-01T00:00:00.000Z","commits":2,"eventId":"evt-1","filesTouched":2,"generatedLinesExcluded":0,"gitContext":"detached","kind":"git.momentum","linesAdded":2,"linesDeleted":0,"repoId":"<hash:8>","repoLabel":"detached-dirty","repoShape":{"ageBand":"new","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":7}
+buildGitMomentum(detached-dirty)[MOMENTUM=0] = undefined
+buildGitMomentum(detached-dirty)[WINDOW=1] = {"at":"2026-01-01T00:00:00.000Z","commits":0,"eventId":"evt-1","filesTouched":0,"generatedLinesExcluded":0,"gitContext":"detached","kind":"git.momentum","linesAdded":0,"linesDeleted":0,"repoId":"<hash:8>","repoLabel":"detached-dirty","repoShape":{"ageBand":"new","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":1}
+buildGitMomentum(detached-dirty)[IGNORE=*.ts] = {"at":"2026-01-01T00:00:00.000Z","commits":2,"eventId":"evt-1","filesTouched":0,"generatedLinesExcluded":2,"gitContext":"detached","kind":"git.momentum","linesAdded":0,"linesDeleted":0,"repoId":"<hash:8>","repoLabel":"detached-dirty","repoShape":{"ageBand":"new","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":7}
+buildGitMomentum(dirty-no-remote)[unset] = {"at":"2026-01-01T00:00:00.000Z","commits":1,"eventId":"evt-1","filesTouched":1,"generatedLinesExcluded":0,"gitContext":"dirty-at-start","kind":"git.momentum","linesAdded":2,"linesDeleted":0,"repoId":"<hash:10>","repoLabel":"dirty-no-remote","repoShape":{"ageBand":"new","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":7}
+buildGitMomentum(dirty-no-remote)[MOMENTUM=0] = undefined
+buildGitMomentum(dirty-no-remote)[WINDOW=1] = {"at":"2026-01-01T00:00:00.000Z","commits":0,"eventId":"evt-1","filesTouched":0,"generatedLinesExcluded":0,"gitContext":"dirty-at-start","kind":"git.momentum","linesAdded":0,"linesDeleted":0,"repoId":"<hash:10>","repoLabel":"dirty-no-remote","repoShape":{"ageBand":"new","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":1}
+buildGitMomentum(dirty-no-remote)[IGNORE=*.ts] = {"at":"2026-01-01T00:00:00.000Z","commits":1,"eventId":"evt-1","filesTouched":0,"generatedLinesExcluded":2,"gitContext":"dirty-at-start","kind":"git.momentum","linesAdded":0,"linesDeleted":0,"repoId":"<hash:10>","repoLabel":"dirty-no-remote","repoShape":{"ageBand":"new","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":7}
+buildGitMomentum(empty)[unset] = undefined
+buildGitMomentum(empty)[MOMENTUM=0] = undefined
+buildGitMomentum(empty)[WINDOW=1] = undefined
+buildGitMomentum(empty)[IGNORE=*.ts] = undefined
+buildGitMomentum(history)[unset] = {"at":"2026-01-01T00:00:00.000Z","commits":7,"eventId":"evt-1","filesTouched":6,"generatedLinesExcluded":1,"gitContext":"clean","kind":"git.momentum","linesAdded":10,"linesDeleted":1,"repoId":"<hash:12>","repoLabel":"history","repoShape":{"ageBand":"established","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":7}
+buildGitMomentum(history)[MOMENTUM=0] = undefined
+buildGitMomentum(history)[WINDOW=1] = {"at":"2026-01-01T00:00:00.000Z","commits":0,"eventId":"evt-1","filesTouched":0,"generatedLinesExcluded":0,"gitContext":"clean","kind":"git.momentum","linesAdded":0,"linesDeleted":0,"repoId":"<hash:12>","repoLabel":"history","repoShape":{"ageBand":"established","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":1}
+buildGitMomentum(history)[IGNORE=*.ts] = {"at":"2026-01-01T00:00:00.000Z","commits":7,"eventId":"evt-1","filesTouched":1,"generatedLinesExcluded":12,"gitContext":"clean","kind":"git.momentum","linesAdded":0,"linesDeleted":0,"repoId":"<hash:12>","repoLabel":"history","repoShape":{"ageBand":"established","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":7}
+buildGitMomentum(survival)[unset] = {"at":"2026-01-01T00:00:00.000Z","commits":6,"eventId":"evt-1","filesTouched":3,"generatedLinesExcluded":0,"gitContext":"clean","kind":"git.momentum","linesAdded":11,"linesDeleted":4,"repoId":"<hash:13>","repoLabel":"survival","repoShape":{"ageBand":"new","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":7}
+buildGitMomentum(survival)[MOMENTUM=0] = undefined
+buildGitMomentum(survival)[WINDOW=1] = {"at":"2026-01-01T00:00:00.000Z","commits":0,"eventId":"evt-1","filesTouched":0,"generatedLinesExcluded":0,"gitContext":"clean","kind":"git.momentum","linesAdded":0,"linesDeleted":0,"repoId":"<hash:13>","repoLabel":"survival","repoShape":{"ageBand":"new","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":1}
+buildGitMomentum(survival)[IGNORE=*.ts] = {"at":"2026-01-01T00:00:00.000Z","commits":6,"eventId":"evt-1","filesTouched":0,"generatedLinesExcluded":15,"gitContext":"clean","kind":"git.momentum","linesAdded":0,"linesDeleted":0,"repoId":"<hash:13>","repoLabel":"survival","repoShape":{"ageBand":"new","monorepo":false,"sizeBand":"xs"},"sessionId":"sess-1","windowDays":7}
+
+## git: uncommittedCounts
+uncommittedCounts(plain-dir, globs=defaults) = null
+uncommittedCounts(plain-dir, globs=empty) = null
+uncommittedCounts(plain-dir, globs=dirOnly) = null
+uncommittedCounts(plain-dir, globs=starExt) = null
+uncommittedCounts(plain-dir, globs=multiStar) = null
+uncommittedCounts(plain-dir, globs=literalBase) = null
+uncommittedCounts(plain-dir, globs=literalFullPath) = null
+uncommittedCounts(plain-dir, globs=blankAndWhitespace) = null
+uncommittedCounts(plain-dir, globs=regexMetachars) = null
+uncommittedCounts(plain-dir, globs=everything) = null
+uncommittedCounts(clean, globs=defaults) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(clean, globs=empty) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(clean, globs=dirOnly) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(clean, globs=starExt) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(clean, globs=multiStar) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(clean, globs=literalBase) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(clean, globs=literalFullPath) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(clean, globs=blankAndWhitespace) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(clean, globs=regexMetachars) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(clean, globs=everything) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(no-remote, globs=defaults) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(no-remote, globs=empty) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(no-remote, globs=dirOnly) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(no-remote, globs=starExt) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(no-remote, globs=multiStar) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(no-remote, globs=literalBase) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(no-remote, globs=literalFullPath) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(no-remote, globs=blankAndWhitespace) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(no-remote, globs=regexMetachars) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(no-remote, globs=everything) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(dirty, globs=defaults) = {"filesTouched":2,"generatedLinesExcluded":2,"linesAdded":2,"linesDeleted":1}
+uncommittedCounts(dirty, globs=empty) = {"filesTouched":4,"generatedLinesExcluded":0,"linesAdded":4,"linesDeleted":1}
+uncommittedCounts(dirty, globs=dirOnly) = {"filesTouched":4,"generatedLinesExcluded":0,"linesAdded":4,"linesDeleted":1}
+uncommittedCounts(dirty, globs=starExt) = {"filesTouched":2,"generatedLinesExcluded":3,"linesAdded":2,"linesDeleted":0}
+uncommittedCounts(dirty, globs=multiStar) = {"filesTouched":4,"generatedLinesExcluded":0,"linesAdded":4,"linesDeleted":1}
+uncommittedCounts(dirty, globs=literalBase) = {"filesTouched":4,"generatedLinesExcluded":0,"linesAdded":4,"linesDeleted":1}
+uncommittedCounts(dirty, globs=literalFullPath) = {"filesTouched":4,"generatedLinesExcluded":0,"linesAdded":4,"linesDeleted":1}
+uncommittedCounts(dirty, globs=blankAndWhitespace) = {"filesTouched":4,"generatedLinesExcluded":0,"linesAdded":4,"linesDeleted":1}
+uncommittedCounts(dirty, globs=regexMetachars) = {"filesTouched":4,"generatedLinesExcluded":0,"linesAdded":4,"linesDeleted":1}
+uncommittedCounts(dirty, globs=everything) = {"filesTouched":0,"generatedLinesExcluded":5,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(detached, globs=defaults) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(detached, globs=empty) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(detached, globs=dirOnly) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(detached, globs=starExt) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(detached, globs=multiStar) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(detached, globs=literalBase) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(detached, globs=literalFullPath) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(detached, globs=blankAndWhitespace) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(detached, globs=regexMetachars) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(detached, globs=everything) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(detached-dirty, globs=defaults) = {"filesTouched":2,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0}
+uncommittedCounts(detached-dirty, globs=empty) = {"filesTouched":2,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0}
+uncommittedCounts(detached-dirty, globs=dirOnly) = {"filesTouched":2,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0}
+uncommittedCounts(detached-dirty, globs=starExt) = {"filesTouched":0,"generatedLinesExcluded":1,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(detached-dirty, globs=multiStar) = {"filesTouched":2,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0}
+uncommittedCounts(detached-dirty, globs=literalBase) = {"filesTouched":1,"generatedLinesExcluded":1,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(detached-dirty, globs=literalFullPath) = {"filesTouched":2,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0}
+uncommittedCounts(detached-dirty, globs=blankAndWhitespace) = {"filesTouched":2,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0}
+uncommittedCounts(detached-dirty, globs=regexMetachars) = {"filesTouched":2,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0}
+uncommittedCounts(detached-dirty, globs=everything) = {"filesTouched":0,"generatedLinesExcluded":1,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(dirty-no-remote, globs=defaults) = {"filesTouched":1,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0}
+uncommittedCounts(dirty-no-remote, globs=empty) = {"filesTouched":1,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0}
+uncommittedCounts(dirty-no-remote, globs=dirOnly) = {"filesTouched":1,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0}
+uncommittedCounts(dirty-no-remote, globs=starExt) = {"filesTouched":0,"generatedLinesExcluded":1,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(dirty-no-remote, globs=multiStar) = {"filesTouched":1,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0}
+uncommittedCounts(dirty-no-remote, globs=literalBase) = {"filesTouched":1,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0}
+uncommittedCounts(dirty-no-remote, globs=literalFullPath) = {"filesTouched":1,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0}
+uncommittedCounts(dirty-no-remote, globs=blankAndWhitespace) = {"filesTouched":1,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0}
+uncommittedCounts(dirty-no-remote, globs=regexMetachars) = {"filesTouched":1,"generatedLinesExcluded":0,"linesAdded":1,"linesDeleted":0}
+uncommittedCounts(dirty-no-remote, globs=everything) = {"filesTouched":0,"generatedLinesExcluded":1,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(empty, globs=defaults) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(empty, globs=empty) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(empty, globs=dirOnly) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(empty, globs=starExt) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(empty, globs=multiStar) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(empty, globs=literalBase) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(empty, globs=literalFullPath) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(empty, globs=blankAndWhitespace) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(empty, globs=regexMetachars) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(empty, globs=everything) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(history, globs=defaults) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(history, globs=empty) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(history, globs=dirOnly) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(history, globs=starExt) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(history, globs=multiStar) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(history, globs=literalBase) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(history, globs=literalFullPath) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(history, globs=blankAndWhitespace) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(history, globs=regexMetachars) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(history, globs=everything) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(survival, globs=defaults) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(survival, globs=empty) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(survival, globs=dirOnly) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(survival, globs=starExt) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(survival, globs=multiStar) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(survival, globs=literalBase) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(survival, globs=literalFullPath) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(survival, globs=blankAndWhitespace) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(survival, globs=regexMetachars) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+uncommittedCounts(survival, globs=everything) = {"filesTouched":0,"generatedLinesExcluded":0,"linesAdded":0,"linesDeleted":0}
+
+## git: writeSessionStartGit + captureSessionDelta
+captureSessionDelta(plain-dir) no-cursor = null
+captureSessionDelta(clean) no-cursor = {"filesTouchedUncommitted":0,"generatedLinesExcludedUncommitted":0,"gitContext":"clean","headMoved":false,"linesAddedUncommitted":0,"linesDeletedUncommitted":0,"startGitContext":"clean"}
+captureSessionDelta(no-remote) no-cursor = {"filesTouchedUncommitted":0,"generatedLinesExcludedUncommitted":0,"gitContext":"no-remote","headMoved":false,"linesAddedUncommitted":0,"linesDeletedUncommitted":0,"startGitContext":"no-remote"}
+captureSessionDelta(dirty) no-cursor = {"filesTouchedUncommitted":2,"generatedLinesExcludedUncommitted":2,"gitContext":"dirty-at-start","headMoved":false,"linesAddedUncommitted":2,"linesDeletedUncommitted":1,"startGitContext":"dirty-at-start"}
+captureSessionDelta(detached) no-cursor = {"filesTouchedUncommitted":0,"generatedLinesExcludedUncommitted":0,"gitContext":"detached","headMoved":false,"linesAddedUncommitted":0,"linesDeletedUncommitted":0,"startGitContext":"detached"}
+captureSessionDelta(detached-dirty) no-cursor = {"filesTouchedUncommitted":2,"generatedLinesExcludedUncommitted":0,"gitContext":"detached","headMoved":false,"linesAddedUncommitted":1,"linesDeletedUncommitted":0,"startGitContext":"detached"}
+captureSessionDelta(dirty-no-remote) no-cursor = {"filesTouchedUncommitted":1,"generatedLinesExcludedUncommitted":0,"gitContext":"dirty-at-start","headMoved":false,"linesAddedUncommitted":1,"linesDeletedUncommitted":0,"startGitContext":"dirty-at-start"}
+captureSessionDelta(empty) no-cursor = {"filesTouchedUncommitted":0,"generatedLinesExcludedUncommitted":0,"gitContext":"no-remote","headMoved":false,"linesAddedUncommitted":0,"linesDeletedUncommitted":0,"startGitContext":"no-remote"}
+captureSessionDelta(history) no-cursor = {"filesTouchedUncommitted":0,"generatedLinesExcludedUncommitted":0,"gitContext":"clean","headMoved":false,"linesAddedUncommitted":0,"linesDeletedUncommitted":0,"startGitContext":"clean"}
+captureSessionDelta(survival) no-cursor = {"filesTouchedUncommitted":0,"generatedLinesExcludedUncommitted":0,"gitContext":"clean","headMoved":false,"linesAddedUncommitted":0,"linesDeletedUncommitted":0,"startGitContext":"clean"}
+writeSessionStartGit(plain-dir) unmoved = null
+cursorFile(plain-dir) unmoved = {"startBranch":null,"startGitContext":"no-repo","startSha":null}
+captureSessionDelta(plain-dir) unmoved = null
+cursorFile(plain-dir) after delta = "absent"
+writeSessionStartGit(clean) unmoved = null
+cursorFile(clean) unmoved = {"startBranch":"main","startGitContext":"clean","startSha":"<sha:15>"}
+captureSessionDelta(clean) unmoved = {"commitsLanded":0,"filesTouchedUncommitted":0,"generatedLinesExcludedUncommitted":0,"gitContext":"clean","headMoved":false,"linesAddedUncommitted":0,"linesDeletedUncommitted":0,"startGitContext":"clean"}
+cursorFile(clean) after delta = "absent"
+writeSessionStartGit(no-remote) unmoved = null
+cursorFile(no-remote) unmoved = {"startBranch":"main","startGitContext":"no-remote","startSha":"<sha:16>"}
+captureSessionDelta(no-remote) unmoved = {"commitsLanded":0,"filesTouchedUncommitted":0,"generatedLinesExcludedUncommitted":0,"gitContext":"no-remote","headMoved":false,"linesAddedUncommitted":0,"linesDeletedUncommitted":0,"startGitContext":"no-remote"}
+cursorFile(no-remote) after delta = "absent"
+writeSessionStartGit(dirty) unmoved = null
+cursorFile(dirty) unmoved = {"startBranch":"main","startGitContext":"dirty-at-start","startSha":"<sha:17>"}
+captureSessionDelta(dirty) unmoved = {"commitsLanded":0,"filesTouchedUncommitted":2,"generatedLinesExcludedUncommitted":2,"gitContext":"dirty-at-start","headMoved":false,"linesAddedUncommitted":2,"linesDeletedUncommitted":1,"startGitContext":"dirty-at-start"}
+cursorFile(dirty) after delta = "absent"
+writeSessionStartGit(detached) unmoved = null
+cursorFile(detached) unmoved = {"startBranch":null,"startGitContext":"detached","startSha":"<sha:18>"}
+captureSessionDelta(detached) unmoved = {"commitsLanded":0,"filesTouchedUncommitted":0,"generatedLinesExcludedUncommitted":0,"gitContext":"detached","headMoved":false,"linesAddedUncommitted":0,"linesDeletedUncommitted":0,"startGitContext":"detached"}
+cursorFile(detached) after delta = "absent"
+writeSessionStartGit(detached-dirty) unmoved = null
+cursorFile(detached-dirty) unmoved = {"startBranch":null,"startGitContext":"detached","startSha":"<sha:18>"}
+captureSessionDelta(detached-dirty) unmoved = {"commitsLanded":0,"filesTouchedUncommitted":2,"generatedLinesExcludedUncommitted":0,"gitContext":"detached","headMoved":false,"linesAddedUncommitted":1,"linesDeletedUncommitted":0,"startGitContext":"detached"}
+cursorFile(detached-dirty) after delta = "absent"
+writeSessionStartGit(dirty-no-remote) unmoved = null
+cursorFile(dirty-no-remote) unmoved = {"startBranch":"main","startGitContext":"dirty-at-start","startSha":"<sha:19>"}
+captureSessionDelta(dirty-no-remote) unmoved = {"commitsLanded":0,"filesTouchedUncommitted":1,"generatedLinesExcludedUncommitted":0,"gitContext":"dirty-at-start","headMoved":false,"linesAddedUncommitted":1,"linesDeletedUncommitted":0,"startGitContext":"dirty-at-start"}
+cursorFile(dirty-no-remote) after delta = "absent"
+writeSessionStartGit(empty) unmoved = null
+cursorFile(empty) unmoved = {"startBranch":"main","startGitContext":"no-remote","startSha":null}
+captureSessionDelta(empty) unmoved = {"filesTouchedUncommitted":0,"generatedLinesExcludedUncommitted":0,"gitContext":"no-remote","headMoved":false,"linesAddedUncommitted":0,"linesDeletedUncommitted":0,"startGitContext":"no-remote"}
+cursorFile(empty) after delta = "absent"
+writeSessionStartGit(history) unmoved = null
+cursorFile(history) unmoved = {"startBranch":"main","startGitContext":"clean","startSha":"<sha:20>"}
+captureSessionDelta(history) unmoved = {"commitsLanded":0,"filesTouchedUncommitted":0,"generatedLinesExcludedUncommitted":0,"gitContext":"clean","headMoved":false,"linesAddedUncommitted":0,"linesDeletedUncommitted":0,"startGitContext":"clean"}
+cursorFile(history) after delta = "absent"
+writeSessionStartGit(survival) unmoved = null
+cursorFile(survival) unmoved = {"startBranch":"main","startGitContext":"clean","startSha":"<sha:21>"}
+captureSessionDelta(survival) unmoved = {"commitsLanded":0,"filesTouchedUncommitted":0,"generatedLinesExcludedUncommitted":0,"gitContext":"clean","headMoved":false,"linesAddedUncommitted":0,"linesDeletedUncommitted":0,"startGitContext":"clean"}
+cursorFile(survival) after delta = "absent"
+captureSessionDelta(clean)[realStart] = {"commitsLanded":2,"filesTouchedUncommitted":0,"generatedLinesExcludedUncommitted":0,"gitContext":"clean","headMoved":true,"linesAddedUncommitted":0,"linesDeletedUncommitted":0,"startGitContext":"clean"}
+captureSessionDelta(clean)[bogusStart] = {"filesTouchedUncommitted":0,"generatedLinesExcludedUncommitted":0,"gitContext":"clean","headMoved":true,"linesAddedUncommitted":0,"linesDeletedUncommitted":0,"startGitContext":"clean"}
+captureSessionDelta(clean)[nullStart] = {"filesTouchedUncommitted":0,"generatedLinesExcludedUncommitted":0,"gitContext":"clean","headMoved":false,"linesAddedUncommitted":0,"linesDeletedUncommitted":0,"startGitContext":"dirty-at-start"}
+captureSessionDelta(clean)[missingFields] = {"filesTouchedUncommitted":0,"generatedLinesExcludedUncommitted":0,"gitContext":"clean","headMoved":false,"linesAddedUncommitted":0,"linesDeletedUncommitted":0,"startGitContext":"no-repo"}
+captureSessionDelta(clean)[wrongTypes] = {"filesTouchedUncommitted":0,"generatedLinesExcludedUncommitted":0,"gitContext":"clean","headMoved":false,"linesAddedUncommitted":0,"linesDeletedUncommitted":0,"startGitContext":7}
+captureSessionDelta(clean)[corrupt] = {"filesTouchedUncommitted":0,"generatedLinesExcludedUncommitted":0,"gitContext":"clean","headMoved":false,"linesAddedUncommitted":0,"linesDeletedUncommitted":0,"startGitContext":"clean"}
+
+## git: resolveNumstatPath
+resolveNumstatPath("src/{old => new}.ts") = "src/new.ts"
+resolveNumstatPath("packages/{web => worker}/x.ts") = "packages/worker/x.ts"
+resolveNumstatPath("src/{foo/ => }bar.ts") = "src/bar.ts"
+resolveNumstatPath("src/{ => nested/}x.ts") = "src/nested/x.ts"
+resolveNumstatPath("old.ts => new.ts") = "new.ts"
+resolveNumstatPath("src/plain.ts") = "src/plain.ts"
+resolveNumstatPath("") = ""
+resolveNumstatPath("a => b => c") = "a => b => c"
+resolveNumstatPath("{a => b}") = "b"
+resolveNumstatPath("x/{ => }y") = "x/y"
+resolveNumstatPath("deep/{a/b/ => c/d/}f.ts") = "deep/c/d/f.ts"
+resolveNumstatPath("no-arrow => ") = ""
+resolveNumstatPath(" => leading") = "leading"
+resolveNumstatPath("pkg/{sub => }/file.ts") = "pkg/file.ts"
+resolveNumstatPath("{a => }/b.ts") = "/b.ts"
+resolveNumstatPath("pkg/{sub => other/}/file.ts") = "pkg/other/file.ts"
+resolveNumstatPath("a/{b => }//c.ts") = "a/c.ts"
+
+## git: commitsSince
+commitsSince(history, coldStart(null), main, defaults, fb=7) = [{"atIsFinite":true,"files":[{"added":5,"path":"src.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":2,"path":"nested/renamed.ts"}],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":3},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":4},{"atIsFinite":true,"files":[],"i":5}]
+commitsSince(history, coldStart(null), main, empty, fb=7) = [{"atIsFinite":true,"files":[{"added":1,"path":"pnpm-lock.yaml"},{"added":5,"path":"src.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":2,"path":"nested/renamed.ts"}],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":3},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":4},{"atIsFinite":true,"files":[],"i":5}]
+commitsSince(history, coldStart(null), main, allTs, fb=7) = [{"atIsFinite":true,"files":[{"added":1,"path":"pnpm-lock.yaml"}],"i":0},{"atIsFinite":true,"files":[],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[],"i":3},{"atIsFinite":true,"files":[],"i":4},{"atIsFinite":true,"files":[],"i":5}]
+commitsSince(history, coldStart(null), main, defaults, fb=1) = []
+commitsSince(history, coldStart(null), main, empty, fb=1) = []
+commitsSince(history, coldStart(null), main, allTs, fb=1) = []
+commitsSince(history, coldStart(null), main, defaults, fb=3650) = [{"atIsFinite":true,"files":[{"added":1,"path":"ancient.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":5,"path":"src.ts"}],"i":1},{"atIsFinite":true,"files":[{"added":2,"path":"nested/renamed.ts"}],"i":2},{"atIsFinite":true,"files":[],"i":3},{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":4},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":5},{"atIsFinite":true,"files":[],"i":6}]
+commitsSince(history, coldStart(null), main, empty, fb=3650) = [{"atIsFinite":true,"files":[{"added":1,"path":"ancient.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":1,"path":"pnpm-lock.yaml"},{"added":5,"path":"src.ts"}],"i":1},{"atIsFinite":true,"files":[{"added":2,"path":"nested/renamed.ts"}],"i":2},{"atIsFinite":true,"files":[],"i":3},{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":4},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":5},{"atIsFinite":true,"files":[],"i":6}]
+commitsSince(history, coldStart(null), main, allTs, fb=3650) = [{"atIsFinite":true,"files":[],"i":0},{"atIsFinite":true,"files":[{"added":1,"path":"pnpm-lock.yaml"}],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[],"i":3},{"atIsFinite":true,"files":[],"i":4},{"atIsFinite":true,"files":[],"i":5},{"atIsFinite":true,"files":[],"i":6}]
+commitsSince(history, validCursor(oldest), main, defaults, fb=7) = [{"atIsFinite":true,"files":[{"added":5,"path":"src.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":2,"path":"nested/renamed.ts"}],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":3},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":4},{"atIsFinite":true,"files":[],"i":5}]
+commitsSince(history, validCursor(oldest), main, empty, fb=7) = [{"atIsFinite":true,"files":[{"added":1,"path":"pnpm-lock.yaml"},{"added":5,"path":"src.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":2,"path":"nested/renamed.ts"}],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":3},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":4},{"atIsFinite":true,"files":[],"i":5}]
+commitsSince(history, validCursor(oldest), main, allTs, fb=7) = [{"atIsFinite":true,"files":[{"added":1,"path":"pnpm-lock.yaml"}],"i":0},{"atIsFinite":true,"files":[],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[],"i":3},{"atIsFinite":true,"files":[],"i":4},{"atIsFinite":true,"files":[],"i":5}]
+commitsSince(history, validCursor(oldest), main, defaults, fb=1) = [{"atIsFinite":true,"files":[{"added":5,"path":"src.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":2,"path":"nested/renamed.ts"}],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":3},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":4},{"atIsFinite":true,"files":[],"i":5}]
+commitsSince(history, validCursor(oldest), main, empty, fb=1) = [{"atIsFinite":true,"files":[{"added":1,"path":"pnpm-lock.yaml"},{"added":5,"path":"src.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":2,"path":"nested/renamed.ts"}],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":3},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":4},{"atIsFinite":true,"files":[],"i":5}]
+commitsSince(history, validCursor(oldest), main, allTs, fb=1) = [{"atIsFinite":true,"files":[{"added":1,"path":"pnpm-lock.yaml"}],"i":0},{"atIsFinite":true,"files":[],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[],"i":3},{"atIsFinite":true,"files":[],"i":4},{"atIsFinite":true,"files":[],"i":5}]
+commitsSince(history, validCursor(oldest), main, defaults, fb=3650) = [{"atIsFinite":true,"files":[{"added":5,"path":"src.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":2,"path":"nested/renamed.ts"}],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":3},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":4},{"atIsFinite":true,"files":[],"i":5}]
+commitsSince(history, validCursor(oldest), main, empty, fb=3650) = [{"atIsFinite":true,"files":[{"added":1,"path":"pnpm-lock.yaml"},{"added":5,"path":"src.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":2,"path":"nested/renamed.ts"}],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":3},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":4},{"atIsFinite":true,"files":[],"i":5}]
+commitsSince(history, validCursor(oldest), main, allTs, fb=3650) = [{"atIsFinite":true,"files":[{"added":1,"path":"pnpm-lock.yaml"}],"i":0},{"atIsFinite":true,"files":[],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[],"i":3},{"atIsFinite":true,"files":[],"i":4},{"atIsFinite":true,"files":[],"i":5}]
+commitsSince(history, validCursor(mid), main, defaults, fb=7) = [{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":1},{"atIsFinite":true,"files":[],"i":2}]
+commitsSince(history, validCursor(mid), main, empty, fb=7) = [{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":1},{"atIsFinite":true,"files":[],"i":2}]
+commitsSince(history, validCursor(mid), main, allTs, fb=7) = [{"atIsFinite":true,"files":[],"i":0},{"atIsFinite":true,"files":[],"i":1},{"atIsFinite":true,"files":[],"i":2}]
+commitsSince(history, validCursor(mid), main, defaults, fb=1) = [{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":1},{"atIsFinite":true,"files":[],"i":2}]
+commitsSince(history, validCursor(mid), main, empty, fb=1) = [{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":1},{"atIsFinite":true,"files":[],"i":2}]
+commitsSince(history, validCursor(mid), main, allTs, fb=1) = [{"atIsFinite":true,"files":[],"i":0},{"atIsFinite":true,"files":[],"i":1},{"atIsFinite":true,"files":[],"i":2}]
+commitsSince(history, validCursor(mid), main, defaults, fb=3650) = [{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":1},{"atIsFinite":true,"files":[],"i":2}]
+commitsSince(history, validCursor(mid), main, empty, fb=3650) = [{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":1},{"atIsFinite":true,"files":[],"i":2}]
+commitsSince(history, validCursor(mid), main, allTs, fb=3650) = [{"atIsFinite":true,"files":[],"i":0},{"atIsFinite":true,"files":[],"i":1},{"atIsFinite":true,"files":[],"i":2}]
+commitsSince(history, bogusCursor(40f), main, defaults, fb=7) = [{"atIsFinite":true,"files":[{"added":5,"path":"src.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":2,"path":"nested/renamed.ts"}],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":3},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":4},{"atIsFinite":true,"files":[],"i":5}]
+commitsSince(history, bogusCursor(40f), main, empty, fb=7) = [{"atIsFinite":true,"files":[{"added":1,"path":"pnpm-lock.yaml"},{"added":5,"path":"src.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":2,"path":"nested/renamed.ts"}],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":3},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":4},{"atIsFinite":true,"files":[],"i":5}]
+commitsSince(history, bogusCursor(40f), main, allTs, fb=7) = [{"atIsFinite":true,"files":[{"added":1,"path":"pnpm-lock.yaml"}],"i":0},{"atIsFinite":true,"files":[],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[],"i":3},{"atIsFinite":true,"files":[],"i":4},{"atIsFinite":true,"files":[],"i":5}]
+commitsSince(history, bogusCursor(40f), main, defaults, fb=1) = []
+commitsSince(history, bogusCursor(40f), main, empty, fb=1) = []
+commitsSince(history, bogusCursor(40f), main, allTs, fb=1) = []
+commitsSince(history, bogusCursor(40f), main, defaults, fb=3650) = [{"atIsFinite":true,"files":[{"added":1,"path":"ancient.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":5,"path":"src.ts"}],"i":1},{"atIsFinite":true,"files":[{"added":2,"path":"nested/renamed.ts"}],"i":2},{"atIsFinite":true,"files":[],"i":3},{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":4},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":5},{"atIsFinite":true,"files":[],"i":6}]
+commitsSince(history, bogusCursor(40f), main, empty, fb=3650) = [{"atIsFinite":true,"files":[{"added":1,"path":"ancient.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":1,"path":"pnpm-lock.yaml"},{"added":5,"path":"src.ts"}],"i":1},{"atIsFinite":true,"files":[{"added":2,"path":"nested/renamed.ts"}],"i":2},{"atIsFinite":true,"files":[],"i":3},{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":4},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":5},{"atIsFinite":true,"files":[],"i":6}]
+commitsSince(history, bogusCursor(40f), main, allTs, fb=3650) = [{"atIsFinite":true,"files":[],"i":0},{"atIsFinite":true,"files":[{"added":1,"path":"pnpm-lock.yaml"}],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[],"i":3},{"atIsFinite":true,"files":[],"i":4},{"atIsFinite":true,"files":[],"i":5},{"atIsFinite":true,"files":[],"i":6}]
+commitsSince(history, shortCursor(abc), main, defaults, fb=7) = [{"atIsFinite":true,"files":[{"added":5,"path":"src.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":2,"path":"nested/renamed.ts"}],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":3},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":4},{"atIsFinite":true,"files":[],"i":5}]
+commitsSince(history, shortCursor(abc), main, empty, fb=7) = [{"atIsFinite":true,"files":[{"added":1,"path":"pnpm-lock.yaml"},{"added":5,"path":"src.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":2,"path":"nested/renamed.ts"}],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":3},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":4},{"atIsFinite":true,"files":[],"i":5}]
+commitsSince(history, shortCursor(abc), main, allTs, fb=7) = [{"atIsFinite":true,"files":[{"added":1,"path":"pnpm-lock.yaml"}],"i":0},{"atIsFinite":true,"files":[],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[],"i":3},{"atIsFinite":true,"files":[],"i":4},{"atIsFinite":true,"files":[],"i":5}]
+commitsSince(history, shortCursor(abc), main, defaults, fb=1) = []
+commitsSince(history, shortCursor(abc), main, empty, fb=1) = []
+commitsSince(history, shortCursor(abc), main, allTs, fb=1) = []
+commitsSince(history, shortCursor(abc), main, defaults, fb=3650) = [{"atIsFinite":true,"files":[{"added":1,"path":"ancient.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":5,"path":"src.ts"}],"i":1},{"atIsFinite":true,"files":[{"added":2,"path":"nested/renamed.ts"}],"i":2},{"atIsFinite":true,"files":[],"i":3},{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":4},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":5},{"atIsFinite":true,"files":[],"i":6}]
+commitsSince(history, shortCursor(abc), main, empty, fb=3650) = [{"atIsFinite":true,"files":[{"added":1,"path":"ancient.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":1,"path":"pnpm-lock.yaml"},{"added":5,"path":"src.ts"}],"i":1},{"atIsFinite":true,"files":[{"added":2,"path":"nested/renamed.ts"}],"i":2},{"atIsFinite":true,"files":[],"i":3},{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":4},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":5},{"atIsFinite":true,"files":[],"i":6}]
+commitsSince(history, shortCursor(abc), main, allTs, fb=3650) = [{"atIsFinite":true,"files":[],"i":0},{"atIsFinite":true,"files":[{"added":1,"path":"pnpm-lock.yaml"}],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[],"i":3},{"atIsFinite":true,"files":[],"i":4},{"atIsFinite":true,"files":[],"i":5},{"atIsFinite":true,"files":[],"i":6}]
+commitsSince(history, nonHexCursor, main, defaults, fb=7) = [{"atIsFinite":true,"files":[{"added":5,"path":"src.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":2,"path":"nested/renamed.ts"}],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":3},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":4},{"atIsFinite":true,"files":[],"i":5}]
+commitsSince(history, nonHexCursor, main, empty, fb=7) = [{"atIsFinite":true,"files":[{"added":1,"path":"pnpm-lock.yaml"},{"added":5,"path":"src.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":2,"path":"nested/renamed.ts"}],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":3},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":4},{"atIsFinite":true,"files":[],"i":5}]
+commitsSince(history, nonHexCursor, main, allTs, fb=7) = [{"atIsFinite":true,"files":[{"added":1,"path":"pnpm-lock.yaml"}],"i":0},{"atIsFinite":true,"files":[],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[],"i":3},{"atIsFinite":true,"files":[],"i":4},{"atIsFinite":true,"files":[],"i":5}]
+commitsSince(history, nonHexCursor, main, defaults, fb=1) = []
+commitsSince(history, nonHexCursor, main, empty, fb=1) = []
+commitsSince(history, nonHexCursor, main, allTs, fb=1) = []
+commitsSince(history, nonHexCursor, main, defaults, fb=3650) = [{"atIsFinite":true,"files":[{"added":1,"path":"ancient.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":5,"path":"src.ts"}],"i":1},{"atIsFinite":true,"files":[{"added":2,"path":"nested/renamed.ts"}],"i":2},{"atIsFinite":true,"files":[],"i":3},{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":4},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":5},{"atIsFinite":true,"files":[],"i":6}]
+commitsSince(history, nonHexCursor, main, empty, fb=3650) = [{"atIsFinite":true,"files":[{"added":1,"path":"ancient.ts"}],"i":0},{"atIsFinite":true,"files":[{"added":1,"path":"pnpm-lock.yaml"},{"added":5,"path":"src.ts"}],"i":1},{"atIsFinite":true,"files":[{"added":2,"path":"nested/renamed.ts"}],"i":2},{"atIsFinite":true,"files":[],"i":3},{"atIsFinite":true,"files":[{"added":2,"path":"side.ts"}],"i":4},{"atIsFinite":true,"files":[{"added":1,"path":"mainonly.ts"}],"i":5},{"atIsFinite":true,"files":[],"i":6}]
+commitsSince(history, nonHexCursor, main, allTs, fb=3650) = [{"atIsFinite":true,"files":[],"i":0},{"atIsFinite":true,"files":[{"added":1,"path":"pnpm-lock.yaml"}],"i":1},{"atIsFinite":true,"files":[],"i":2},{"atIsFinite":true,"files":[],"i":3},{"atIsFinite":true,"files":[],"i":4},{"atIsFinite":true,"files":[],"i":5},{"atIsFinite":true,"files":[],"i":6}]
+commitsSince(history, null, nonexistent-ref) = null
+commitsSince(plain-dir, null, main) = null
+commitsSince(empty, null, main) = null
+
+## git: seedLastCommitAt
+seedLastCommitAt(history, 3650, 0, defaults) = {"ancient.ts":true,"blob.bin":true,"mainonly.ts":true,"nested/renamed.ts":true,"side.ts":true,"src.ts":true}
+seedLastCommitAt(history, 3650, 0, empty) = {"ancient.ts":true,"blob.bin":true,"mainonly.ts":true,"nested/renamed.ts":true,"pnpm-lock.yaml":true,"side.ts":true,"src.ts":true}
+seedLastCommitAt(history, 3650, 0, allTs) = {"blob.bin":true,"pnpm-lock.yaml":true}
+seedLastCommitAt(history, 7, 0, defaults) = {"ancient.ts":true,"blob.bin":true,"mainonly.ts":true,"nested/renamed.ts":true,"side.ts":true,"src.ts":true}
+seedLastCommitAt(history, 7, 0, empty) = {"ancient.ts":true,"blob.bin":true,"mainonly.ts":true,"nested/renamed.ts":true,"pnpm-lock.yaml":true,"side.ts":true,"src.ts":true}
+seedLastCommitAt(history, 7, 0, allTs) = {"blob.bin":true,"pnpm-lock.yaml":true}
+seedLastCommitAt(history, 3650, 7, defaults) = {"ancient.ts":true}
+seedLastCommitAt(history, 3650, 7, empty) = {"ancient.ts":true}
+seedLastCommitAt(history, 3650, 7, allTs) = {}
+seedLastCommitAt(history, 1, 0, defaults) = {}
+seedLastCommitAt(history, 1, 0, empty) = {}
+seedLastCommitAt(history, 1, 0, allTs) = {}
+seedLastCommitAt(history, 0, 0, defaults) = {}
+seedLastCommitAt(history, 0, 0, empty) = {}
+seedLastCommitAt(history, 0, 0, allTs) = {}
+seedLastCommitAt(clean, 3650, 0, defaults) = {"a.ts":true,"b.ts":true}
+seedLastCommitAt(clean, 3650, 0, empty) = {"a.ts":true,"b.ts":true,"dist/out.js":true,"package-lock.json":true,"thing.generated.ts":true}
+seedLastCommitAt(clean, 3650, 0, allTs) = {"dist/out.js":true,"package-lock.json":true}
+seedLastCommitAt(clean, 7, 0, defaults) = {"a.ts":true,"b.ts":true}
+seedLastCommitAt(clean, 7, 0, empty) = {"a.ts":true,"b.ts":true,"dist/out.js":true,"package-lock.json":true,"thing.generated.ts":true}
+seedLastCommitAt(clean, 7, 0, allTs) = {"dist/out.js":true,"package-lock.json":true}
+seedLastCommitAt(clean, 3650, 7, defaults) = {}
+seedLastCommitAt(clean, 3650, 7, empty) = {}
+seedLastCommitAt(clean, 3650, 7, allTs) = {}
+seedLastCommitAt(clean, 1, 0, defaults) = {}
+seedLastCommitAt(clean, 1, 0, empty) = {}
+seedLastCommitAt(clean, 1, 0, allTs) = {}
+seedLastCommitAt(clean, 0, 0, defaults) = {}
+seedLastCommitAt(clean, 0, 0, empty) = {}
+seedLastCommitAt(clean, 0, 0, allTs) = {}
+seedLastCommitAt(survival, 3650, 0, defaults) = {"gone.ts":true,"keep.ts":true,"vanish.ts":true}
+seedLastCommitAt(survival, 3650, 0, empty) = {"gone.ts":true,"keep.ts":true,"vanish.ts":true}
+seedLastCommitAt(survival, 3650, 0, allTs) = {}
+seedLastCommitAt(survival, 7, 0, defaults) = {"gone.ts":true,"keep.ts":true,"vanish.ts":true}
+seedLastCommitAt(survival, 7, 0, empty) = {"gone.ts":true,"keep.ts":true,"vanish.ts":true}
+seedLastCommitAt(survival, 7, 0, allTs) = {}
+seedLastCommitAt(survival, 3650, 7, defaults) = {}
+seedLastCommitAt(survival, 3650, 7, empty) = {}
+seedLastCommitAt(survival, 3650, 7, allTs) = {}
+seedLastCommitAt(survival, 1, 0, defaults) = {}
+seedLastCommitAt(survival, 1, 0, empty) = {}
+seedLastCommitAt(survival, 1, 0, allTs) = {}
+seedLastCommitAt(survival, 0, 0, defaults) = {}
+seedLastCommitAt(survival, 0, 0, empty) = {}
+seedLastCommitAt(survival, 0, 0, allTs) = {}
+seedLastCommitAt(empty, 3650, 0, defaults) = null
+seedLastCommitAt(empty, 3650, 0, empty) = null
+seedLastCommitAt(empty, 3650, 0, allTs) = null
+seedLastCommitAt(empty, 7, 0, defaults) = null
+seedLastCommitAt(empty, 7, 0, empty) = null
+seedLastCommitAt(empty, 7, 0, allTs) = null
+seedLastCommitAt(empty, 3650, 7, defaults) = null
+seedLastCommitAt(empty, 3650, 7, empty) = null
+seedLastCommitAt(empty, 3650, 7, allTs) = null
+seedLastCommitAt(empty, 1, 0, defaults) = null
+seedLastCommitAt(empty, 1, 0, empty) = null
+seedLastCommitAt(empty, 1, 0, allTs) = null
+seedLastCommitAt(empty, 0, 0, defaults) = null
+seedLastCommitAt(empty, 0, 0, empty) = null
+seedLastCommitAt(empty, 0, 0, allTs) = null
+seedLastCommitAt(plain-dir, 3650, 0, defaults) = null
+seedLastCommitAt(plain-dir, 3650, 0, empty) = null
+seedLastCommitAt(plain-dir, 3650, 0, allTs) = null
+seedLastCommitAt(plain-dir, 7, 0, defaults) = null
+seedLastCommitAt(plain-dir, 7, 0, empty) = null
+seedLastCommitAt(plain-dir, 7, 0, allTs) = null
+seedLastCommitAt(plain-dir, 3650, 7, defaults) = null
+seedLastCommitAt(plain-dir, 3650, 7, empty) = null
+seedLastCommitAt(plain-dir, 3650, 7, allTs) = null
+seedLastCommitAt(plain-dir, 1, 0, defaults) = null
+seedLastCommitAt(plain-dir, 1, 0, empty) = null
+seedLastCommitAt(plain-dir, 1, 0, allTs) = null
+seedLastCommitAt(plain-dir, 0, 0, defaults) = null
+seedLastCommitAt(plain-dir, 0, 0, empty) = null
+seedLastCommitAt(plain-dir, 0, 0, allTs) = null
+
+## git: blameAttributedLines + captureAttributedSurvival
+blameAttributedLines(survival, tip, retained(keep.ts)) = {"filesGoneFromTip":0,"linesSurviving":3}
+captureAttributedSurvival(survival, "main", retained(keep.ts), authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", retained(keep.ts), authored=1) = {"fate":"retained","filesGoneFromTip":0,"linesSurviving":1}
+captureAttributedSurvival(survival, "main", retained(keep.ts), authored=3) = {"fate":"retained","filesGoneFromTip":0,"linesSurviving":3}
+captureAttributedSurvival(survival, "main", retained(keep.ts), authored=1000) = {"fate":"retained","filesGoneFromTip":0,"linesSurviving":3}
+captureAttributedSurvival(survival, null, retained(keep.ts), authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, retained(keep.ts), authored=1) = {"fate":"retained","filesGoneFromTip":0,"linesSurviving":1}
+captureAttributedSurvival(survival, null, retained(keep.ts), authored=3) = {"fate":"retained","filesGoneFromTip":0,"linesSurviving":3}
+captureAttributedSurvival(survival, null, retained(keep.ts), authored=1000) = {"fate":"retained","filesGoneFromTip":0,"linesSurviving":3}
+captureAttributedSurvival(survival, "no-such-branch", retained(keep.ts), authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", retained(keep.ts), authored=1) = {"fate":"retained","filesGoneFromTip":0,"linesSurviving":1}
+captureAttributedSurvival(survival, "no-such-branch", retained(keep.ts), authored=3) = {"fate":"retained","filesGoneFromTip":0,"linesSurviving":3}
+captureAttributedSurvival(survival, "no-such-branch", retained(keep.ts), authored=1000) = {"fate":"retained","filesGoneFromTip":0,"linesSurviving":3}
+captureAttributedSurvival(survival, "detached", retained(keep.ts), authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", retained(keep.ts), authored=1) = {"fate":"retained","filesGoneFromTip":0,"linesSurviving":1}
+captureAttributedSurvival(survival, "detached", retained(keep.ts), authored=3) = {"fate":"retained","filesGoneFromTip":0,"linesSurviving":3}
+captureAttributedSurvival(survival, "detached", retained(keep.ts), authored=1000) = {"fate":"retained","filesGoneFromTip":0,"linesSurviving":3}
+blameAttributedLines(survival, tip, overwritten(gone.ts)) = {"filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", overwritten(gone.ts), authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", overwritten(gone.ts), authored=1) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", overwritten(gone.ts), authored=3) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", overwritten(gone.ts), authored=1000) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, overwritten(gone.ts), authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, overwritten(gone.ts), authored=1) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, overwritten(gone.ts), authored=3) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, overwritten(gone.ts), authored=1000) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", overwritten(gone.ts), authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", overwritten(gone.ts), authored=1) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", overwritten(gone.ts), authored=3) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", overwritten(gone.ts), authored=1000) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", overwritten(gone.ts), authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", overwritten(gone.ts), authored=1) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", overwritten(gone.ts), authored=3) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", overwritten(gone.ts), authored=1000) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+blameAttributedLines(survival, tip, fileGone(vanish.ts)) = {"filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", fileGone(vanish.ts), authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", fileGone(vanish.ts), authored=1) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", fileGone(vanish.ts), authored=3) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", fileGone(vanish.ts), authored=1000) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, null, fileGone(vanish.ts), authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, fileGone(vanish.ts), authored=1) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, null, fileGone(vanish.ts), authored=3) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, null, fileGone(vanish.ts), authored=1000) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", fileGone(vanish.ts), authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", fileGone(vanish.ts), authored=1) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", fileGone(vanish.ts), authored=3) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", fileGone(vanish.ts), authored=1000) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", fileGone(vanish.ts), authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", fileGone(vanish.ts), authored=1) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", fileGone(vanish.ts), authored=3) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", fileGone(vanish.ts), authored=1000) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+blameAttributedLines(survival, tip, mixed) = {"filesGoneFromTip":1,"linesSurviving":3}
+captureAttributedSurvival(survival, "main", mixed, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", mixed, authored=1) = {"fate":"retained","filesGoneFromTip":1,"linesSurviving":1}
+captureAttributedSurvival(survival, "main", mixed, authored=3) = {"fate":"retained","filesGoneFromTip":1,"linesSurviving":3}
+captureAttributedSurvival(survival, "main", mixed, authored=1000) = {"fate":"retained","filesGoneFromTip":1,"linesSurviving":3}
+captureAttributedSurvival(survival, null, mixed, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, mixed, authored=1) = {"fate":"retained","filesGoneFromTip":1,"linesSurviving":1}
+captureAttributedSurvival(survival, null, mixed, authored=3) = {"fate":"retained","filesGoneFromTip":1,"linesSurviving":3}
+captureAttributedSurvival(survival, null, mixed, authored=1000) = {"fate":"retained","filesGoneFromTip":1,"linesSurviving":3}
+captureAttributedSurvival(survival, "no-such-branch", mixed, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", mixed, authored=1) = {"fate":"retained","filesGoneFromTip":1,"linesSurviving":1}
+captureAttributedSurvival(survival, "no-such-branch", mixed, authored=3) = {"fate":"retained","filesGoneFromTip":1,"linesSurviving":3}
+captureAttributedSurvival(survival, "no-such-branch", mixed, authored=1000) = {"fate":"retained","filesGoneFromTip":1,"linesSurviving":3}
+captureAttributedSurvival(survival, "detached", mixed, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", mixed, authored=1) = {"fate":"retained","filesGoneFromTip":1,"linesSurviving":1}
+captureAttributedSurvival(survival, "detached", mixed, authored=3) = {"fate":"retained","filesGoneFromTip":1,"linesSurviving":3}
+captureAttributedSurvival(survival, "detached", mixed, authored=1000) = {"fate":"retained","filesGoneFromTip":1,"linesSurviving":3}
+blameAttributedLines(survival, tip, crossFileShaLeak) = {"filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", crossFileShaLeak, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", crossFileShaLeak, authored=1) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", crossFileShaLeak, authored=3) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", crossFileShaLeak, authored=1000) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, crossFileShaLeak, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, crossFileShaLeak, authored=1) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, crossFileShaLeak, authored=3) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, crossFileShaLeak, authored=1000) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", crossFileShaLeak, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", crossFileShaLeak, authored=1) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", crossFileShaLeak, authored=3) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", crossFileShaLeak, authored=1000) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", crossFileShaLeak, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", crossFileShaLeak, authored=1) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", crossFileShaLeak, authored=3) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", crossFileShaLeak, authored=1000) = {"fate":"overwritten","filesGoneFromTip":0,"linesSurviving":0}
+blameAttributedLines(survival, tip, emptyMap) = {"filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", emptyMap, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", emptyMap, authored=1) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", emptyMap, authored=3) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", emptyMap, authored=1000) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, emptyMap, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, emptyMap, authored=1) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, emptyMap, authored=3) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, emptyMap, authored=1000) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", emptyMap, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", emptyMap, authored=1) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", emptyMap, authored=3) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", emptyMap, authored=1000) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", emptyMap, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", emptyMap, authored=1) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", emptyMap, authored=3) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", emptyMap, authored=1000) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+blameAttributedLines(survival, tip, emptyShaSet) = {"filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", emptyShaSet, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", emptyShaSet, authored=1) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", emptyShaSet, authored=3) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", emptyShaSet, authored=1000) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, emptyShaSet, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, emptyShaSet, authored=1) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, emptyShaSet, authored=3) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, emptyShaSet, authored=1000) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", emptyShaSet, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", emptyShaSet, authored=1) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", emptyShaSet, authored=3) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", emptyShaSet, authored=1000) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", emptyShaSet, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", emptyShaSet, authored=1) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", emptyShaSet, authored=3) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", emptyShaSet, authored=1000) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+blameAttributedLines(survival, tip, orphanOnly) = {"filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", orphanOnly, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", orphanOnly, authored=1) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", orphanOnly, authored=3) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", orphanOnly, authored=1000) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, orphanOnly, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, orphanOnly, authored=1) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, orphanOnly, authored=3) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, orphanOnly, authored=1000) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", orphanOnly, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", orphanOnly, authored=1) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", orphanOnly, authored=3) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", orphanOnly, authored=1000) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", orphanOnly, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", orphanOnly, authored=1) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", orphanOnly, authored=3) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", orphanOnly, authored=1000) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+blameAttributedLines(survival, tip, unknownFile) = {"filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", unknownFile, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", unknownFile, authored=1) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", unknownFile, authored=3) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", unknownFile, authored=1000) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, null, unknownFile, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, unknownFile, authored=1) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, null, unknownFile, authored=3) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, null, unknownFile, authored=1000) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", unknownFile, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", unknownFile, authored=1) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", unknownFile, authored=3) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", unknownFile, authored=1000) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", unknownFile, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", unknownFile, authored=1) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", unknownFile, authored=3) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", unknownFile, authored=1000) = {"fate":"overwritten","filesGoneFromTip":1,"linesSurviving":0}
+blameAttributedLines(survival, tip, bogusSha) = {"filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", bogusSha, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", bogusSha, authored=1) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", bogusSha, authored=3) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "main", bogusSha, authored=1000) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, bogusSha, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, bogusSha, authored=1) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, bogusSha, authored=3) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, null, bogusSha, authored=1000) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", bogusSha, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", bogusSha, authored=1) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", bogusSha, authored=3) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "no-such-branch", bogusSha, authored=1000) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", bogusSha, authored=0) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", bogusSha, authored=1) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", bogusSha, authored=3) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, "detached", bogusSha, authored=1000) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, main, 101 files, authored=50) = {"fate":"unknown","filesGoneFromTip":0,"linesSurviving":0}
+captureAttributedSurvival(survival, main, 100 files, authored=50) = {"fate":"overwritten","filesGoneFromTip":100,"linesSurviving":0}
+captureAttributedSurvival(plain-dir, main, retained, authored=3) = {"fate":"unreachable","filesGoneFromTip":0,"linesSurviving":0}
+blameAttributedLines(plain-dir, tip, retained) = {"filesGoneFromTip":1,"linesSurviving":0}
+
+## emit: exported registry surface
+EMIT_ALLOWLIST = {"agent.quota":["kind","eventId","sessionId","at","tool","windows"],"git.momentum":["kind","eventId","sessionId","at","repoId","repoLabel","gitContext","windowDays","commits","filesTouched","linesAdded","linesDeleted","generatedLinesExcluded","repoShape"],"repo.toolchain":["kind","eventId","sessionId","at","repoId","repoLabel","gitContext","packageManager","framework"],"session.delta":["kind","eventId","sessionId","at","repoId","repoLabel","gitContext","startGitContext","commitsLanded","headMoved","filesTouchedUncommitted","linesAddedUncommitted","linesDeletedUncommitted","generatedLinesExcludedUncommitted"],"session.end":["kind","eventId","sessionId","at","reason"],"session.linesurvival":["kind","eventId","sessionId","at","repoId","repoLabel","gitContext","rung","fate","commitsChecked","linesAuthored","linesSurviving","commits","filesGoneFromTip"],"session.notification":["kind","eventId","sessionId","at","notificationType"],"session.prompt":["kind","eventId","sessionId","at"],"session.start":["kind","eventId","sessionId","at","repoId","repoLabel","agent","agentVersion","capabilities","branchWorkType"],"session.tokens":["kind","eventId","sessionId","at","models"],"tool.call":["kind","eventId","sessionId","at","toolName","inputTokens","outputTokens","cacheReadTokens","cacheWriteTokens","costUsd","errored","linesAdded","linesRemoved","fileId","dirId","fileCategory","fileLabel","dirLabel","models","verificationKind","verificationPassed","fileLanguage","undoKind"]}
+MODEL_ITEM_ALLOWLIST = ["model","inputTokens","outputTokens","cacheReadTokens","cacheWriteTokens","costUsd"]
+SESSION_TOKENS_MODEL_ALLOWLIST = ["model","inputTokens","outputTokens","cacheReadTokens","cacheWriteTokens"]
+CAPABILITIES_ALLOWLIST = ["hasTokens","hasCacheTokens","cost","toolResult","endReason","duration","verification","costScope","usageWindow"]
+AGENT_VERSION_SHAPE.source = "^[0-9A-Za-z._+-]{1,64}$"
+AGENT_VERSION_SHAPE.flags = ""
+EmitAllowlistError name = "EmitAllowlistError"
+EmitAllowlistError instanceof Error = true
+
+## emit: assertEmitSafe verdicts
+notObject(null) = EmitAllowlistError: emit blocked: event is not an object
+notObject(undefined) = EmitAllowlistError: emit blocked: event is not an object
+notObject(array) = EmitAllowlistError: emit blocked: event is not an object
+notObject(string) = EmitAllowlistError: emit blocked: event is not an object
+notObject(number) = EmitAllowlistError: emit blocked: event is not an object
+noKind = EmitAllowlistError: emit blocked: unknown event kind undefined
+kindNotString = EmitAllowlistError: emit blocked: unknown event kind 7
+unknownKind = EmitAllowlistError: emit blocked: unknown event kind "session.bogus"
+kindProtoPollution = TypeError: allowed.includes is not a function
+kindConstructor = TypeError: allowed.includes is not a function
+minimal[session.start] = ok
+leak[session.start].prompt = EmitAllowlistError: emit blocked: un-allowlisted key "prompt" on session.start event
+leak[session.start].command = EmitAllowlistError: emit blocked: un-allowlisted key "command" on session.start event
+leak[session.start].file_text = EmitAllowlistError: emit blocked: un-allowlisted key "file_text" on session.start event
+leak[session.start].stdout = EmitAllowlistError: emit blocked: un-allowlisted key "stdout" on session.start event
+leak[session.start].stderr = EmitAllowlistError: emit blocked: un-allowlisted key "stderr" on session.start event
+leak[session.start].file_path = EmitAllowlistError: emit blocked: un-allowlisted key "file_path" on session.start event
+leak[session.start].tool_input = EmitAllowlistError: emit blocked: un-allowlisted key "tool_input" on session.start event
+leak[session.start].tool_response = EmitAllowlistError: emit blocked: un-allowlisted key "tool_response" on session.start event
+leak[session.start].tool_error = EmitAllowlistError: emit blocked: un-allowlisted key "tool_error" on session.start event
+leak[session.start].cwd = EmitAllowlistError: emit blocked: un-allowlisted key "cwd" on session.start event
+leak[session.start].message = EmitAllowlistError: emit blocked: un-allowlisted key "message" on session.start event
+leak[session.start].branch = EmitAllowlistError: emit blocked: un-allowlisted key "branch" on session.start event
+leak[session.start].originUrl = EmitAllowlistError: emit blocked: un-allowlisted key "originUrl" on session.start event
+leak[session.start].__proto__x = EmitAllowlistError: emit blocked: un-allowlisted key "__proto__x" on session.start event
+minimal[tool.call] = ok
+leak[tool.call].prompt = EmitAllowlistError: emit blocked: un-allowlisted key "prompt" on tool.call event
+leak[tool.call].command = EmitAllowlistError: emit blocked: un-allowlisted key "command" on tool.call event
+leak[tool.call].file_text = EmitAllowlistError: emit blocked: un-allowlisted key "file_text" on tool.call event
+leak[tool.call].stdout = EmitAllowlistError: emit blocked: un-allowlisted key "stdout" on tool.call event
+leak[tool.call].stderr = EmitAllowlistError: emit blocked: un-allowlisted key "stderr" on tool.call event
+leak[tool.call].file_path = EmitAllowlistError: emit blocked: un-allowlisted key "file_path" on tool.call event
+leak[tool.call].tool_input = EmitAllowlistError: emit blocked: un-allowlisted key "tool_input" on tool.call event
+leak[tool.call].tool_response = EmitAllowlistError: emit blocked: un-allowlisted key "tool_response" on tool.call event
+leak[tool.call].tool_error = EmitAllowlistError: emit blocked: un-allowlisted key "tool_error" on tool.call event
+leak[tool.call].cwd = EmitAllowlistError: emit blocked: un-allowlisted key "cwd" on tool.call event
+leak[tool.call].message = EmitAllowlistError: emit blocked: un-allowlisted key "message" on tool.call event
+leak[tool.call].branch = EmitAllowlistError: emit blocked: un-allowlisted key "branch" on tool.call event
+leak[tool.call].originUrl = EmitAllowlistError: emit blocked: un-allowlisted key "originUrl" on tool.call event
+leak[tool.call].__proto__x = EmitAllowlistError: emit blocked: un-allowlisted key "__proto__x" on tool.call event
+minimal[session.end] = ok
+leak[session.end].prompt = EmitAllowlistError: emit blocked: un-allowlisted key "prompt" on session.end event
+leak[session.end].command = EmitAllowlistError: emit blocked: un-allowlisted key "command" on session.end event
+leak[session.end].file_text = EmitAllowlistError: emit blocked: un-allowlisted key "file_text" on session.end event
+leak[session.end].stdout = EmitAllowlistError: emit blocked: un-allowlisted key "stdout" on session.end event
+leak[session.end].stderr = EmitAllowlistError: emit blocked: un-allowlisted key "stderr" on session.end event
+leak[session.end].file_path = EmitAllowlistError: emit blocked: un-allowlisted key "file_path" on session.end event
+leak[session.end].tool_input = EmitAllowlistError: emit blocked: un-allowlisted key "tool_input" on session.end event
+leak[session.end].tool_response = EmitAllowlistError: emit blocked: un-allowlisted key "tool_response" on session.end event
+leak[session.end].tool_error = EmitAllowlistError: emit blocked: un-allowlisted key "tool_error" on session.end event
+leak[session.end].cwd = EmitAllowlistError: emit blocked: un-allowlisted key "cwd" on session.end event
+leak[session.end].message = EmitAllowlistError: emit blocked: un-allowlisted key "message" on session.end event
+leak[session.end].branch = EmitAllowlistError: emit blocked: un-allowlisted key "branch" on session.end event
+leak[session.end].originUrl = EmitAllowlistError: emit blocked: un-allowlisted key "originUrl" on session.end event
+leak[session.end].__proto__x = EmitAllowlistError: emit blocked: un-allowlisted key "__proto__x" on session.end event
+minimal[session.notification] = ok
+leak[session.notification].prompt = EmitAllowlistError: emit blocked: un-allowlisted key "prompt" on session.notification event
+leak[session.notification].command = EmitAllowlistError: emit blocked: un-allowlisted key "command" on session.notification event
+leak[session.notification].file_text = EmitAllowlistError: emit blocked: un-allowlisted key "file_text" on session.notification event
+leak[session.notification].stdout = EmitAllowlistError: emit blocked: un-allowlisted key "stdout" on session.notification event
+leak[session.notification].stderr = EmitAllowlistError: emit blocked: un-allowlisted key "stderr" on session.notification event
+leak[session.notification].file_path = EmitAllowlistError: emit blocked: un-allowlisted key "file_path" on session.notification event
+leak[session.notification].tool_input = EmitAllowlistError: emit blocked: un-allowlisted key "tool_input" on session.notification event
+leak[session.notification].tool_response = EmitAllowlistError: emit blocked: un-allowlisted key "tool_response" on session.notification event
+leak[session.notification].tool_error = EmitAllowlistError: emit blocked: un-allowlisted key "tool_error" on session.notification event
+leak[session.notification].cwd = EmitAllowlistError: emit blocked: un-allowlisted key "cwd" on session.notification event
+leak[session.notification].message = EmitAllowlistError: emit blocked: un-allowlisted key "message" on session.notification event
+leak[session.notification].branch = EmitAllowlistError: emit blocked: un-allowlisted key "branch" on session.notification event
+leak[session.notification].originUrl = EmitAllowlistError: emit blocked: un-allowlisted key "originUrl" on session.notification event
+leak[session.notification].__proto__x = EmitAllowlistError: emit blocked: un-allowlisted key "__proto__x" on session.notification event
+minimal[git.momentum] = ok
+leak[git.momentum].prompt = EmitAllowlistError: emit blocked: un-allowlisted key "prompt" on git.momentum event
+leak[git.momentum].command = EmitAllowlistError: emit blocked: un-allowlisted key "command" on git.momentum event
+leak[git.momentum].file_text = EmitAllowlistError: emit blocked: un-allowlisted key "file_text" on git.momentum event
+leak[git.momentum].stdout = EmitAllowlistError: emit blocked: un-allowlisted key "stdout" on git.momentum event
+leak[git.momentum].stderr = EmitAllowlistError: emit blocked: un-allowlisted key "stderr" on git.momentum event
+leak[git.momentum].file_path = EmitAllowlistError: emit blocked: un-allowlisted key "file_path" on git.momentum event
+leak[git.momentum].tool_input = EmitAllowlistError: emit blocked: un-allowlisted key "tool_input" on git.momentum event
+leak[git.momentum].tool_response = EmitAllowlistError: emit blocked: un-allowlisted key "tool_response" on git.momentum event
+leak[git.momentum].tool_error = EmitAllowlistError: emit blocked: un-allowlisted key "tool_error" on git.momentum event
+leak[git.momentum].cwd = EmitAllowlistError: emit blocked: un-allowlisted key "cwd" on git.momentum event
+leak[git.momentum].message = EmitAllowlistError: emit blocked: un-allowlisted key "message" on git.momentum event
+leak[git.momentum].branch = EmitAllowlistError: emit blocked: un-allowlisted key "branch" on git.momentum event
+leak[git.momentum].originUrl = EmitAllowlistError: emit blocked: un-allowlisted key "originUrl" on git.momentum event
+leak[git.momentum].__proto__x = EmitAllowlistError: emit blocked: un-allowlisted key "__proto__x" on git.momentum event
+minimal[session.delta] = ok
+leak[session.delta].prompt = EmitAllowlistError: emit blocked: un-allowlisted key "prompt" on session.delta event
+leak[session.delta].command = EmitAllowlistError: emit blocked: un-allowlisted key "command" on session.delta event
+leak[session.delta].file_text = EmitAllowlistError: emit blocked: un-allowlisted key "file_text" on session.delta event
+leak[session.delta].stdout = EmitAllowlistError: emit blocked: un-allowlisted key "stdout" on session.delta event
+leak[session.delta].stderr = EmitAllowlistError: emit blocked: un-allowlisted key "stderr" on session.delta event
+leak[session.delta].file_path = EmitAllowlistError: emit blocked: un-allowlisted key "file_path" on session.delta event
+leak[session.delta].tool_input = EmitAllowlistError: emit blocked: un-allowlisted key "tool_input" on session.delta event
+leak[session.delta].tool_response = EmitAllowlistError: emit blocked: un-allowlisted key "tool_response" on session.delta event
+leak[session.delta].tool_error = EmitAllowlistError: emit blocked: un-allowlisted key "tool_error" on session.delta event
+leak[session.delta].cwd = EmitAllowlistError: emit blocked: un-allowlisted key "cwd" on session.delta event
+leak[session.delta].message = EmitAllowlistError: emit blocked: un-allowlisted key "message" on session.delta event
+leak[session.delta].branch = EmitAllowlistError: emit blocked: un-allowlisted key "branch" on session.delta event
+leak[session.delta].originUrl = EmitAllowlistError: emit blocked: un-allowlisted key "originUrl" on session.delta event
+leak[session.delta].__proto__x = EmitAllowlistError: emit blocked: un-allowlisted key "__proto__x" on session.delta event
+minimal[session.linesurvival] = ok
+leak[session.linesurvival].prompt = EmitAllowlistError: emit blocked: un-allowlisted key "prompt" on session.linesurvival event
+leak[session.linesurvival].command = EmitAllowlistError: emit blocked: un-allowlisted key "command" on session.linesurvival event
+leak[session.linesurvival].file_text = EmitAllowlistError: emit blocked: un-allowlisted key "file_text" on session.linesurvival event
+leak[session.linesurvival].stdout = EmitAllowlistError: emit blocked: un-allowlisted key "stdout" on session.linesurvival event
+leak[session.linesurvival].stderr = EmitAllowlistError: emit blocked: un-allowlisted key "stderr" on session.linesurvival event
+leak[session.linesurvival].file_path = EmitAllowlistError: emit blocked: un-allowlisted key "file_path" on session.linesurvival event
+leak[session.linesurvival].tool_input = EmitAllowlistError: emit blocked: un-allowlisted key "tool_input" on session.linesurvival event
+leak[session.linesurvival].tool_response = EmitAllowlistError: emit blocked: un-allowlisted key "tool_response" on session.linesurvival event
+leak[session.linesurvival].tool_error = EmitAllowlistError: emit blocked: un-allowlisted key "tool_error" on session.linesurvival event
+leak[session.linesurvival].cwd = EmitAllowlistError: emit blocked: un-allowlisted key "cwd" on session.linesurvival event
+leak[session.linesurvival].message = EmitAllowlistError: emit blocked: un-allowlisted key "message" on session.linesurvival event
+leak[session.linesurvival].branch = EmitAllowlistError: emit blocked: un-allowlisted key "branch" on session.linesurvival event
+leak[session.linesurvival].originUrl = EmitAllowlistError: emit blocked: un-allowlisted key "originUrl" on session.linesurvival event
+leak[session.linesurvival].__proto__x = EmitAllowlistError: emit blocked: un-allowlisted key "__proto__x" on session.linesurvival event
+minimal[repo.toolchain] = ok
+leak[repo.toolchain].prompt = EmitAllowlistError: emit blocked: un-allowlisted key "prompt" on repo.toolchain event
+leak[repo.toolchain].command = EmitAllowlistError: emit blocked: un-allowlisted key "command" on repo.toolchain event
+leak[repo.toolchain].file_text = EmitAllowlistError: emit blocked: un-allowlisted key "file_text" on repo.toolchain event
+leak[repo.toolchain].stdout = EmitAllowlistError: emit blocked: un-allowlisted key "stdout" on repo.toolchain event
+leak[repo.toolchain].stderr = EmitAllowlistError: emit blocked: un-allowlisted key "stderr" on repo.toolchain event
+leak[repo.toolchain].file_path = EmitAllowlistError: emit blocked: un-allowlisted key "file_path" on repo.toolchain event
+leak[repo.toolchain].tool_input = EmitAllowlistError: emit blocked: un-allowlisted key "tool_input" on repo.toolchain event
+leak[repo.toolchain].tool_response = EmitAllowlistError: emit blocked: un-allowlisted key "tool_response" on repo.toolchain event
+leak[repo.toolchain].tool_error = EmitAllowlistError: emit blocked: un-allowlisted key "tool_error" on repo.toolchain event
+leak[repo.toolchain].cwd = EmitAllowlistError: emit blocked: un-allowlisted key "cwd" on repo.toolchain event
+leak[repo.toolchain].message = EmitAllowlistError: emit blocked: un-allowlisted key "message" on repo.toolchain event
+leak[repo.toolchain].branch = EmitAllowlistError: emit blocked: un-allowlisted key "branch" on repo.toolchain event
+leak[repo.toolchain].originUrl = EmitAllowlistError: emit blocked: un-allowlisted key "originUrl" on repo.toolchain event
+leak[repo.toolchain].__proto__x = EmitAllowlistError: emit blocked: un-allowlisted key "__proto__x" on repo.toolchain event
+minimal[session.prompt] = ok
+leak[session.prompt].prompt = EmitAllowlistError: emit blocked: un-allowlisted key "prompt" on session.prompt event
+leak[session.prompt].command = EmitAllowlistError: emit blocked: un-allowlisted key "command" on session.prompt event
+leak[session.prompt].file_text = EmitAllowlistError: emit blocked: un-allowlisted key "file_text" on session.prompt event
+leak[session.prompt].stdout = EmitAllowlistError: emit blocked: un-allowlisted key "stdout" on session.prompt event
+leak[session.prompt].stderr = EmitAllowlistError: emit blocked: un-allowlisted key "stderr" on session.prompt event
+leak[session.prompt].file_path = EmitAllowlistError: emit blocked: un-allowlisted key "file_path" on session.prompt event
+leak[session.prompt].tool_input = EmitAllowlistError: emit blocked: un-allowlisted key "tool_input" on session.prompt event
+leak[session.prompt].tool_response = EmitAllowlistError: emit blocked: un-allowlisted key "tool_response" on session.prompt event
+leak[session.prompt].tool_error = EmitAllowlistError: emit blocked: un-allowlisted key "tool_error" on session.prompt event
+leak[session.prompt].cwd = EmitAllowlistError: emit blocked: un-allowlisted key "cwd" on session.prompt event
+leak[session.prompt].message = EmitAllowlistError: emit blocked: un-allowlisted key "message" on session.prompt event
+leak[session.prompt].branch = EmitAllowlistError: emit blocked: un-allowlisted key "branch" on session.prompt event
+leak[session.prompt].originUrl = EmitAllowlistError: emit blocked: un-allowlisted key "originUrl" on session.prompt event
+leak[session.prompt].__proto__x = EmitAllowlistError: emit blocked: un-allowlisted key "__proto__x" on session.prompt event
+minimal[session.tokens] = ok
+leak[session.tokens].prompt = EmitAllowlistError: emit blocked: un-allowlisted key "prompt" on session.tokens event
+leak[session.tokens].command = EmitAllowlistError: emit blocked: un-allowlisted key "command" on session.tokens event
+leak[session.tokens].file_text = EmitAllowlistError: emit blocked: un-allowlisted key "file_text" on session.tokens event
+leak[session.tokens].stdout = EmitAllowlistError: emit blocked: un-allowlisted key "stdout" on session.tokens event
+leak[session.tokens].stderr = EmitAllowlistError: emit blocked: un-allowlisted key "stderr" on session.tokens event
+leak[session.tokens].file_path = EmitAllowlistError: emit blocked: un-allowlisted key "file_path" on session.tokens event
+leak[session.tokens].tool_input = EmitAllowlistError: emit blocked: un-allowlisted key "tool_input" on session.tokens event
+leak[session.tokens].tool_response = EmitAllowlistError: emit blocked: un-allowlisted key "tool_response" on session.tokens event
+leak[session.tokens].tool_error = EmitAllowlistError: emit blocked: un-allowlisted key "tool_error" on session.tokens event
+leak[session.tokens].cwd = EmitAllowlistError: emit blocked: un-allowlisted key "cwd" on session.tokens event
+leak[session.tokens].message = EmitAllowlistError: emit blocked: un-allowlisted key "message" on session.tokens event
+leak[session.tokens].branch = EmitAllowlistError: emit blocked: un-allowlisted key "branch" on session.tokens event
+leak[session.tokens].originUrl = EmitAllowlistError: emit blocked: un-allowlisted key "originUrl" on session.tokens event
+leak[session.tokens].__proto__x = EmitAllowlistError: emit blocked: un-allowlisted key "__proto__x" on session.tokens event
+minimal[agent.quota] = ok
+leak[agent.quota].prompt = EmitAllowlistError: emit blocked: un-allowlisted key "prompt" on agent.quota event
+leak[agent.quota].command = EmitAllowlistError: emit blocked: un-allowlisted key "command" on agent.quota event
+leak[agent.quota].file_text = EmitAllowlistError: emit blocked: un-allowlisted key "file_text" on agent.quota event
+leak[agent.quota].stdout = EmitAllowlistError: emit blocked: un-allowlisted key "stdout" on agent.quota event
+leak[agent.quota].stderr = EmitAllowlistError: emit blocked: un-allowlisted key "stderr" on agent.quota event
+leak[agent.quota].file_path = EmitAllowlistError: emit blocked: un-allowlisted key "file_path" on agent.quota event
+leak[agent.quota].tool_input = EmitAllowlistError: emit blocked: un-allowlisted key "tool_input" on agent.quota event
+leak[agent.quota].tool_response = EmitAllowlistError: emit blocked: un-allowlisted key "tool_response" on agent.quota event
+leak[agent.quota].tool_error = EmitAllowlistError: emit blocked: un-allowlisted key "tool_error" on agent.quota event
+leak[agent.quota].cwd = EmitAllowlistError: emit blocked: un-allowlisted key "cwd" on agent.quota event
+leak[agent.quota].message = EmitAllowlistError: emit blocked: un-allowlisted key "message" on agent.quota event
+leak[agent.quota].branch = EmitAllowlistError: emit blocked: un-allowlisted key "branch" on agent.quota event
+leak[agent.quota].originUrl = EmitAllowlistError: emit blocked: un-allowlisted key "originUrl" on agent.quota event
+leak[agent.quota].__proto__x = EmitAllowlistError: emit blocked: un-allowlisted key "__proto__x" on agent.quota event
+
+## emit: session.start deep validation
+start.capabilities=undefined = ok
+start.capabilities={} = ok
+start.capabilities=null = EmitAllowlistError: emit blocked: session.start capabilities is not an object
+start.capabilities=[] = EmitAllowlistError: emit blocked: session.start capabilities is not an object
+start.capabilities="str" = EmitAllowlistError: emit blocked: session.start capabilities is not an object
+start.capabilities=7 = EmitAllowlistError: emit blocked: session.start capabilities is not an object
+start.capabilities={"hasTokens":true} = ok
+start.capabilities={"endReason":true,"hasCacheTokens":true,"hasTokens":false} = ok
+start.capabilities={"hasTokens":"yes"} = EmitAllowlistError: emit blocked: capabilities.hasTokens must be a boolean
+start.capabilities={"hasTokens":1} = EmitAllowlistError: emit blocked: capabilities.hasTokens must be a boolean
+start.capabilities={"hasTokens":null} = EmitAllowlistError: emit blocked: capabilities.hasTokens must be a boolean
+start.capabilities={"cost":"actual"} = EmitAllowlistError: emit blocked: capabilities.cost "actual" not in the closed enum
+start.capabilities={"cost":"estimate"} = EmitAllowlistError: emit blocked: capabilities.cost "estimate" not in the closed enum
+start.capabilities={"cost":"none"} = ok
+start.capabilities={"cost":"bogus"} = EmitAllowlistError: emit blocked: capabilities.cost "bogus" not in the closed enum
+start.capabilities={"cost":true} = EmitAllowlistError: emit blocked: capabilities.cost true not in the closed enum
+start.capabilities={"cost":null} = EmitAllowlistError: emit blocked: capabilities.cost null not in the closed enum
+start.capabilities={"toolResult":"full"} = EmitAllowlistError: emit blocked: capabilities.toolResult "full" not in the closed enum
+start.capabilities={"toolResult":"bogus"} = EmitAllowlistError: emit blocked: capabilities.toolResult "bogus" not in the closed enum
+start.capabilities={"duration":"wall"} = EmitAllowlistError: emit blocked: capabilities.duration "wall" not in the closed enum
+start.capabilities={"duration":"bogus"} = EmitAllowlistError: emit blocked: capabilities.duration "bogus" not in the closed enum
+start.capabilities={"verification":"full"} = EmitAllowlistError: emit blocked: capabilities.verification "full" not in the closed enum
+start.capabilities={"verification":"bogus"} = EmitAllowlistError: emit blocked: capabilities.verification "bogus" not in the closed enum
+start.capabilities={"costScope":"session"} = ok
+start.capabilities={"costScope":"sesion"} = EmitAllowlistError: emit blocked: capabilities.costScope "sesion" not in the closed enum
+start.capabilities={"usageWindow":"rate"} = EmitAllowlistError: emit blocked: capabilities.usageWindow "rate" not in the closed enum
+start.capabilities={"usageWindow":"rato"} = EmitAllowlistError: emit blocked: capabilities.usageWindow "rato" not in the closed enum
+start.capabilities={"prompt":"leak"} = EmitAllowlistError: emit blocked: un-allowlisted key "prompt" on session.start capabilities
+start.capabilities={"file_path":"/etc/passwd"} = EmitAllowlistError: emit blocked: un-allowlisted key "file_path" on session.start capabilities
+start.capabilities={"hasTokens":true,"prompt":"leak"} = EmitAllowlistError: emit blocked: un-allowlisted key "prompt" on session.start capabilities
+start.agentVersion=undefined = ok
+start.agentVersion="1.2.3" = ok
+start.agentVersion="0.146.0-alpha.3.1" = ok
+start.agentVersion="unknown" = ok
+start.agentVersion="" = EmitAllowlistError: emit blocked: session.start agentVersion "" is not a version shape
+start.agentVersion="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" = ok
+start.agentVersion="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" = EmitAllowlistError: emit blocked: session.start agentVersion "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" is not a version shape
+start.agentVersion="1.2.3 /Users/me/secret" = EmitAllowlistError: emit blocked: session.start agentVersion "1.2.3 /Users/me/secret" is not a version shape
+start.agentVersion="has space" = EmitAllowlistError: emit blocked: session.start agentVersion "has space" is not a version shape
+start.agentVersion="has/slash" = EmitAllowlistError: emit blocked: session.start agentVersion "has/slash" is not a version shape
+start.agentVersion="тест" = EmitAllowlistError: emit blocked: session.start agentVersion "тест" is not a version shape
+start.agentVersion=7 = EmitAllowlistError: emit blocked: session.start agentVersion 7 is not a version shape
+start.agentVersion=null = EmitAllowlistError: emit blocked: session.start agentVersion null is not a version shape
+start.agentVersion={} = EmitAllowlistError: emit blocked: session.start agentVersion {} is not a version shape
+start.branchWorkType=undefined = ok
+start.branchWorkType="feature" = ok
+start.branchWorkType="fix" = ok
+start.branchWorkType="refactor" = ok
+start.branchWorkType="chore" = ok
+start.branchWorkType="other" = ok
+start.branchWorkType="Feature" = EmitAllowlistError: emit blocked: session.start branchWorkType "Feature" not in the closed enum
+start.branchWorkType="feat/x" = EmitAllowlistError: emit blocked: session.start branchWorkType "feat/x" not in the closed enum
+start.branchWorkType="" = EmitAllowlistError: emit blocked: session.start branchWorkType "" not in the closed enum
+start.branchWorkType=7 = EmitAllowlistError: emit blocked: session.start branchWorkType 7 not in the closed enum
+start.branchWorkType=null = EmitAllowlistError: emit blocked: session.start branchWorkType null not in the closed enum
+start.repoId="<hash:14>" = ok
+start.repoId="<sha:22>" = ok
+start.repoId="not-hex" = ok
+start.repoId="" = ok
+start.repoId="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" = ok
+start.repoId="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaextra" = ok
+start.repoId="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" = ok
+start.repoId=7 = ok
+start.repoId=null = ok
+start.repoId=undefined = ok
+
+## emit: tool.call deep validation
+call.toolName="Bash" = ok
+call.toolName="Read" = ok
+call.toolName="Edit" = ok
+call.toolName="Shell" = ok
+call.toolName="ApplyPatch" = ok
+call.toolName="mcp" = ok
+call.toolName="other" = ok
+call.toolName="Task" = ok
+call.toolName="TodoWrite" = ok
+call.toolName="mcp__server__verb" = EmitAllowlistError: emit blocked: tool.call toolName "mcp__server__verb" not in the closed set
+call.toolName="bash" = EmitAllowlistError: emit blocked: tool.call toolName "bash" not in the closed set
+call.toolName="" = EmitAllowlistError: emit blocked: tool.call toolName "" not in the closed set
+call.toolName=undefined = EmitAllowlistError: emit blocked: tool.call toolName undefined not in the closed set
+call.toolName=null = EmitAllowlistError: emit blocked: tool.call toolName null not in the closed set
+call.toolName=7 = EmitAllowlistError: emit blocked: tool.call toolName 7 not in the closed set
+call.toolName="Unknown" = EmitAllowlistError: emit blocked: tool.call toolName "Unknown" not in the closed set
+call.fileLanguage=undefined = ok
+call.fileLanguage="typescript" = ok
+call.fileLanguage="svelte" = ok
+call.fileLanguage="TypeScript" = EmitAllowlistError: emit blocked: tool.call fileLanguage "TypeScript" not in the closed enum
+call.fileLanguage="brainfuck" = EmitAllowlistError: emit blocked: tool.call fileLanguage "brainfuck" not in the closed enum
+call.fileLanguage="" = EmitAllowlistError: emit blocked: tool.call fileLanguage "" not in the closed enum
+call.fileLanguage=7 = EmitAllowlistError: emit blocked: tool.call fileLanguage 7 not in the closed enum
+call.fileLanguage=null = EmitAllowlistError: emit blocked: tool.call fileLanguage null not in the closed enum
+call.undoKind=undefined = ok
+call.undoKind="reset-hard" = ok
+call.undoKind="restore" = ok
+call.undoKind="clean" = ok
+call.undoKind="revert" = ok
+call.undoKind="reset" = EmitAllowlistError: emit blocked: tool.call undoKind "reset" not in the closed enum
+call.undoKind="" = EmitAllowlistError: emit blocked: tool.call undoKind "" not in the closed enum
+call.undoKind=7 = EmitAllowlistError: emit blocked: tool.call undoKind 7 not in the closed enum
+call.undoKind=null = EmitAllowlistError: emit blocked: tool.call undoKind null not in the closed enum
+call.models=undefined = ok
+call.models=[] = ok
+call.models=[{"model":"m"}] = ok
+call.models=[{"cacheReadTokens":3,"cacheWriteTokens":4,"costUsd":0.1,"inputTokens":1,"model":"m","outputTokens":2}] = ok
+call.models=[{"model":"m","prompt":"leak"}] = EmitAllowlistError: emit blocked: un-allowlisted key "prompt" on tool.call models item
+call.models=[{"file_path":"/x","model":"m"}] = EmitAllowlistError: emit blocked: un-allowlisted key "file_path" on tool.call models item
+call.models=[null] = EmitAllowlistError: emit blocked: tool.call models item is not an object
+call.models=["str"] = EmitAllowlistError: emit blocked: tool.call models item is not an object
+call.models=[[]] = EmitAllowlistError: emit blocked: tool.call models item is not an object
+call.models={} = EmitAllowlistError: emit blocked: tool.call models is not an array
+call.models="str" = EmitAllowlistError: emit blocked: tool.call models is not an array
+call.models=[{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"}] = ok
+call.models=[{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"}] = ok
+call.models=[{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"},{"model":"m"}] = EmitAllowlistError: emit blocked: tool.call models exceeds the 16 cap
+
+## emit: session.tokens deep validation
+tokens.models=undefined = EmitAllowlistError: emit blocked: session.tokens models is not an array
+tokens.models=null = EmitAllowlistError: emit blocked: session.tokens models is not an array
+tokens.models={} = EmitAllowlistError: emit blocked: session.tokens models is not an array
+tokens.models="str" = EmitAllowlistError: emit blocked: session.tokens models is not an array
+tokens.models=[] = ok
+tokens.models=[{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"gpt-5-codex","outputTokens":1}] = ok
+tokens.models=[{"cacheReadTokens":0,"cacheWriteTokens":0,"costUsd":1,"inputTokens":1,"model":"gpt-5-codex","outputTokens":1}] = EmitAllowlistError: emit blocked: un-allowlisted key "costUsd" on session.tokens models item
+tokens.models=[{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"gpt-5-codex","outputTokens":1,"prompt":"leak"}] = EmitAllowlistError: emit blocked: un-allowlisted key "prompt" on session.tokens models item
+tokens.models=[null] = EmitAllowlistError: emit blocked: session.tokens models item is not an object
+tokens.models=[{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"","outputTokens":1}] = EmitAllowlistError: emit blocked: session.tokens model "" is not a model-id shape
+tokens.models=[{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"<hash:14>","outputTokens":1}] = ok
+tokens.models=[{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","outputTokens":1}] = EmitAllowlistError: emit blocked: session.tokens model "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" is not a model-id shape
+tokens.models=[{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"-leading-dash","outputTokens":1}] = EmitAllowlistError: emit blocked: session.tokens model "-leading-dash" is not a model-id shape
+tokens.models=[{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"/Users/me/secret","outputTokens":1}] = EmitAllowlistError: emit blocked: session.tokens model "/Users/me/secret" is not a model-id shape
+tokens.models=[{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"gpt 5","outputTokens":1}] = EmitAllowlistError: emit blocked: session.tokens model "gpt 5" is not a model-id shape
+tokens.models=[{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":7,"outputTokens":1}] = EmitAllowlistError: emit blocked: session.tokens model 7 is not a model-id shape
+tokens.models=[{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":-1,"model":"gpt-5-codex","outputTokens":1}] = EmitAllowlistError: emit blocked: session.tokens inputTokens is not a non-negative integer
+tokens.models=[{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1.5,"model":"gpt-5-codex","outputTokens":1}] = EmitAllowlistError: emit blocked: session.tokens inputTokens is not a non-negative integer
+tokens.models=[{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":null,"model":"gpt-5-codex","outputTokens":1}] = EmitAllowlistError: emit blocked: session.tokens inputTokens is not a non-negative integer
+tokens.models=[{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":null,"model":"gpt-5-codex","outputTokens":1}] = EmitAllowlistError: emit blocked: session.tokens inputTokens is not a non-negative integer
+tokens.models=[{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"gpt-5-codex","outputTokens":"1"}] = EmitAllowlistError: emit blocked: session.tokens outputTokens is not a non-negative integer
+tokens.models=[{"cacheWriteTokens":0,"inputTokens":1,"model":"gpt-5-codex","outputTokens":1}] = EmitAllowlistError: emit blocked: session.tokens cacheReadTokens is not a non-negative integer
+tokens.models=[{"model":"m"}] = EmitAllowlistError: emit blocked: session.tokens inputTokens is not a non-negative integer
+tokens.models=[{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"gpt-5-codex","outputTokens":1},{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"gpt-5-codex","outputTokens":1},{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"gpt-5-codex","outputTokens":1},{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"gpt-5-codex","outputTokens":1},{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"gpt-5-codex","outputTokens":1},{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"gpt-5-codex","outputTokens":1},{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"gpt-5-codex","outputTokens":1},{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"gpt-5-codex","outputTokens":1}] = ok
+tokens.models=[{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"gpt-5-codex","outputTokens":1},{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"gpt-5-codex","outputTokens":1},{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"gpt-5-codex","outputTokens":1},{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"gpt-5-codex","outputTokens":1},{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"gpt-5-codex","outputTokens":1},{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"gpt-5-codex","outputTokens":1},{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"gpt-5-codex","outputTokens":1},{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"gpt-5-codex","outputTokens":1},{"cacheReadTokens":0,"cacheWriteTokens":0,"inputTokens":1,"model":"gpt-5-codex","outputTokens":1}] = ok
+
+## emit: agent.quota deep validation
+quota.tool="codex" = ok
+quota.tool="claude-code" = ok
+quota.tool="cursor" = EmitAllowlistError: emit blocked: agent.quota tool is not a registered agent
+quota.tool="" = EmitAllowlistError: emit blocked: agent.quota tool is not a registered agent
+quota.tool=undefined = EmitAllowlistError: emit blocked: agent.quota tool is not a registered agent
+quota.tool=null = EmitAllowlistError: emit blocked: agent.quota tool is not a registered agent
+quota.tool=7 = EmitAllowlistError: emit blocked: agent.quota tool is not a registered agent
+quota.windows=undefined = EmitAllowlistError: emit blocked: agent.quota windows is not an array
+quota.windows=null = EmitAllowlistError: emit blocked: agent.quota windows is not an array
+quota.windows={} = EmitAllowlistError: emit blocked: agent.quota windows is not an array
+quota.windows="str" = EmitAllowlistError: emit blocked: agent.quota windows is not an array
+quota.windows=[] = EmitAllowlistError: emit blocked: agent.quota carries no windows
+quota.windows=[{"resetsAt":"2026-01-01T05:00:00.000Z","usedPercent":12.5,"windowMinutes":300}] = ok
+quota.windows=[{"resetsAt":"2026-01-01T05:00:00.000Z","usedPercent":12.5,"windowMinutes":300},{"resetsAt":"2026-01-01T05:00:00.000Z","usedPercent":12.5,"windowMinutes":10080}] = ok
+quota.windows=[{"resetsAt":"2026-01-01T05:00:00.000Z","usedPercent":12.5,"windowMinutes":300},{"resetsAt":"2026-01-01T05:00:00.000Z","usedPercent":12.5,"windowMinutes":300},{"resetsAt":"2026-01-01T05:00:00.000Z","usedPercent":12.5,"windowMinutes":300}] = ok
+quota.windows=[{"resetsAt":"2026-01-01T05:00:00.000Z","usedPercent":12.5,"windowMinutes":300},{"resetsAt":"2026-01-01T05:00:00.000Z","usedPercent":12.5,"windowMinutes":300},{"resetsAt":"2026-01-01T05:00:00.000Z","usedPercent":12.5,"windowMinutes":300},{"resetsAt":"2026-01-01T05:00:00.000Z","usedPercent":12.5,"windowMinutes":300}] = ok
+quota.windows=[{"plan_type":"pro","resetsAt":"2026-01-01T05:00:00.000Z","usedPercent":12.5,"windowMinutes":300}] = EmitAllowlistError: emit blocked: un-allowlisted key "plan_type" on agent.quota windows item
+quota.windows=[{"limit_id":"premium","resetsAt":"2026-01-01T05:00:00.000Z","usedPercent":12.5,"windowMinutes":300}] = EmitAllowlistError: emit blocked: un-allowlisted key "limit_id" on agent.quota windows item
+quota.windows=[{"credits":{"balance":5},"resetsAt":"2026-01-01T05:00:00.000Z","usedPercent":12.5,"windowMinutes":300}] = EmitAllowlistError: emit blocked: un-allowlisted key "credits" on agent.quota windows item
+quota.windows=[null] = EmitAllowlistError: emit blocked: agent.quota windows item is not an object
+quota.windows=["str"] = EmitAllowlistError: emit blocked: agent.quota windows item is not an object
+quota.windows=[{"resetsAt":"2026-01-01T05:00:00.000Z","usedPercent":12.5,"windowMinutes":-1}] = EmitAllowlistError: emit blocked: agent.quota windowMinutes is not a non-negative integer
+quota.windows=[{"resetsAt":"2026-01-01T05:00:00.000Z","usedPercent":12.5,"windowMinutes":1.5}] = EmitAllowlistError: emit blocked: agent.quota windowMinutes is not a non-negative integer
+quota.windows=[{"resetsAt":"2026-01-01T05:00:00.000Z","usedPercent":12.5,"windowMinutes":"300"}] = EmitAllowlistError: emit blocked: agent.quota windowMinutes is not a non-negative integer
+quota.windows=[{"resetsAt":"2026-01-01T05:00:00.000Z","usedPercent":-0.1,"windowMinutes":300}] = EmitAllowlistError: emit blocked: agent.quota usedPercent -0.1 is not 0..100
+quota.windows=[{"resetsAt":"2026-01-01T05:00:00.000Z","usedPercent":0,"windowMinutes":300}] = ok
+quota.windows=[{"resetsAt":"2026-01-01T05:00:00.000Z","usedPercent":100,"windowMinutes":300}] = ok
+quota.windows=[{"resetsAt":"2026-01-01T05:00:00.000Z","usedPercent":100.1,"windowMinutes":300}] = EmitAllowlistError: emit blocked: agent.quota usedPercent 100.1 is not 0..100
+quota.windows=[{"resetsAt":"2026-01-01T05:00:00.000Z","usedPercent":null,"windowMinutes":300}] = EmitAllowlistError: emit blocked: agent.quota usedPercent null is not 0..100
+quota.windows=[{"resetsAt":"2026-01-01T05:00:00.000Z","usedPercent":null,"windowMinutes":300}] = EmitAllowlistError: emit blocked: agent.quota usedPercent null is not 0..100
+quota.windows=[{"resetsAt":"2026-01-01T05:00:00.000Z","usedPercent":"12","windowMinutes":300}] = EmitAllowlistError: emit blocked: agent.quota usedPercent "12" is not 0..100
+quota.windows=[{"resetsAt":"not-a-date","usedPercent":12.5,"windowMinutes":300}] = EmitAllowlistError: emit blocked: agent.quota resetsAt "not-a-date" is not an ISO instant
+quota.windows=[{"resetsAt":1234567890,"usedPercent":12.5,"windowMinutes":300}] = EmitAllowlistError: emit blocked: agent.quota resetsAt 1234567890 is not an ISO instant
+quota.windows=[{"resetsAt":"","usedPercent":12.5,"windowMinutes":300}] = EmitAllowlistError: emit blocked: agent.quota resetsAt "" is not an ISO instant
+quota.windows=[{"resetsAt":null,"usedPercent":12.5,"windowMinutes":300}] = EmitAllowlistError: emit blocked: agent.quota resetsAt null is not an ISO instant
+
+## emit: session.linesurvival deep validation
+ls.commitsChecked=0 = ok
+ls.commitsChecked=1 = ok
+ls.commitsChecked=-1 = EmitAllowlistError: emit blocked: session.linesurvival commitsChecked must be a non-negative integer
+ls.commitsChecked=1.5 = EmitAllowlistError: emit blocked: session.linesurvival commitsChecked must be a non-negative integer
+ls.commitsChecked="1" = EmitAllowlistError: emit blocked: session.linesurvival commitsChecked must be a non-negative integer
+ls.commitsChecked=null = EmitAllowlistError: emit blocked: session.linesurvival commitsChecked must be a non-negative integer
+ls.commitsChecked=undefined = EmitAllowlistError: emit blocked: session.linesurvival commitsChecked must be a non-negative integer
+ls.commitsChecked=null = EmitAllowlistError: emit blocked: session.linesurvival commitsChecked must be a non-negative integer
+ls.linesAuthored=0 = EmitAllowlistError: emit blocked: session.linesurvival linesSurviving exceeds linesAuthored
+ls.linesAuthored=10 = ok
+ls.linesAuthored=-1 = EmitAllowlistError: emit blocked: session.linesurvival linesAuthored must be a non-negative integer
+ls.linesAuthored=1.5 = EmitAllowlistError: emit blocked: session.linesurvival linesAuthored must be a non-negative integer
+ls.linesAuthored="10" = EmitAllowlistError: emit blocked: session.linesurvival linesAuthored must be a non-negative integer
+ls.linesAuthored=null = EmitAllowlistError: emit blocked: session.linesurvival linesAuthored must be a non-negative integer
+ls.linesAuthored=undefined = EmitAllowlistError: emit blocked: session.linesurvival linesAuthored must be a non-negative integer
+ls.linesSurviving=0 = ok
+ls.linesSurviving=5 = ok
+ls.linesSurviving=10 = ok
+ls.linesSurviving=11 = EmitAllowlistError: emit blocked: session.linesurvival linesSurviving exceeds linesAuthored
+ls.linesSurviving=-1 = EmitAllowlistError: emit blocked: session.linesurvival linesSurviving must be a non-negative integer
+ls.linesSurviving=1.5 = EmitAllowlistError: emit blocked: session.linesurvival linesSurviving must be a non-negative integer
+ls.linesSurviving=null = EmitAllowlistError: emit blocked: session.linesurvival linesSurviving must be a non-negative integer
+ls.linesSurviving=undefined = EmitAllowlistError: emit blocked: session.linesurvival linesSurviving must be a non-negative integer
+ls.fate="retained" = ok
+ls.fate="overwritten" = ok
+ls.fate="unreachable" = ok
+ls.fate="unknown" = ok
+ls.fate="dead" = EmitAllowlistError: emit blocked: session.linesurvival fate "dead" not in the closed enum
+ls.fate="" = EmitAllowlistError: emit blocked: session.linesurvival fate "" not in the closed enum
+ls.fate=7 = EmitAllowlistError: emit blocked: session.linesurvival fate 7 not in the closed enum
+ls.fate=null = EmitAllowlistError: emit blocked: session.linesurvival fate null not in the closed enum
+ls.fate=undefined = EmitAllowlistError: emit blocked: session.linesurvival fate undefined not in the closed enum
+ls.rung="3d" = ok
+ls.rung="7d" = EmitAllowlistError: emit blocked: session.linesurvival rung "7d" not in the closed enum
+ls.rung="" = EmitAllowlistError: emit blocked: session.linesurvival rung "" not in the closed enum
+ls.rung=7 = EmitAllowlistError: emit blocked: session.linesurvival rung 7 not in the closed enum
+ls.rung=null = EmitAllowlistError: emit blocked: session.linesurvival rung null not in the closed enum
+ls.rung=undefined = EmitAllowlistError: emit blocked: session.linesurvival rung undefined not in the closed enum
+ls.gitContext="clean" = ok
+ls.gitContext="no-repo" = ok
+ls.gitContext="detached" = ok
+ls.gitContext="dirty-at-start" = ok
+ls.gitContext="no-remote" = ok
+ls.gitContext="bogus" = EmitAllowlistError: emit blocked: session.linesurvival gitContext "bogus" not in the closed enum
+ls.gitContext="" = EmitAllowlistError: emit blocked: session.linesurvival gitContext "" not in the closed enum
+ls.gitContext=7 = EmitAllowlistError: emit blocked: session.linesurvival gitContext 7 not in the closed enum
+ls.gitContext=null = EmitAllowlistError: emit blocked: session.linesurvival gitContext null not in the closed enum
+ls.gitContext=undefined = EmitAllowlistError: emit blocked: session.linesurvival gitContext undefined not in the closed enum
+ls.commits=undefined = ok
+ls.commits=[] = ok
+ls.commits=[{"added":10,"authored":5,"contested":2,"id":"<hash:14>"}] = ok
+ls.commits=[{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"}] = ok
+ls.commits={} = EmitAllowlistError: emit blocked: session.linesurvival commits must be an array
+ls.commits="str" = EmitAllowlistError: emit blocked: session.linesurvival commits must be an array
+ls.commits=[null] = EmitAllowlistError: emit blocked: session.linesurvival commits item must be an object
+ls.commits=["str"] = EmitAllowlistError: emit blocked: session.linesurvival commits item must be an object
+ls.commits=[[]] = EmitAllowlistError: emit blocked: session.linesurvival commits item must be an object
+ls.commits=[{"added":10,"authored":5,"contested":2,"id":"<sha:22>"}] = EmitAllowlistError: emit blocked: session.linesurvival commits item id must be a 64-hex salted hash (never a sha)
+ls.commits=[{"added":10,"authored":5,"contested":2,"id":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"}] = EmitAllowlistError: emit blocked: session.linesurvival commits item id must be a 64-hex salted hash (never a sha)
+ls.commits=[{"added":10,"authored":5,"contested":2,"id":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}] = EmitAllowlistError: emit blocked: session.linesurvival commits item id must be a 64-hex salted hash (never a sha)
+ls.commits=[{"added":10,"authored":5,"contested":2,"id":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}] = EmitAllowlistError: emit blocked: session.linesurvival commits item id must be a 64-hex salted hash (never a sha)
+ls.commits=[{"added":10,"authored":5,"contested":2,"id":7}] = EmitAllowlistError: emit blocked: session.linesurvival commits item id must be a 64-hex salted hash (never a sha)
+ls.commits=[{"added":10,"authored":5,"contested":2,"id":"<hash:14>","path":"/secret"}] = EmitAllowlistError: emit blocked: un-allowlisted key "path" on session.linesurvival commits item
+ls.commits=[{"added":10,"authored":5,"contested":2,"id":"<hash:14>","message":"commit msg"}] = EmitAllowlistError: emit blocked: un-allowlisted key "message" on session.linesurvival commits item
+ls.commits=[{"added":-1,"authored":5,"contested":2,"id":"<hash:14>"}] = EmitAllowlistError: emit blocked: session.linesurvival commits item added must be a non-negative integer
+ls.commits=[{"added":1.5,"authored":5,"contested":2,"id":"<hash:14>"}] = EmitAllowlistError: emit blocked: session.linesurvival commits item added must be a non-negative integer
+ls.commits=[{"added":10,"authored":9,"contested":2,"id":"<hash:14>"}] = EmitAllowlistError: emit blocked: session.linesurvival commits item authored+contested exceeds added
+ls.commits=[{"added":10,"authored":8,"contested":2,"id":"<hash:14>"}] = ok
+ls.commits=[{"added":1,"id":"<hash:14>"}] = EmitAllowlistError: emit blocked: session.linesurvival commits item contested must be a non-negative integer
+ls.commits=[{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"}] = ok
+ls.commits=[{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"}] = ok
+ls.commits=[{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"},{"added":10,"authored":5,"contested":2,"id":"<hash:14>"}] = EmitAllowlistError: emit blocked: session.linesurvival commits exceeds the 100 cap
+ls.filesGoneFromTip=undefined = ok
+ls.filesGoneFromTip=0 = ok
+ls.filesGoneFromTip=3 = ok
+ls.filesGoneFromTip=-1 = EmitAllowlistError: emit blocked: session.linesurvival filesGoneFromTip must be a non-negative integer
+ls.filesGoneFromTip=1.5 = EmitAllowlistError: emit blocked: session.linesurvival filesGoneFromTip must be a non-negative integer
+ls.filesGoneFromTip="3" = EmitAllowlistError: emit blocked: session.linesurvival filesGoneFromTip must be a non-negative integer
+ls.filesGoneFromTip=null = EmitAllowlistError: emit blocked: session.linesurvival filesGoneFromTip must be a non-negative integer
+
+## emit: repo.toolchain deep validation
+tc.packageManager="npm" = ok
+tc.packageManager="pnpm" = ok
+tc.packageManager="cargo" = ok
+tc.packageManager="gradle" = ok
+tc.packageManager="brew" = EmitAllowlistError: emit blocked: repo.toolchain packageManager "brew" not in the closed enum (or null)
+tc.packageManager="" = EmitAllowlistError: emit blocked: repo.toolchain packageManager "" not in the closed enum (or null)
+tc.packageManager=7 = EmitAllowlistError: emit blocked: repo.toolchain packageManager 7 not in the closed enum (or null)
+tc.packageManager=null = ok
+tc.packageManager=undefined = EmitAllowlistError: emit blocked: repo.toolchain packageManager undefined not in the closed enum (or null)
+tc.framework="next" = ok
+tc.framework="svelte" = ok
+tc.framework="spring" = ok
+tc.framework="jquery" = EmitAllowlistError: emit blocked: repo.toolchain framework "jquery" not in the closed enum (or null)
+tc.framework="" = EmitAllowlistError: emit blocked: repo.toolchain framework "" not in the closed enum (or null)
+tc.framework=7 = EmitAllowlistError: emit blocked: repo.toolchain framework 7 not in the closed enum (or null)
+tc.framework=null = ok
+tc.framework=undefined = EmitAllowlistError: emit blocked: repo.toolchain framework undefined not in the closed enum (or null)
+tc.gitContext="clean" = ok
+tc.gitContext="no-repo" = ok
+tc.gitContext="bogus" = EmitAllowlistError: emit blocked: repo.toolchain gitContext "bogus" not in the closed enum
+tc.gitContext="" = EmitAllowlistError: emit blocked: repo.toolchain gitContext "" not in the closed enum
+tc.gitContext=7 = EmitAllowlistError: emit blocked: repo.toolchain gitContext 7 not in the closed enum
+tc.gitContext=null = EmitAllowlistError: emit blocked: repo.toolchain gitContext null not in the closed enum
+tc.gitContext=undefined = EmitAllowlistError: emit blocked: repo.toolchain gitContext undefined not in the closed enum
+
+## emit: git.momentum repoShape deep validation
+mom.repoShape=undefined = ok
+mom.repoShape={"ageBand":"mature","monorepo":true,"sizeBand":"m"} = ok
+mom.repoShape={"ageBand":"mature","monorepo":false,"sizeBand":"m"} = ok
+mom.repoShape={} = EmitAllowlistError: emit blocked: git.momentum repoShape.monorepo must be a boolean
+mom.repoShape=null = EmitAllowlistError: emit blocked: git.momentum repoShape is not an object
+mom.repoShape=[] = EmitAllowlistError: emit blocked: git.momentum repoShape is not an object
+mom.repoShape="str" = EmitAllowlistError: emit blocked: git.momentum repoShape is not an object
+mom.repoShape=7 = EmitAllowlistError: emit blocked: git.momentum repoShape is not an object
+mom.repoShape={"ageBand":"mature","monorepo":true,"sizeBand":"m","workspaces":"packages/*"} = EmitAllowlistError: emit blocked: un-allowlisted key "workspaces" on git.momentum repoShape
+mom.repoShape={"ageBand":"mature","monorepo":true,"path":"/Users/me","sizeBand":"m"} = EmitAllowlistError: emit blocked: un-allowlisted key "path" on git.momentum repoShape
+mom.repoShape={"ageBand":"mature","monorepo":"yes","sizeBand":"m"} = EmitAllowlistError: emit blocked: git.momentum repoShape.monorepo must be a boolean
+mom.repoShape={"ageBand":"mature","monorepo":1,"sizeBand":"m"} = EmitAllowlistError: emit blocked: git.momentum repoShape.monorepo must be a boolean
+mom.repoShape={"ageBand":"mature","monorepo":true,"sizeBand":"xs"} = ok
+mom.repoShape={"ageBand":"mature","monorepo":true,"sizeBand":"xxl"} = EmitAllowlistError: emit blocked: git.momentum repoShape.sizeBand "xxl" not in the closed enum
+mom.repoShape={"ageBand":"mature","monorepo":true,"sizeBand":7} = EmitAllowlistError: emit blocked: git.momentum repoShape.sizeBand 7 not in the closed enum
+mom.repoShape={"ageBand":"new","monorepo":true,"sizeBand":"m"} = ok
+mom.repoShape={"ageBand":"ancient","monorepo":true,"sizeBand":"m"} = EmitAllowlistError: emit blocked: git.momentum repoShape.ageBand "ancient" not in the closed enum
+mom.repoShape={"monorepo":true} = EmitAllowlistError: emit blocked: git.momentum repoShape.sizeBand undefined not in the closed enum
+
+## emit: nested container leak probe
+quota.windows[] + prompt = EmitAllowlistError: emit blocked: un-allowlisted key "prompt" on agent.quota windows item
+quota.windows[] + command = EmitAllowlistError: emit blocked: un-allowlisted key "command" on agent.quota windows item
+quota.windows[] + file_text = EmitAllowlistError: emit blocked: un-allowlisted key "file_text" on agent.quota windows item
+quota.windows[] + stdout = EmitAllowlistError: emit blocked: un-allowlisted key "stdout" on agent.quota windows item
+quota.windows[] + stderr = EmitAllowlistError: emit blocked: un-allowlisted key "stderr" on agent.quota windows item
+quota.windows[] + file_path = EmitAllowlistError: emit blocked: un-allowlisted key "file_path" on agent.quota windows item
+quota.windows[] + tool_input = EmitAllowlistError: emit blocked: un-allowlisted key "tool_input" on agent.quota windows item
+quota.windows[] + tool_response = EmitAllowlistError: emit blocked: un-allowlisted key "tool_response" on agent.quota windows item
+quota.windows[] + tool_error = EmitAllowlistError: emit blocked: un-allowlisted key "tool_error" on agent.quota windows item
+quota.windows[] + cwd = EmitAllowlistError: emit blocked: un-allowlisted key "cwd" on agent.quota windows item
+quota.windows[] + message = EmitAllowlistError: emit blocked: un-allowlisted key "message" on agent.quota windows item
+quota.windows[] + branch = EmitAllowlistError: emit blocked: un-allowlisted key "branch" on agent.quota windows item
+quota.windows[] + originUrl = EmitAllowlistError: emit blocked: un-allowlisted key "originUrl" on agent.quota windows item
+quota.windows[] + __proto__x = EmitAllowlistError: emit blocked: un-allowlisted key "__proto__x" on agent.quota windows item
+tokens.models[] + prompt = EmitAllowlistError: emit blocked: un-allowlisted key "prompt" on session.tokens models item
+tokens.models[] + command = EmitAllowlistError: emit blocked: un-allowlisted key "command" on session.tokens models item
+tokens.models[] + file_text = EmitAllowlistError: emit blocked: un-allowlisted key "file_text" on session.tokens models item
+tokens.models[] + stdout = EmitAllowlistError: emit blocked: un-allowlisted key "stdout" on session.tokens models item
+tokens.models[] + stderr = EmitAllowlistError: emit blocked: un-allowlisted key "stderr" on session.tokens models item
+tokens.models[] + file_path = EmitAllowlistError: emit blocked: un-allowlisted key "file_path" on session.tokens models item
+tokens.models[] + tool_input = EmitAllowlistError: emit blocked: un-allowlisted key "tool_input" on session.tokens models item
+tokens.models[] + tool_response = EmitAllowlistError: emit blocked: un-allowlisted key "tool_response" on session.tokens models item
+tokens.models[] + tool_error = EmitAllowlistError: emit blocked: un-allowlisted key "tool_error" on session.tokens models item
+tokens.models[] + cwd = EmitAllowlistError: emit blocked: un-allowlisted key "cwd" on session.tokens models item
+tokens.models[] + message = EmitAllowlistError: emit blocked: un-allowlisted key "message" on session.tokens models item
+tokens.models[] + branch = EmitAllowlistError: emit blocked: un-allowlisted key "branch" on session.tokens models item
+tokens.models[] + originUrl = EmitAllowlistError: emit blocked: un-allowlisted key "originUrl" on session.tokens models item
+tokens.models[] + __proto__x = EmitAllowlistError: emit blocked: un-allowlisted key "__proto__x" on session.tokens models item
+momentum.repoShape + prompt = EmitAllowlistError: emit blocked: un-allowlisted key "prompt" on git.momentum repoShape
+momentum.repoShape + command = EmitAllowlistError: emit blocked: un-allowlisted key "command" on git.momentum repoShape
+momentum.repoShape + file_text = EmitAllowlistError: emit blocked: un-allowlisted key "file_text" on git.momentum repoShape
+momentum.repoShape + stdout = EmitAllowlistError: emit blocked: un-allowlisted key "stdout" on git.momentum repoShape
+momentum.repoShape + stderr = EmitAllowlistError: emit blocked: un-allowlisted key "stderr" on git.momentum repoShape
+momentum.repoShape + file_path = EmitAllowlistError: emit blocked: un-allowlisted key "file_path" on git.momentum repoShape
+momentum.repoShape + tool_input = EmitAllowlistError: emit blocked: un-allowlisted key "tool_input" on git.momentum repoShape
+momentum.repoShape + tool_response = EmitAllowlistError: emit blocked: un-allowlisted key "tool_response" on git.momentum repoShape
+momentum.repoShape + tool_error = EmitAllowlistError: emit blocked: un-allowlisted key "tool_error" on git.momentum repoShape
+momentum.repoShape + cwd = EmitAllowlistError: emit blocked: un-allowlisted key "cwd" on git.momentum repoShape
+momentum.repoShape + message = EmitAllowlistError: emit blocked: un-allowlisted key "message" on git.momentum repoShape
+momentum.repoShape + branch = EmitAllowlistError: emit blocked: un-allowlisted key "branch" on git.momentum repoShape
+momentum.repoShape + originUrl = EmitAllowlistError: emit blocked: un-allowlisted key "originUrl" on git.momentum repoShape
+momentum.repoShape + __proto__x = EmitAllowlistError: emit blocked: un-allowlisted key "__proto__x" on git.momentum repoShape
+linesurvival.commits[] + prompt = EmitAllowlistError: emit blocked: un-allowlisted key "prompt" on session.linesurvival commits item
+linesurvival.commits[] + command = EmitAllowlistError: emit blocked: un-allowlisted key "command" on session.linesurvival commits item
+linesurvival.commits[] + file_text = EmitAllowlistError: emit blocked: un-allowlisted key "file_text" on session.linesurvival commits item
+linesurvival.commits[] + stdout = EmitAllowlistError: emit blocked: un-allowlisted key "stdout" on session.linesurvival commits item
+linesurvival.commits[] + stderr = EmitAllowlistError: emit blocked: un-allowlisted key "stderr" on session.linesurvival commits item
+linesurvival.commits[] + file_path = EmitAllowlistError: emit blocked: un-allowlisted key "file_path" on session.linesurvival commits item
+linesurvival.commits[] + tool_input = EmitAllowlistError: emit blocked: un-allowlisted key "tool_input" on session.linesurvival commits item
+linesurvival.commits[] + tool_response = EmitAllowlistError: emit blocked: un-allowlisted key "tool_response" on session.linesurvival commits item
+linesurvival.commits[] + tool_error = EmitAllowlistError: emit blocked: un-allowlisted key "tool_error" on session.linesurvival commits item
+linesurvival.commits[] + cwd = EmitAllowlistError: emit blocked: un-allowlisted key "cwd" on session.linesurvival commits item
+linesurvival.commits[] + message = EmitAllowlistError: emit blocked: un-allowlisted key "message" on session.linesurvival commits item
+linesurvival.commits[] + branch = EmitAllowlistError: emit blocked: un-allowlisted key "branch" on session.linesurvival commits item
+linesurvival.commits[] + originUrl = EmitAllowlistError: emit blocked: un-allowlisted key "originUrl" on session.linesurvival commits item
+linesurvival.commits[] + __proto__x = EmitAllowlistError: emit blocked: un-allowlisted key "__proto__x" on session.linesurvival commits item
+toolchain.capabilities + prompt = EmitAllowlistError: emit blocked: un-allowlisted key "capabilities" on repo.toolchain event
+toolchain.capabilities + command = EmitAllowlistError: emit blocked: un-allowlisted key "capabilities" on repo.toolchain event
+toolchain.capabilities + file_text = EmitAllowlistError: emit blocked: un-allowlisted key "capabilities" on repo.toolchain event
+toolchain.capabilities + stdout = EmitAllowlistError: emit blocked: un-allowlisted key "capabilities" on repo.toolchain event
+toolchain.capabilities + stderr = EmitAllowlistError: emit blocked: un-allowlisted key "capabilities" on repo.toolchain event
+toolchain.capabilities + file_path = EmitAllowlistError: emit blocked: un-allowlisted key "capabilities" on repo.toolchain event
+toolchain.capabilities + tool_input = EmitAllowlistError: emit blocked: un-allowlisted key "capabilities" on repo.toolchain event
+toolchain.capabilities + tool_response = EmitAllowlistError: emit blocked: un-allowlisted key "capabilities" on repo.toolchain event
+toolchain.capabilities + tool_error = EmitAllowlistError: emit blocked: un-allowlisted key "capabilities" on repo.toolchain event
+toolchain.capabilities + cwd = EmitAllowlistError: emit blocked: un-allowlisted key "capabilities" on repo.toolchain event
+toolchain.capabilities + message = EmitAllowlistError: emit blocked: un-allowlisted key "capabilities" on repo.toolchain event
+toolchain.capabilities + branch = EmitAllowlistError: emit blocked: un-allowlisted key "capabilities" on repo.toolchain event
+toolchain.capabilities + originUrl = EmitAllowlistError: emit blocked: un-allowlisted key "capabilities" on repo.toolchain event
+toolchain.capabilities + __proto__x = EmitAllowlistError: emit blocked: un-allowlisted key "capabilities" on repo.toolchain event
+
+## emit: deep branches are kind-scoped
+end.reason=clear = ok
+end.reason=bogus = ok
+notification.type=bogus = ok
+delta.gitContext=bogus = ok
+momentum.gitContext=bogus = ok
+prompt.envelopeOnly = ok
+momentum.commits=-1 = ok
+delta.commitsLanded=-1 = ok

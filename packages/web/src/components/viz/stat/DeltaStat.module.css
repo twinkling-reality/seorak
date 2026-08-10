@@ -1,0 +1,86 @@
+/* Period-over-period change as a before/after bar pair on one common scale: the
+ * change is the difference in the two bar lengths. Current is ink, prior is muted
+ * context; each carries its value at the bar end. Movement is shown by length,
+ * never graded — ink only, no red/green. See DeltaStat.tsx. */
+
+.frame {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 6px 0 4px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  align-items: center;
+  gap: 12px;
+  animation: rowReveal 0.3s var(--motion) both;
+  animation-delay: calc(var(--row-index, 0) * 70ms);
+}
+
+.tag {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.barCell {
+  position: relative;
+  height: 18px;
+  min-width: 0;
+}
+
+.track {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--ghost);
+}
+
+.fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: var(--ink);
+  transition: width 0.4s var(--motion);
+}
+
+/* Prior window: the same bar, a step lighter so it reads as context under the
+ * ink current bar without importing a second hue. */
+.fillMuted {
+  composes: fill;
+  background: color-mix(in srgb, var(--ink) 30%, var(--page-bg));
+}
+
+/* The value trails just past its bar's end, in ink, so both legs' numbers sit on
+ * the same reading line as their length. */
+.value {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  font-family: var(--mono);
+  font-size: var(--text-sm);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row {
+    animation: none;
+  }
+  .fill {
+    transition: none;
+  }
+}

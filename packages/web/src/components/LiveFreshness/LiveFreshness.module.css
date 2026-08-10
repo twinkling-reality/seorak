@@ -1,0 +1,46 @@
+.freshness {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-eyebrow);
+  color: var(--soft);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--live, var(--accent));
+  animation: livePulse 2s ease-out infinite;
+}
+
+.degraded {
+  color: var(--danger);
+}
+
+.degraded .dot {
+  background: var(--danger);
+  animation: none;
+}
+
+@keyframes livePulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--live, var(--accent)) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 5px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot {
+    animation: none;
+  }
+}

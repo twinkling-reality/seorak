@@ -1,0 +1,33 @@
+/* Bottom-center floater shell. Positioning is owned by #bottom-floaters in app.css. */
+
+.shell {
+  order: 1;
+  width: max-content;
+  max-width: min(680px, calc(100vw - 48px));
+  flex-shrink: 1;
+  animation: floatingBannerIn 0.3s var(--motion) both;
+}
+
+.shell > div {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  box-shadow: var(--shadow-lg), var(--shadow-xs);
+}
+
+@keyframes floatingBannerIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell {
+    animation: none;
+  }
+}

@@ -1,0 +1,76 @@
+/* `backwards`, NOT `both`: a fill-HELD opacity keeps this wrapper composited after
+   the animation finishes, which makes it a backdrop root — and every
+   backdrop-filter inside the route then silently renders as a flat fill (verified:
+   glass over a table left the rows razor sharp). The keyframes land on opacity 1 /
+   transform none, which is this element's own resting style, so dropping the fill
+   at the end costs nothing visually and releases the layer. `backwards` still
+   covers the pre-start frame, so there is no flash. Same trap the `to` block below
+   already documents for transform; see components/surface/glass.module.css. */
+.routeTransition {
+  --route-duration: var(--motion-route-enter);
+  --route-y: var(--motion-route-y);
+  animation: routeEnter var(--route-duration) var(--motion-route-ease) backwards;
+}
+
+.marketingScene {
+  --route-duration: var(--motion-route-enter-long);
+  --route-y: var(--motion-route-y-small);
+}
+
+.marketingPage {
+  --route-duration: var(--motion-route-enter);
+}
+
+.dashboardView {
+  --route-duration: var(--motion-route-enter);
+  --route-y: var(--motion-route-y-small);
+}
+
+.dashboardDetail {
+  --route-duration: var(--motion-route-enter-short);
+  --route-y: var(--motion-route-y-small);
+}
+
+.none {
+  animation: none;
+}
+
+.pop {
+  --route-y: calc(var(--motion-route-y-small) * -1);
+}
+
+@keyframes routeEnter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--route-y));
+  }
+  to {
+    opacity: 1;
+    /* `none`, not translateY(0): any transform creates a containing block for
+       position:fixed children. SystemNotFound (and other takeover screens)
+       collapse to 0 height inside a transformed wrapper whose only child is
+       out of flow. */
+    transform: none;
+  }
+}
+
+@keyframes routeFadeEnter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .routeTransition {
+    animation-name: routeFadeEnter;
+    animation-duration: 80ms;
+  }
+
+  .none {
+    animation: none;
+  }
+}
+

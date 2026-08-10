@@ -1,0 +1,963 @@
+{
+  "schemaVersion": 2,
+  "measuredAt": "2026-08-04",
+  "measuredAtCommit": "36bcfd0",
+  "decidedBy": "docs/adr/005-open-core-repository-and-free-ui-packaging.md",
+  "readBy": [
+    "scripts/open-core-ownership.mjs",
+    "scripts/check-package-boundaries.mjs",
+    "scripts/check-open-core-boundaries.mjs",
+    "scripts/check-public-identifiers.mjs"
+  ],
+  "note": "THIS FILE IS THE OWNERSHIP MAP. ADR 005 decided it and argues for it; this file records it, and nothing else restates it. ADR 005's ownership section and CLAUDE.md's repo map point here rather than carrying a second copy, because a duplicated allowlist does not fail when it drifts. Every tracked path under `coverage.roots` must match exactly one `paths` rule: an unmatched file fails the gate, which is what makes a new directory a decision rather than a silent omission. Adding a workspace, a path rule, or a visibility class is an edit to this file alone. Schema 2 adds `publicFileSet`, which B2r moved here from a second module that had drifted 37 files away from this one.",
+  "visibilities": {
+    "public": {
+      "summary": "Ships in the public `seorak` repository under Apache-2.0.",
+      "mayImport": [
+        "public",
+        "split"
+      ]
+    },
+    "private": {
+      "summary": "Stays in `seorak-internal`. The private half may depend on the public half; ADR 005 decision 1 makes every boundary-crossing arrow point private to public.",
+      "mayImport": [
+        "public",
+        "private",
+        "split",
+        "mixed",
+        "excluded"
+      ]
+    },
+    "split": {
+      "summary": "A build input or document B4 has to divide between the two repositories. It is not yet in either set, so it is held to the public rule: an edge from here into the private tree is work B4 owes, and the gate records it rather than letting the split discover it.",
+      "mayImport": [
+        "public",
+        "split"
+      ]
+    },
+    "mixed": {
+      "summary": "A workspace whose files are split across both repositories. Only a workspace identity carries this class, never a file. Nothing may import a mixed workspace by package name, because after the split no such package exists whole.",
+      "mayImport": [
+        "public",
+        "split"
+      ]
+    },
+    "excluded": {
+      "summary": "Ships in NEITHER repository. ADR 005 decision 6: licensed binaries whose EULA the tree cannot evidence.",
+      "mayImport": []
+    }
+  },
+  "publicFileSet": {
+    "note": "Which tracked files land in the public repository, asked once. B2r folded a second answer, `scripts/public-file-set.mjs`, into this block: it carried its own inline rules, `public-identifiers:check` read it, and by `b5fc317` the two definitions disagreed about 37 files with both gates green. `scripts/one-public-file-set.test.mjs` fails if a third answer appears. `split` is in the set because the visibilities table already holds a split file to the public rule: its public half ships, so an identifier in it ships too, and waiting for B4 to divide the file would mean not scanning it in the meantime. C0 placed `docs/**` under `paths` and removed the `coverage.outOfScope` entry that used to stand in for a placement, so documentation is scanned like every other public file. C1b then WROTE the public half of every redaction-pending path instead of leaving them for a filter, so every `redactionPending` entry now names a PRIVATE half that does not travel, and the public half beside it at `open-core/<path>` is scanned like anything else. That is the difference between a file nobody has judged and one nobody may judge: these are the latter, and their replacements are the former.",
+    "visibilities": [
+      "public",
+      "split"
+    ],
+    "redactionPending": [
+      {
+        "pattern": "docs/adr/005-open-core-repository-and-free-ui-packaging.md",
+        "owner": "C1b, done: the public half is `open-core/docs/adr/005-open-core-repository-and-free-ui-packaging.md`",
+        "why": "THE PRIVATE HALF, which does not travel. This document QUOTES the operator's account name and the Cloudflare account subdomain as the evidence for removing them from the public tree, so a scan here would fail on its own justification. The four other ADRs scan clean and are public whole. The redacted public form drops the private workspaces' module tables, the identifier enumeration in section 11, and every line-level citation into a private file, and says so at the top and in place, so no reader mistakes it for the whole document."
+      },
+      {
+        "pattern": "CLAUDE.md",
+        "owner": "C1b, done: the public half is `open-core/CLAUDE.md`",
+        "why": "THE PRIVATE HALF, which does not travel: its repo map and product pointers name six workspaces and two commercial specs the public tree does not contain. The public half keeps all six hard rules at their existing NUMBERS, because gates and documents in the public set cite rules 1, 2, 3, 5, and 6 by number, and reduces the repo map to the four workspaces a public reader has. A public CLAUDE.md instructing an agent about packages the reader cannot see would be worse than none; one that is true of the tree in front of it is better than none, and the alternative would leave `CONTRIBUTING.md` and several gate messages pointing at a file that is not there."
+      },
+      {
+        "pattern": "README.md",
+        "owner": "C1b, done: the public half is `open-core/README.md`",
+        "why": "THE PRIVATE HALF, which does not travel: it opens with the private docs index and its local-dev section runs the worker, the push dispatcher, and the menu bar. The public half is written for a reader who has ONLY the public tree, so every command in it runs there, and it states plainly that nothing is published to a registry yet rather than advertising an install that does not exist."
+      },
+      {
+        "pattern": ".github/workflows/ci.yml",
+        "owner": "C1b, done: the public half is `open-core/.github/workflows/ci.yml`",
+        "why": "THE PRIVATE HALF, which does not travel: it builds and signs the iOS app, packages the macOS menu bar, and runs deploy-shaped gates for three private workers. Its one finding is not an identifier at all: the iOS Release step names the built bundle by its product name plus the `.app` extension, which is character-for-character the shape of the site origin, and the rule cannot tell an app bundle from a hostname. Loosening that rule to admit the shape would weaken it everywhere for the sake of one file that is not going, so this is declared instead."
+      },
+      {
+        "pattern": "SETUP.md",
+        "owner": "C1b, done: the public half is `open-core/SETUP.md`",
+        "why": "THE PRIVATE HALF, which does not travel: it provisions Seorak's own Cloudflare account and names the control-plane origin and the worker hostnames thirteen times. The public half keeps Part 1 whole, replaces 'deploy a worker of your own' with the collector's own routable binding, which is the reference self-hosted service and is in this tree, reduces the env table to the collector's own variables, and describes the managed service as a private product the collector carries a client for rather than something a reader can operate."
+      }
+    ]
+  },
+  "coverage": {
+    "roots": [
+      "packages",
+      "apps",
+      "scripts",
+      "docs",
+      "open-core",
+      "tests",
+      "patches",
+      ".github",
+      ".claude"
+    ],
+    "rootFiles": [
+      "CLAUDE.md",
+      "README.md",
+      "SETUP.md",
+      "LICENSING-POLICY.md",
+      "NOTICE",
+      "SECURITY.md",
+      "CONTRIBUTING.md",
+      "CODE_OF_CONDUCT.md",
+      "TRADEMARK.md",
+      "package.json",
+      "package-lock.json",
+      "playwright.config.ts",
+      ".gitignore",
+      ".dockerignore"
+    ],
+    "outOfScope": []
+  },
+  "developmentFilePatterns": [
+    "**/*.test.*",
+    "**/*.spec.*",
+    "**/__tests__/**",
+    "**/__fixtures__/**",
+    "**/test/**",
+    "**/tests/**"
+  ],
+  "workspaces": [
+    {
+      "package": "@seorak/types",
+      "root": "packages/types",
+      "visibility": "public",
+      "sourceRoots": [
+        {
+          "path": "src",
+          "mode": "production"
+        },
+        {
+          "path": "test",
+          "mode": "development"
+        },
+        {
+          "path": "scripts",
+          "mode": "development"
+        }
+      ],
+      "allowedInternalPackages": [],
+      "moduleLoaders": "forbidden",
+      "why": "ADR 005 decision 2. Already Apache-2.0, zero production identifiers, and the wire contract every consumer must agree on."
+    },
+    {
+      "package": "@seorak/collector",
+      "root": "packages/collector",
+      "visibility": "public",
+      "sourceRoots": [
+        {
+          "path": "src",
+          "mode": "production"
+        },
+        {
+          "path": "bin",
+          "mode": "production"
+        },
+        {
+          "path": "test",
+          "mode": "development"
+        },
+        {
+          "path": "scripts",
+          "mode": "development"
+        },
+        {
+          "path": "vitest.config.ts",
+          "mode": "development"
+        }
+      ],
+      "allowedInternalPackages": [
+        "@seorak/types",
+        "@seorak/dashboard"
+      ],
+      "moduleLoaders": "forbidden",
+      "why": "CLAUDE.md rule 1 and ADR 005 decision 2. Imports @seorak/types, node: builtins, and the exact MIT-licensed @modelcontextprotocol/server@2.0.0 for the mounted local private-MCP resource server; authentication, query execution, and replay reduction remain collector-owned. B6 added @seorak/dashboard, which is not an import edge at all: it is static assets with no module to load, named once as a resolution target so the plane can serve the interface the published collector otherwise did not carry."
+    },
+    {
+      "package": "@seorak/dashboard",
+      "root": "packages/dashboard",
+      "visibility": "public",
+      "sourceRoots": [
+        {
+          "path": "scripts",
+          "mode": "development"
+        },
+        {
+          "path": "test",
+          "mode": "development"
+        }
+      ],
+      "allowedInternalPackages": [
+        "@seorak/types"
+      ],
+      "moduleLoaders": "forbidden",
+      "why": "ADR 005 decision 3, built by B6. The Free primary UI as a versioned public package, whose one runtime consumer is @seorak/collector. It carries no production source root because it carries no production source: `dist/` is the dashboard entry of packages/web, built. @seorak/types is a DEVELOPMENT edge only, from the staging script, which reads DATA_PLANE_PROTOCOL_VERSION to check the version the artifact declares; the published package has zero runtime dependencies and the gate asserts it. No edge crosses into packages/web, because the staging script runs that build through npm rather than importing a mixed workspace."
+    },
+    {
+      "package": "@seorak/web",
+      "root": "packages/web",
+      "visibility": "mixed",
+      "assetRoot": "public",
+      "sourceRoots": [
+        {
+          "path": "src",
+          "mode": "production"
+        },
+        {
+          "path": "scripts",
+          "mode": "development"
+        }
+      ],
+      "allowedInternalPackages": [
+        "@seorak/types"
+      ],
+      "moduleLoaders": "forbidden",
+      "why": "ADR 005 Decision Zero splits this workspace: the dashboard is the public core's primary UI and the marketing site is Seorak's own website. `assetRoot` is where a root-absolute CSS url() resolves, which is how the font references in `src/app.css` become visible to a gate that otherwise only reads import statements."
+    },
+    {
+      "package": "@seorak/worker",
+      "root": "packages/worker",
+      "visibility": "private",
+      "sourceRoots": [
+        {
+          "path": "src",
+          "mode": "production"
+        },
+        {
+          "path": "test",
+          "mode": "development"
+        },
+        {
+          "path": "scripts",
+          "mode": "development"
+        }
+      ],
+      "allowedInternalPackages": [
+        "@seorak/types"
+      ],
+      "moduleLoaders": "allowed",
+      "why": "ADR 005 decision 2 and section 5. Provider-bound today: of 103 modules, 79 name a Cloudflare runtime type or bind WorkerEnv, so the core-candidate half needs a storage port before it can move."
+    },
+    {
+      "package": "@seorak/control-plane",
+      "root": "packages/control-plane",
+      "visibility": "private",
+      "sourceRoots": [
+        {
+          "path": "src",
+          "mode": "production"
+        },
+        {
+          "path": "test",
+          "mode": "development"
+        }
+      ],
+      "allowedInternalPackages": [
+        "@seorak/types"
+      ],
+      "moduleLoaders": "allowed",
+      "why": "ADR 005 decision 2. Identity, OAuth, billing, provisioning, encryption rotation, and the MCP authorization server."
+    },
+    {
+      "package": "@seorak/public-directory",
+      "root": "packages/public-directory",
+      "visibility": "private",
+      "sourceRoots": [
+        {
+          "path": "src",
+          "mode": "production"
+        },
+        {
+          "path": "test",
+          "mode": "development"
+        }
+      ],
+      "allowedInternalPackages": [
+        "@seorak/types"
+      ],
+      "moduleLoaders": "allowed",
+      "why": "ADR 005 decision 2. A Seorak-operated service with its own abuse controls and publisher credentials; its read contracts are already public in @seorak/types."
+    },
+    {
+      "package": "@seorak/push",
+      "root": "packages/push",
+      "visibility": "private",
+      "sourceRoots": [
+        {
+          "path": "src",
+          "mode": "production"
+        },
+        {
+          "path": "test",
+          "mode": "development"
+        }
+      ],
+      "allowedInternalPackages": [
+        "@seorak/types"
+      ],
+      "moduleLoaders": "allowed",
+      "why": "ADR 005 section 5 defers it until the dispatcher runs against a non-Seorak APNs key in CI. Until that gate is met its destination today is the private cloud."
+    },
+    {
+      "package": "seorak-app",
+      "root": "apps/mobile",
+      "visibility": "private",
+      "sourceRoots": [
+        {
+          "path": "src",
+          "mode": "production"
+        },
+        {
+          "path": "test",
+          "mode": "development"
+        }
+      ],
+      "allowedInternalPackages": [
+        "@seorak/types"
+      ],
+      "moduleLoaders": "allowed",
+      "why": "ADR 005 decision 2. App Store distribution binds it to Seorak's signing identity. This is also the workspace whose package name does not start with `@seorak/`, which is why visibility is a declared map rather than a name-prefix test."
+    }
+  ],
+  "paths": [
+    {
+      "pattern": "packages/types/**",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "Public whole."
+    },
+    {
+      "pattern": "packages/collector/**",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "Public whole, including the local plane, the local store and projection, compact sync, recovery download, the terminal, hooks, adapters, and the launchd installer."
+    },
+    {
+      "pattern": "packages/dashboard/**",
+      "visibility": "public",
+      "source": "b6",
+      "why": "Public whole. The manifest, the staging script and its test, the Apache grant, and the third-party notices and licence texts that ADR 005 decision 6 requires to travel with the redistributed bytes. `dist/` is generated and untracked, so nothing here is a build output this map has to place."
+    },
+    {
+      "pattern": "packages/web/**",
+      "visibility": "private",
+      "source": "b1a",
+      "why": "The workspace default is the closed side, so a new file under packages/web is private until someone places it. Every public placement below is explicit."
+    },
+    {
+      "pattern": "packages/web/src/**",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "DashboardApp, the nine views, the 89-file widget layer, components, hooks, motion, styles, periodClarity, lib, and the chat stub. ADR 005 Decision Zero: the public core includes the complete primary local web application Free requires."
+    },
+    {
+      "pattern": "packages/web/src/marketing/**",
+      "visibility": "private",
+      "source": "adr-005",
+      "why": "Seorak's own website: home, statement, mission, surfaces, pricing, blog, legal, /developers, /docs. A self-hoster needs none of it and a verbatim-forkable Seorak site is an impersonation problem."
+    },
+    {
+      "pattern": "packages/web/src/public/**",
+      "visibility": "private",
+      "source": "adr-005",
+      "why": "The public profile and project renderer. ADR 005's corrections section and decision 2 both place it private because its only importers are seven sites under src/marketing and its only data source is a Seorak-operated private service. NOTE: the ADR's file-level table still carried a stale PUBLIC row for this path from an earlier draft; B1a resolves it to private, which is what three other places in the same document say, and is what the wave-2 plan's B4 assumes when it moves this tree with the /developers routes that mount it."
+    },
+    {
+      "pattern": "packages/web/dashboard/**",
+      "visibility": "public",
+      "source": "b4",
+      "why": "The dashboard entry document. Its own index.html with its own pre-paint theme script, which is why it needs its own CSP hash: this script has no path to classify, and the site's does."
+    },
+    {
+      "pattern": "packages/web/site/**",
+      "visibility": "private",
+      "source": "b4",
+      "why": "Seorak's own site entry document, carrying the canonical link and the Open Graph and Twitter tags that name Seorak's own site origin. It was packages/web/index.html, which public-identifiers:check reported for exactly those four tags with nothing to fix until the entries existed. The origin is spelled out in neither this entry nor the next one, because C0 puts this map in the public file set and the identifier gate reads it there."
+    },
+    {
+      "pattern": "packages/web/vite.site.config.ts",
+      "visibility": "private",
+      "source": "b4",
+      "why": "The site build: root `site/`, output `dist` (which the worker binds), the marketing chunk ceilings, and build:discovery downstream of it."
+    },
+    {
+      "pattern": "packages/web/tsconfig.site.json",
+      "visibility": "private",
+      "source": "b4",
+      "why": "The site program, which sees the whole workspace because Seorak's own site serves the whole workspace."
+    },
+    {
+      "pattern": "packages/web/vitest.config.ts",
+      "visibility": "public",
+      "source": "b4",
+      "why": "The test program, which spans both halves and says nothing private. It exists because vite.config.ts now has a `root` of `dashboard/`, and Vitest reading that config would look for suites inside the entry document's directory and find none."
+    },
+    {
+      "pattern": "packages/web/scripts/buildPlugins.ts",
+      "visibility": "public",
+      "source": "b4",
+      "why": "The chunk budget, the per-entry CSP hash, and the named public-asset copy. Both entry configs import it, so it is held to the public rule, and the dashboard config could not import it otherwise."
+    },
+    {
+      "pattern": "packages/web/scripts/buildPlugins.test.ts",
+      "visibility": "public",
+      "source": "b4",
+      "why": "Its suite, including the assertion that the two entries do not share a script hash."
+    },
+    {
+      "pattern": "packages/web/src/main.tsx",
+      "visibility": "public",
+      "source": "b4",
+      "why": "THE DASHBOARD ENTRY, resolved. It mounts DashboardApp and nothing else; the site has its own entry at src/marketing/main.tsx. This was `split` because one entry had to choose between the two halves at runtime."
+    },
+    {
+      "pattern": "packages/web/src/app.css",
+      "visibility": "public",
+      "source": "b4",
+      "why": "Global tokens, resets, and the @font-face block, imported by both entries and owned by the dashboard. B4 moved the one marketing-only rule out to src/marketing/styles/marketingDocument.css. The @font-face block still reaches the licensed face, which is B5 and is recorded as an accepted boundary violation."
+    },
+    {
+      "pattern": "packages/web/src/vite-env.d.ts",
+      "visibility": "public",
+      "source": "b4",
+      "why": "The dashboard declares NO build variable, which this file now states by holding none. VITE_CONTROL_PLANE_URL and VITE_PUBLIC_DIRECTORY_URL moved to src/marketing/vite-env.d.ts, where the site that reads them lives."
+    },
+    {
+      "pattern": "packages/web/vite.config.ts",
+      "visibility": "public",
+      "source": "b4",
+      "why": "The dashboard build. Root is `dashboard/`, output is `dist-dashboard`, and it never calls build:discovery. The site build is vite.site.config.ts and is private."
+    },
+    {
+      "pattern": "packages/web/tsconfig.json",
+      "visibility": "public",
+      "source": "b4",
+      "why": "The dashboard program: src without src/marketing and src/public. The exclusions are what make a reverse import a type error here rather than a surprise at the split. tsconfig.site.json is the private program that sees everything."
+    },
+    {
+      "pattern": "packages/web/package.json",
+      "visibility": "split",
+      "source": "b4",
+      "why": "Still split, and the LAST split build input. It carries both entries' scripts (build:dashboard and build:site) plus dependencies neither half needs alone; B6 divides it when @seorak/dashboard becomes its own package with its own manifest."
+    },
+    {
+      "pattern": "packages/web/public/fonts/**",
+      "visibility": "public",
+      "source": "b5",
+      "why": "Figtree at 300/400/500/600, OFL-1.1, byte-identical to the pinned @fontsource/figtree cuts, with the full licence text travelling in the published tarball. This read `excluded` until stage B5, for TT Commons Pro: TypeType LLC property under a EULA that exists nowhere in this repository, and commercial webfont licences are as a class non-sublicensable. The substitution is what changed the answer, and the licensing question is now answered rather than avoided."
+    },
+    {
+      "pattern": "packages/web/public/assets/stack/**",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "72 Simple Icons under CC0-1.0, with a pinned version and per-file attribution already recorded in THIRD_PARTY_NOTICES.md."
+    },
+    {
+      "pattern": "packages/web/public/assets/*.svg",
+      "visibility": "private",
+      "source": "b7",
+      "why": "RESOLVED BY B7, AND THE RESOLUTION IS A REMOVAL. This rule was public and carried a condition: the thirteen vendored AI-tool marks it covered were third-party trademarks with no version pin, accepted into the public core on the condition that B7 re-sync them from a pinned simple-icons version and record the version and date, and marked FALSIFIED EITHER WAY, becoming `excluded` if that could not be done. B7 measured every file against upstream on 2026-08-04 and the re-sync is not achievable: only five of the thirteen were simple-icons content at all, simple-icons carries no `visualstudiocode`, `aider`, `amazonq`, `continue`, `zed`, or `codex` at v15.0.0 or at master, and two files (`vscode.svg`, `codex.svg`) were third-party marks from a source nobody recorded. Six were original artwork drawn in this repository that the notices file attributed to a third party. So the fallback branch applied: the thirteen files are DELETED, `src/lib/toolMeta.ts` renders the colored letter fallback for every tool, and the per-file measurement is in packages/web/THIRD_PARTY_NOTICES.md. The rule is not `excluded`, because nothing is being withheld from both repositories; it is private, because what still matches this glob is only Seorak's own brand, which the four rules below place explicitly and which this rule now agrees with. WHAT IS STILL NOT SETTLED: precondition P2 asked outside counsel whether vendoring third-party trademarks in a public Apache-2.0 repository is acceptable. This removal answers nothing about that question; it removes the subject. P2's other half, the six agent brand-mark PNGs under apps/mobile/assets/agents, is untouched and still open, and any future vendored mark needs recorded provenance a check can re-verify before it may land."
+    },
+    {
+      "pattern": "packages/web/public/assets/dashboard-icon.svg",
+      "visibility": "public",
+      "source": "c0",
+      "why": "The tab icon `packages/web/dashboard/index.html` links, and the static twin of NeutralMark in packages/web/src/brand/brand.tsx. It is NOT the Seorak mark and it is not a second logo: ADR 005 requires a neutral default so a fork has a non-infringing path, B4 built that for the in-app mark, and the entry document was the one brand surface the slot could not reach. Until C0 that document linked assets/favicon.svg, so the public dashboard build copied a private file and failed the moment the private half was absent."
+    },
+    {
+      "pattern": "packages/web/public/assets/favicon.svg",
+      "visibility": "private",
+      "source": "adr-005",
+      "why": "Seorak brand. UNCHANGED BY C0, AND STILL CONTESTED: ADR 005's file-level table places it private, its corrections section says the mark ships in the public core because SeorakMark.tsx already does, and packages/dashboard/scripts/build-package.mjs reported the conflict rather than settling it. C0 removed the public build's DEPENDENCE on this file instead of deciding where it goes, because making a private file public is an owner decision and unbuildability was not."
+    },
+    {
+      "pattern": "packages/web/public/assets/logo-mark.svg",
+      "visibility": "private",
+      "source": "adr-005",
+      "why": "Seorak brand."
+    },
+    {
+      "pattern": "packages/web/public/assets/seorak-icon.svg",
+      "visibility": "private",
+      "source": "adr-005",
+      "why": "Seorak brand."
+    },
+    {
+      "pattern": "packages/web/public/assets/og-image.svg",
+      "visibility": "private",
+      "source": "adr-005",
+      "why": "Seorak brand."
+    },
+    {
+      "pattern": "packages/web/public/assets/og-image.png",
+      "visibility": "private",
+      "source": "adr-005",
+      "why": "Seorak brand."
+    },
+    {
+      "pattern": "packages/web/THIRD_PARTY_NOTICES.md",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "ADR 005 decision 6: licences have to travel with the artifact, so the notices file ships in the dashboard tarball's files array."
+    },
+    {
+      "pattern": "packages/web/DESIGN_LANGUAGE.md",
+      "visibility": "split",
+      "source": "adr-005",
+      "why": "Public for the dashboard system; its marketing sections move with marketing."
+    },
+    {
+      "pattern": "packages/web/README.md",
+      "visibility": "split",
+      "source": "b1a",
+      "why": "Describes both halves of a workspace ADR 005 splits, so it splits with them. ADR 005 did not place it."
+    },
+    {
+      "pattern": "packages/web/.gitignore",
+      "visibility": "split",
+      "source": "b1a",
+      "why": "Build-output ignore rules for both entries. ADR 005 did not place it."
+    },
+    {
+      "pattern": "packages/web/scripts/public-build-guard.mjs",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "A credential guard, useful on both sides of the split."
+    },
+    {
+      "pattern": "packages/web/scripts/sync-stack-icons.mjs",
+      "visibility": "public",
+      "source": "b1a",
+      "why": "Re-syncs the CC0-1.0 stack icons this manifest ships public, and B7 needs it in the same repository as the icons it pins. ADR 005 did not place it."
+    },
+    {
+      "pattern": "packages/web/scripts/portrait*",
+      "visibility": "public",
+      "source": "b1a",
+      "why": "The developer-model portrait fixture matrix and its card reader. They sit outside src/ because nothing that ships to a browser may import fixture data, not because they are marketing: two ModelView suites under src/views import the matrix, and ModelView is public. ADR 005 did not place them, and the gate found the misplacement by reporting those two suites as public files reading a private one."
+    },
+    {
+      "pattern": "packages/worker/**",
+      "visibility": "private",
+      "source": "adr-005",
+      "why": "The managed cloud. ADR 005 section 5 marks much of the data plane a core candidate for a later phase, but every module's destination today is the private repository, and its wrangler.toml and scripts carry account identifiers."
+    },
+    {
+      "pattern": "packages/control-plane/**",
+      "visibility": "private",
+      "source": "adr-005",
+      "why": "Private whole."
+    },
+    {
+      "pattern": "packages/public-directory/**",
+      "visibility": "private",
+      "source": "adr-005",
+      "why": "Private service; its read contracts are already public in @seorak/types."
+    },
+    {
+      "pattern": "packages/push/**",
+      "visibility": "private",
+      "source": "adr-005",
+      "why": "Deferred behind a non-Seorak APNs key in CI."
+    },
+    {
+      "pattern": "apps/mobile/**",
+      "visibility": "private",
+      "source": "adr-005",
+      "why": "App Store distribution under Seorak's signing identity."
+    },
+    {
+      "pattern": "scripts/**",
+      "visibility": "private",
+      "source": "b1a",
+      "why": "The repository's own tooling defaults to the closed side, so a new script is private until someone places it. ADR 005 enumerates the public ones; they are explicit below."
+    },
+    {
+      "pattern": "scripts/check-package-boundaries*",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "The import and dependency gate. CLAUDE.md rule 1 is the public core's own invariant."
+    },
+    {
+      "pattern": "scripts/check-publication-packages*",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "Proves a tarball packs, installs, and audits clean; the public core publishes two of the three packages it checks."
+    },
+    {
+      "pattern": "scripts/check-source-bytes*",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "Refuses control bytes that make a source file unreadable to text tools."
+    },
+    {
+      "pattern": "scripts/check-product-copy*",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "Holds user-facing copy to CLAUDE.md rules 3 and 5."
+    },
+    {
+      "pattern": "scripts/check-dependency-advisories*",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "The advisory posture the published packages have to keep."
+    },
+    {
+      "pattern": "scripts/check-local-artifacts*",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "Repository local-state policy."
+    },
+    {
+      "pattern": "scripts/check-local-private-mcp*",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "The public collector's private-MCP resource gate. It proves the exact resource audience, official stateless transport seam, closed tool catalog, and authority/query integration independently of route admission."
+    },
+    {
+      "pattern": "scripts/check-local-integration-activation*",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "The collector activation gate. It proves positional-first admission, closed management/API/MCP mounting, both real listener bindings, and fails on the highest-risk missing-MCP-mount mutation."
+    },
+    {
+      "pattern": "scripts/check-coverage-floors*",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "Named-file coverage floors over seams the public core owns."
+    },
+    {
+      "pattern": "scripts/check-types-publish-safety*",
+      "visibility": "public",
+      "source": "b1a",
+      "why": "The operational definition of CLAUDE.md rule 2, which is a property of @seorak/types, so it belongs in the repository that publishes it. ADR 005 did not place it because it landed after the ADR was written."
+    },
+    {
+      "pattern": "scripts/check-shared-union-parity*",
+      "visibility": "public",
+      "source": "b1a",
+      "why": "Every reader of a union must accept all of it. Its whole subject is public: the unions live in @seorak/types and the zod schemas that mirror them live in packages/types and packages/web, all four of which this tree publishes. The bug it prevents is a public-core bug — one enum listing four of six SessionEndReason values blanked a whole pillar — and a gate over published packages belongs in the repository that publishes them. Placed under B1a for the same reason as the two rules above it: ADR 005 did not place it because it did not exist."
+    },
+    {
+      "pattern": "scripts/open-core-ownership*",
+      "visibility": "public",
+      "source": "b1a",
+      "why": "This manifest's loader. ADR 005 already publishes `docs/adr/**` redacted, and the ADR carried the ownership matrix, so the map itself is public by a decision already made. It names paths, never identifiers."
+    },
+    {
+      "pattern": "scripts/check-open-core-boundaries*",
+      "visibility": "public",
+      "source": "b1a",
+      "why": "The leak detector. Same reasoning as the map it reads."
+    },
+    {
+      "pattern": "scripts/check-governance*",
+      "visibility": "public",
+      "source": "b7",
+      "why": "The gate over the public core's own governance files: one contact across the set, NOTICE's copyright line matching both Apache grants, a security window a solo maintainer can hold, no LICENSE at this repository's root, and the DCO enforcement point LICENSING-POLICY.md declares. It checks public files and belongs in the repository that carries them. Neither ADR 005 nor B1a placed it."
+    },
+    {
+      "pattern": "scripts/check-vendored-assets*",
+      "visibility": "public",
+      "source": "b7",
+      "why": "Recomputes each vendored collection's digest, refuses a file under the asset roots that the provenance record does not declare, and fails when THIRD_PARTY_NOTICES.md and docs/reference/vendored-assets.json disagree about a version or a sync date. It guards assets the public core ships and belongs in the repository that carries them. Neither ADR 005 nor B1a placed it."
+    },
+    {
+      "pattern": "scripts/check-gate-coverage*",
+      "visibility": "public",
+      "source": "c2",
+      "why": "Does the root test script and .github/workflows/ci.yml name the same gates? It reads a public manifest and a public workflow to answer, so it belongs in the repository that carries them, which is the reasoning already recorded for check-governance* and check-vendored-assets* above. It ships public because the public workflow carried this comparison INLINE with two bugs that could only fail toward silence: the pattern 'npm run ([a-z:-]+)' has no digits in its class, so browser-e2e read as browser-e, and it understood no --workspace, so every workspace-scoped gate:* read as invented. Leaving a knowingly buggy guard public was not an option and removing it would have left the public core with no coverage check at all, so it is placed instead, with the suite the inline version could not have. The glob covers the test beside it: a guard nobody has watched fail is scenery. Its comparison also had to MOVE here from gate-plan.mjs, which stays private because the tiers, the pre-push classification and the step names in it are this repository's alone; the private runner imports the comparison back rather than keeping a second copy."
+    },
+    {
+      "pattern": "scripts/isolated-git*",
+      "visibility": "public",
+      "source": "c1g",
+      "why": "The only sanctioned way to spawn git, and five already-public scripts call it: check-governance*, check-local-artifacts*, check-open-core-boundaries*, check-source-bytes* and open-core-ownership*. Leaving it on the private default would give the public tree five modules importing a file it does not have, so placement here is forced by callers that ADR 005 already placed rather than by a new decision. The hazard it removes is not this repository's alone either: git exports GIT_DIR into every hook, GIT_DIR beats a child's cwd, and a suite that spawns git raw therefore writes to whichever repository the hook belongs to. A public contributor running the public suites under a pre-push hook hits exactly the same thing."
+    },
+    {
+      "pattern": "scripts/check-isolated-git*",
+      "visibility": "public",
+      "source": "c1g",
+      "why": "The gate that fails when a file under scripts/ names the git binary instead of going through the wrapper above. It ships public for the same reason the wrapper does: the public tree carries public suites that spawn git, so the rule has to be enforced where they run, not only here. Wiring is per-repository for the same reason advisories:check is: both halves run their own copy. The glob covers the test beside it, because a gate nobody has watched fail is scenery, and this one is watched failing on a planted raw spawn."
+    },
+    {
+      "pattern": "scripts/check-test-timeouts*",
+      "visibility": "public",
+      "source": "c2t",
+      "why": "Fails when a vitest workspace would run on the implicit 5000ms default. The measurements and the reasoning are in the gate's own docblock and are deliberately not repeated here. What this entry decides is PLACEMENT: it ships public for the reason check-isolated-git* does, that the public tree carries two workspaces which run vitest, @seorak/collector and @seorak/web, and a contributor there runs them under the same kind of pre-push hook, so the rule has to be enforced where the suites are. Wiring is per-repository, both halves running their own copy. The failure that prompted it was in packages/web, which is in the public file set, so it is a public-core defect start to finish. The glob covers the test beside it, because a gate nobody has watched fail is scenery. Neither ADR 005 nor B1a placed it."
+    },
+    {
+      "pattern": "scripts/one-public-file-set*",
+      "visibility": "public",
+      "source": "b2r",
+      "why": "Fails when a second module under scripts/ answers which files are public, or when a data file beside this one declares placements. It guards this map, so it belongs in the repository that carries it. Neither ADR 005 nor B1a placed it; B2r added it after finding the two definitions 37 files apart with both gates green."
+    },
+    {
+      "pattern": "tests/**",
+      "visibility": "private",
+      "source": "b1a",
+      "why": "Browser journeys over the combined site, marketing pages included. B4 decides whether a dashboard-only suite splits out. ADR 005 did not place it."
+    },
+    {
+      "pattern": "patches/**",
+      "visibility": "private",
+      "source": "b1a",
+      "why": "Patches for the native mobile and menu-bar dependency stack, both private. ADR 005 did not place it."
+    },
+    {
+      "pattern": ".github/**",
+      "visibility": "private",
+      "source": "b1a",
+      "why": "This repository's CI, including the macOS signing and Expo jobs. The public core gets its own workflow rather than a filtered copy of these, and the one path both repositories need is placed split below. ADR 005 did not place it."
+    },
+    {
+      "pattern": ".github/workflows/ci.yml",
+      "visibility": "split",
+      "source": "c1b",
+      "why": "Both repositories need a workflow at this exact path and neither one's can serve the other: this repository's runs jobs against six workspaces the public tree does not contain, and the public one runs the public tree's own install, build, suites, and gates. That is the same shape as the root manifest, so it is divided the same way, and the public half is written down at `open-core/.github/workflows/ci.yml`. It is NOT placed at a second path under `.github/workflows/` here, because GitHub runs every file in that directory: a public-tree workflow committed there would execute in this repository against a lockfile and a workspace set it was not written for, and be red forever by construction."
+    },
+    {
+      "pattern": ".claude/**",
+      "visibility": "private",
+      "source": "b1a",
+      "why": "Local agent settings for this checkout. ADR 005 did not place it."
+    },
+    {
+      "pattern": "docs/**",
+      "visibility": "private",
+      "source": "c0",
+      "why": "Documentation defaults to the closed side, so a new document is private until someone places it. This root used to sit in `coverage.outOfScope` on the argument that no gate can leak through a document, which was true and was not a placement: an unplaced path is private, so a filter driven by this map produced a public repository with ZERO documentation while ADR 005 section 'Repository-level' sends docs public REDACTED. C0 encodes that table below. What stays private here is what the ADR names private, plus everything the ADR does not name at all: docs/README.md and docs/ROADMAP.md index and plan the whole product including the managed cloud, docs/launch-*.md, docs/handoff/**, and docs/runbooks/** are the operational map ADR 005 decision 1 keeps closed, and the five docs/reference documents the ADR lists by name."
+    },
+    {
+      "pattern": "docs/VISION.md",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "ADR 005 repository-level table, PUBLIC redacted. The product north star every other public document points at."
+    },
+    {
+      "pattern": "docs/ARCHITECTURE.md",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "ADR 005 repository-level table, PUBLIC redacted. Package boundaries and data flow, which is what a contributor to the public core needs before touching it."
+    },
+    {
+      "pattern": "docs/STATUS.md",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "ADR 005 repository-level table, PUBLIC redacted. Shipped versus planned per surface, which is the honesty gate CONTRIBUTING.md sends a reader to."
+    },
+    {
+      "pattern": "docs/adr/**",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "ADR 005 repository-level table, PUBLIC redacted. The decisions the public core is built on, including this split. Four of the five are public whole and scan clean; ADR 005 itself is split, because it argues for the split by naming what stays private."
+    },
+    {
+      "pattern": "docs/adr/005-open-core-repository-and-free-ui-packaging.md",
+      "visibility": "split",
+      "source": "c1b",
+      "why": "The ADR cuts both ways: it explains what the project did and why, and its evidence sections enumerate private module groups and the infrastructure identifiers that block a filtered history. Publishing it whole would defeat the decision it makes; withholding it would leave fourteen public files, including CONTRIBUTING.md and both licence documents, pointing at the missing argument for the boundary they describe. So it divides like the root manifest: the private half stays here whole, and a redacted public half is written down at `open-core/docs/adr/005-open-core-repository-and-free-ui-packaging.md`, which keeps every decision and its reasoning, drops the private-workspace tables and the identifier inventory, and marks each removal in place."
+    },
+    {
+      "pattern": "docs/reference/agent-standards.md",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "ADR 005 repository-level table, PUBLIC redacted. The quality bar a change is reviewed against, which CONTRIBUTING.md names as the standard for a contribution."
+    },
+    {
+      "pattern": "docs/reference/voice-and-scope.md",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "ADR 005 repository-level table, PUBLIC redacted. Eight files in the public set cite it, including check-product-copy's subject matter and the collector's narrative renderer."
+    },
+    {
+      "pattern": "docs/reference/open-core-ownership.json",
+      "visibility": "public",
+      "source": "c0",
+      "why": "THIS FILE. `scripts/open-core-ownership.mjs` is public by a decision already made and cannot load without it, so the public tree carried the boundary machinery and no map to drive it; eight of the twelve shipped gate suites failed on exactly that. It names paths, never identifiers."
+    },
+    {
+      "pattern": "docs/reference/open-core-boundary-acceptance.json",
+      "visibility": "public",
+      "source": "c0",
+      "why": "The acceptance file both public boundary gates reconcile against. Without it they report every accepted violation as undeclared and exit non-zero in a tree that has not changed."
+    },
+    {
+      "pattern": "docs/reference/types-boundary-acceptance.json",
+      "visibility": "public",
+      "source": "c0",
+      "why": "Read by `scripts/check-types-publish-safety.mjs`, which is public because CLAUDE.md rule 2 is a property of the package the public core publishes."
+    },
+    {
+      "pattern": "docs/reference/shared-union-acceptance.json",
+      "visibility": "public",
+      "source": "c0",
+      "why": "Read by `scripts/check-shared-union-parity.mjs`, which is public. Same reasoning as the entry above it: without the acceptance file the gate reports its one declared narrowing as undeclared and exits non-zero in a tree that has not changed."
+    },
+    {
+      "pattern": "docs/reference/dependency-advisory-baseline.json",
+      "visibility": "split",
+      "source": "c0b",
+      "why": "Read by `scripts/check-dependency-advisories.mjs`, which is public. C0 placed it public whole, which shipped THIS tree's measurement to a tree that resolves a different graph: the baseline records a normalized graph by sha256, and the public half has no wrangler, no miniflare, and no Expo. One file cannot be the reviewed measurement of two graphs, so each repository carries its own and the public half is written down at `open-core/docs/reference/dependency-advisory-baseline.json`."
+    },
+    {
+      "pattern": "docs/reference/dependency-advisory-posture.md",
+      "visibility": "split",
+      "source": "c0b",
+      "why": "READ, not merely cited, by `scripts/check-dependency-advisories.test.mjs`, which asserts the prose still states the baseline's own numbers. It follows the baseline: the private document triages Cloudflare toolchain findings the public tree cannot produce and states counts the public baseline does not hold, so shipping it whole would fail the public half's own gate. The public half is written down at `open-core/docs/reference/dependency-advisory-posture.md`."
+    },
+    {
+      "pattern": "docs/reference/vendored-assets.json",
+      "visibility": "public",
+      "source": "c0",
+      "why": "The provenance record `scripts/check-vendored-assets.mjs` recomputes offline, over asset roots the public core ships. Both the notices file and the dashboard's CC0 licence text cite it."
+    },
+    {
+      "pattern": "docs/reference/self-hosted-plane-hardening.md",
+      "visibility": "public",
+      "source": "c0",
+      "why": "SECURITY.md and the PUBLISHED collector README both send a reader here for the threat model of the plane they run on their own machine. It is a public-core document by subject, and leaving it behind puts a dead link in a package README on npm. ADR 005 names five docs/reference documents private and this is not one of them."
+    },
+    {
+      "pattern": "docs/reference/event-ingest-compatibility.md",
+      "visibility": "public",
+      "source": "c0",
+      "why": "The wire compatibility record for ingest, cited by the published collector README. A protocol document about the contract in @seorak/types, which is public whole."
+    },
+    {
+      "pattern": "docs/reference/font-substitution-*.md",
+      "visibility": "public",
+      "source": "c0",
+      "why": "B5's measurement record for the typeface the public core now ships. packages/web/DESIGN_LANGUAGE.md, which is in the public set, cites the result document as the evidence for its type scale, and the result document cites the metrics and impact documents as its own inputs. All three describe an OFL face and its tuning, not the managed cloud."
+    },
+    {
+      "pattern": "docs/specs/intervention.md",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "ADR 005 repository-level table: specs are public for the local and protocol half. Attention boundaries the local collector delivers."
+    },
+    {
+      "pattern": "docs/specs/introspection.md",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "Same row. The developer model contract, cited by @seorak/types and by two public ModelView modules."
+    },
+    {
+      "pattern": "docs/specs/multi-repo.md",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "Same row. Which surface answers which question, cited by ten files in the public set."
+    },
+    {
+      "pattern": "docs/specs/multi-tool.md",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "Same row. The committed capability contract for adding a second capture tool, which agent-standards names as the document to read before doing it and which the collector's adapters cite by path."
+    },
+    {
+      "pattern": "docs/specs/replay.md",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "Same row. Keyframe review of past sessions, a local product contract."
+    },
+    {
+      "pattern": "docs/specs/surfaces.md",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "Same row. The three delivery surfaces and their equal weight, and the one docs file a suite in the public set READS: packages/collector/test/cli-command-contract.test.ts asserts the retired command name is gone from the authoritative surface document as well as from the code."
+    },
+    {
+      "pattern": "open-core/**",
+      "visibility": "public",
+      "source": "c0",
+      "relocatedTo": "the public repository's root, without the open-core/ prefix",
+      "why": "The public repository's own root manifest and lockfile, which `package.json` and `package-lock.json` are `split` FOR. The root manifest cannot be divided in place the way B4 divided the Vite entries, because both halves must be called package.json and sit at the root; this directory is where the public half is written down and reviewed instead of being reconstructed by hand at every audit. `scripts/assemble-public-tree.mjs` copies each file here to the tree root and drops the split original, and it fails if a file here does not correspond to a root file this map places split."
+    },
+    {
+      "pattern": "CLAUDE.md",
+      "visibility": "split",
+      "source": "adr-005",
+      "why": "A public core CLAUDE.md and a private one; the managed half stays private."
+    },
+    {
+      "pattern": "README.md",
+      "visibility": "split",
+      "source": "adr-005",
+      "why": "A public core README and a private one."
+    },
+    {
+      "pattern": "SETUP.md",
+      "visibility": "split",
+      "source": "adr-005",
+      "why": "A public core SETUP and a private one; the owner-cell and provisioning halves stay private."
+    },
+    {
+      "pattern": "LICENSING-POLICY.md",
+      "visibility": "public",
+      "source": "b7",
+      "why": "ADR 005 decision 7 makes this file the gate the DCO status check reads: the check does not pass until it exists. It states the inbound licence for the public core, so it belongs whole to the public repository rather than splitting. It is public and not split because it says nothing about the managed cloud."
+    },
+    {
+      "pattern": "NOTICE",
+      "visibility": "public",
+      "source": "b7",
+      "why": "ADR 005 decision 7: yes, minimal. Apache-2.0 section 4(d) is conditional rather than mandatory, and ASF's own guidance is to put nothing in NOTICE that is not legally required, so this is the product name and the copyright line and nothing else. It grants nothing on its own, which is why it may sit at this repository's root while a root LICENSE may not."
+    },
+    {
+      "pattern": "SECURITY.md",
+      "visibility": "public",
+      "source": "b7",
+      "why": "ADR 005 decision 7. The reporting channel and the response window belong to the public core; the same address takes reports about the private services, which is stated in the file rather than implied by a second policy."
+    },
+    {
+      "pattern": "CONTRIBUTING.md",
+      "visibility": "public",
+      "source": "b7",
+      "why": "ADR 005 decision 7. It describes what a contributor can build from the public tree, so it splits nothing: everything it names is either public or named as unavailable."
+    },
+    {
+      "pattern": "CODE_OF_CONDUCT.md",
+      "visibility": "public",
+      "source": "b7",
+      "why": "ADR 005 decision 7. Contributor Covenant 2.1 with a real enforcement address and a preamble saying the plural in its text is one person."
+    },
+    {
+      "pattern": "TRADEMARK.md",
+      "visibility": "public",
+      "source": "b7",
+      "why": "ADR 005 decision 7 requires a trademark policy, and the wave-2 plan lists its WORDING as an owner decision with legal review, which is a gate outside engineering control. The file is placed public because that is where it lands whatever the review says; its content is marked DRAFT and carries the open questions rather than a settled policy. Apache-2.0 section 6 grants no trademark rights, so this is the only control over who may present a fork as Seorak, which is why it is a separate artifact from the licence."
+    },
+    {
+      "pattern": "package.json",
+      "visibility": "split",
+      "source": "b1a",
+      "why": "The workspace root manifest. Each repository needs its own; neither inherits the other's workspace globs or scripts. ADR 005 did not place it."
+    },
+    {
+      "pattern": "package-lock.json",
+      "visibility": "split",
+      "source": "b1a",
+      "why": "Follows package.json. ADR 005 did not place it."
+    },
+    {
+      "pattern": "playwright.config.ts",
+      "visibility": "private",
+      "source": "b1a",
+      "why": "Configures tests/browser, which is private for the same reason. ADR 005 did not place it."
+    },
+    {
+      "pattern": ".gitignore",
+      "visibility": "split",
+      "source": "b1a",
+      "why": "Ignore rules for build outputs both repositories produce. ADR 005 did not place it."
+    },
+    {
+      "pattern": ".dockerignore",
+      "visibility": "private",
+      "source": "b1a",
+      "why": "The push dispatcher's container build context. ADR 005 did not place it."
+    }
+  ]
+}

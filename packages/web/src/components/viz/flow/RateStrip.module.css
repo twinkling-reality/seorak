@@ -1,0 +1,104 @@
+/* Rate strip: label | shared 0→max track | value. Dot position encodes
+ * rate; dot size encodes weight (e.g. hours logged). Relies on the
+ * global `rowReveal` keyframe (app.css). */
+
+.strip {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 140px) minmax(0, 1fr) minmax(0, auto);
+  align-items: center;
+  gap: 20px;
+  animation: rowReveal 0.3s var(--motion) both;
+  animation-delay: calc(var(--row-index, 0) * 40ms);
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  color: var(--ink);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.track {
+  position: relative;
+  height: 20px;
+  min-width: 0;
+}
+
+.axis {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: var(--hover-bg);
+  transform: translateY(-50%);
+}
+
+.dot {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ink);
+  transition: transform var(--motion-fast) ease;
+}
+
+.value {
+  font-family: var(--mono);
+  font-size: var(--text-sm);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.meta {
+  color: var(--soft);
+}
+
+/* "0" and "max" labels under the track, aligned to the track's left
+ * edge via padding-left = label column (140px) + column gap (20px). */
+.axisLabels {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  padding-left: 160px;
+  padding-right: 0;
+  margin-top: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row {
+    animation: none;
+  }
+  .dot {
+    transition: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+  .axisLabels {
+    padding-left: 0;
+  }
+}

@@ -1,0 +1,94 @@
+/* DurationStrip: column-stacked horizontal strip where each bucket flexes
+ * to its share of the total. Tints fall on either a monochrome alpha ramp
+ * (default, matches the Usage detail view) or a positional success-to-warn
+ * ramp (for outcome-flavored reads). */
+
+.frame {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.cols {
+  display: flex;
+  width: 100%;
+  gap: 0;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 0 10px;
+  animation: rowReveal 0.3s var(--motion) both;
+  animation-delay: calc(var(--row-index, 0) * 45ms);
+}
+
+.col:first-child {
+  padding-left: 0;
+}
+
+.col:last-child {
+  padding-right: 0;
+}
+
+.label {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+.seg {
+  height: 12px;
+  min-width: 2px;
+  margin: 0 -10px;
+  background: var(--ds-seg-color, var(--ink));
+  transition: opacity var(--motion-fast) ease;
+}
+
+.col:first-child .seg {
+  margin-left: 0;
+  border-top-left-radius: var(--radius-2xs);
+  border-bottom-left-radius: var(--radius-2xs);
+}
+
+.col:last-child .seg {
+  margin-right: 0;
+  border-top-right-radius: var(--radius-2xs);
+  border-bottom-right-radius: var(--radius-2xs);
+}
+
+.value {
+  font-family: var(--mono);
+  font-size: var(--text-sm);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meta {
+  color: var(--soft);
+  font-size: var(--text-2xs);
+  margin-left: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .col {
+    animation: none !important;
+  }
+  .seg {
+    transition: none !important;
+  }
+}

@@ -1,0 +1,811 @@
+/* Per-section categorical palette — same recipe as Model's facets: each
+   evidence section its own muted hue (target hue mixed toward --accent), so a
+   note term, its connector, its card swatch, and its pill all read as one
+   category. Colour encodes CATEGORY (which evidence backs the claim); the
+   open/selected STATE stays lavender + highlight, never a rotating hue.
+
+   Four of these hues are the shared narrativePalette ramp (Model draws the same
+   values for its facets); pink and slate are Agents' own. The aliases below need
+   no dark override — a var() resolves against whatever the ramp computes to on
+   this element, which the composed dark rule already switches. */
+.page {
+  composes: narrativeHues from '../../styles/narrativePalette.module.css';
+  --sect-matrix: var(--narrative-amber);
+  --sect-where: var(--narrative-blue);
+  --sect-when: var(--narrative-green);
+  --sect-models: var(--narrative-violet);
+  --sect-outcomes: color-mix(in srgb, #c0567a 78%, var(--accent));
+  --sect-coverage: color-mix(in srgb, #64748d 80%, var(--accent));
+  animation: dashboardViewFadeIn 0.25s var(--motion) both;
+  min-width: 0;
+  /* The split below gates on the CONTENT LANE, not the viewport: the sidebar
+     collapses from 188px to 56px, which moves the lane by 130px at a fixed window
+     width. A media query would seat two columns in a lane that cannot hold them. */
+  container-type: inline-size;
+}
+
+/* Dark field needs brighter section hues to stay legible. Only the two
+   Agents-only hues restate here; the ramp brightens itself. */
+:global([data-theme='dark']) .page {
+  --sect-outcomes: color-mix(in srgb, #e58aa8 80%, var(--accent));
+  --sect-coverage: color-mix(in srgb, #9caec8 82%, var(--accent));
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  /* Two controls here (repo filter + range pills); match the Overview controlTray
+     gap so they don't sit flush against each other. */
+  gap: 12px;
+  margin: 26px 0 8px;
+}
+
+/* ── The split: the verdict and the evidence it rests on, side by side ──
+   The panels are evidence FOR the verdict, not alternatives TO it, and the prose
+   cites INTO them, so they belong beside the read rather than a scroll below it.
+   Stacked, the page ran 1864px and put every number on the second fold.
+
+   The evidence column is sized by the table, not by taste: .headRow/.row carry
+   min-width: calc(280px + cols * 140px), which is 560px at two agents. Narrower
+   than that and the compare would scroll sideways inside its own column. Below a
+   lane that can hold both, this collapses to one column and the note card falls
+   back to its in-flow position under the prose. */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin: clamp(20px, 4vh, 40px) 0 8px;
+}
+
+@container (min-width: 1140px) {
+  .split {
+    grid-template-columns: minmax(0, 1fr) minmax(560px, 600px);
+    column-gap: 48px;
+    align-items: start;
+  }
+}
+
+.verdict {
+  min-width: 0;
+  scroll-margin-top: 24px;
+}
+
+.evidence {
+  min-width: 0;
+}
+
+.read {
+  position: relative;
+  width: 100%;
+}
+
+.column {
+  position: relative;
+  width: 100%;
+  max-width: 40rem;
+}
+
+/* A verdict you read, not a headline you are shown. At 2.05rem these three
+   paragraphs stood 967px tall on their own, which is the whole reason the evidence
+   used to start below the fold; narrowing the column to seat the panel beside them
+   would have pushed the same text to 1113px. This is still well above body copy and
+   it is where the old clamp already landed on a narrow window. */
+.verdictRead {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(1.35rem, 1.8vw, 1.6rem);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: normal;
+  word-spacing: 0.04em;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.verdictRead + .verdictRead {
+  margin-top: 1.1em;
+}
+
+/* ── Note terms — one annotation, two states ──
+   rest  = quiet section-hued underline → "there's cited evidence here"
+   shown = section highlight → open, its value revealed in the lane      */
+
+.term {
+  display: inline;
+  margin: 0;
+  padding: 0.02em 0.1em;
+  border: none;
+  border-radius: 0.3em;
+  background: none;
+  color: var(--note-accent, var(--accent));
+  font: inherit;
+  text-align: inherit;
+  letter-spacing: inherit;
+  word-spacing: inherit;
+  line-height: inherit;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.18em;
+  cursor: pointer;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  transition:
+    color 0.15s var(--motion),
+    background 0.18s var(--motion),
+    text-decoration-color 0.15s var(--motion);
+}
+
+.term:hover,
+.term:focus-visible {
+  color: color-mix(in srgb, var(--note-accent, var(--accent)) 80%, var(--ink));
+  background: color-mix(in srgb, var(--note-accent, var(--accent)) 10%, transparent);
+  outline: none;
+}
+
+/* The one pulled term lifts from underline to highlight — the "open" state. */
+.termShown,
+.termShown:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--note-accent, var(--accent)) 26%, transparent);
+  text-decoration-color: transparent;
+}
+
+.termSection_outcomes { --note-accent: var(--sect-outcomes); }
+.termSection_matrix { --note-accent: var(--sect-matrix); }
+.termSection_where { --note-accent: var(--sect-where); }
+.termSection_when { --note-accent: var(--sect-when); }
+.termSection_models { --note-accent: var(--sect-models); }
+.termSection_coverage { --note-accent: var(--sect-coverage); }
+
+/* ── Connector — the pulled term's line into the lane, one at a time ── */
+
+.connectorSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 2;
+  animation: agentsConnectorIn 0.24s var(--motion) both;
+}
+
+.connectorPath {
+  fill: none;
+  stroke: var(--note-accent, var(--accent));
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  opacity: 0.5;
+}
+
+.connectorDot {
+  fill: var(--note-accent, var(--accent));
+}
+
+/* ── Cited note card — soft environment, hard evidence ──
+   The PEEK object: what a hovered term shows before you commit to it. Pinning docks
+   the note into the panel head instead (see .panelHead), so this card never has to
+   sit on top of the evidence it cites for longer than a hover.
+
+   It was reading as a flat grey box for three reasons, and only one of them was
+   colour. It carried a fill and a blur and nothing else: no edge, no depth, no
+   inset highlight. Every other floating glass surface in the app (ProjectDropdown,
+   CollectionPanel, DemoSwitcher) is sheet + rim + shadow-lg/xs; this was the one
+   without either, so it could not read as a material. Second, the hue its term and
+   its connector both carry never reached the card — --glass-tint hands it over now.
+   Third, it floated in an empty white lane, and glass over nothing is a grey box:
+   it now floats over the evidence panel, so the blur finally has something to
+   refract. (That blur was ALSO dead app-wide until the route wrapper stopped
+   fill-holding opacity; see motion/RouteTransition.module.css.) */
+
+.note {
+  position: relative;
+  --glass-tint: var(--note-accent, var(--accent));
+  padding: clamp(15px, 2vw, 20px);
+  border-radius: 16px;
+  box-shadow:
+    var(--shadow-lg),
+    var(--shadow-xs),
+    inset 0 1px 0 var(--note-inset);
+  overflow: hidden;
+}
+
+.noteLane {
+  position: absolute;
+  z-index: 3;
+  animation: agentsNoteIn 0.26s var(--motion) both;
+}
+
+.noteBelow {
+  margin-top: clamp(18px, 3.5vh, 28px);
+  max-width: 30rem;
+  animation: agentsNoteIn 0.26s var(--motion) both;
+}
+
+.notePeek {
+  pointer-events: none;
+}
+
+.noteHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Section identity chip — flat categorical swatch (the mesh gradient stays
+   reserved for real repos, per Model's detail chip). Shared by the card head
+   and the evidence pills so the category reads as one system. */
+.noteSwatch {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  background: linear-gradient(
+    140deg,
+    var(--note-accent, var(--accent)),
+    color-mix(in srgb, var(--note-accent, var(--accent)) 55%, white)
+  );
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.noteSwatch[data-section='outcomes'] { --note-accent: var(--sect-outcomes); }
+.noteSwatch[data-section='matrix'] { --note-accent: var(--sect-matrix); }
+.noteSwatch[data-section='where'] { --note-accent: var(--sect-where); }
+.noteSwatch[data-section='when'] { --note-accent: var(--sect-when); }
+.noteSwatch[data-section='models'] { --note-accent: var(--sect-models); }
+.noteSwatch[data-section='coverage'] { --note-accent: var(--sect-coverage); }
+
+.noteHead .noteSwatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+}
+
+.noteTitle {
+  flex: 1;
+  margin: 0;
+  font-family: var(--display);
+  font-size: 0.98rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.noteClose {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border: none;
+  border-radius: var(--control-radius);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  font-family: var(--display);
+  font-size: 0.85rem;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.15s var(--motion);
+}
+
+.noteClose:hover {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.noteClose:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.noteDetail {
+  margin: 12px 0 0;
+  font-family: var(--display);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--ink) 74%, transparent);
+}
+
+.noteCitations {
+  margin: 11px 0 0;
+  padding: 0 0 0 1.1em;
+  font-family: var(--display);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--ink) 66%, transparent);
+}
+
+.noteCitations li + li {
+  margin-top: 5px;
+}
+
+@keyframes agentsNoteIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes agentsConnectorIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Evidence pills — glass peer links that swap the one panel below ──
+   Sibling choices per DESIGN_LANGUAGE.md; the section hue rides the small
+   swatch, selection stays lavender. */
+
+/* In the split these sit at the top of the evidence column, directly on the panel
+   they drive. That is the point: the RANGE pills above pick which data the page is
+   about, these pick which evidence you are reading, and a control that sits on the
+   thing it changes does not need a label to say so. */
+.panelPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: clamp(28px, 5vh, 44px);
+}
+
+@container (min-width: 1140px) {
+  .panelPills {
+    margin-top: 0;
+  }
+}
+
+.panelPill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border: none;
+  border-radius: 13px;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-table);
+  text-transform: uppercase;
+  color: var(--soft);
+  cursor: pointer;
+  transition:
+    color 0.15s var(--motion),
+    background 0.15s var(--motion),
+    transform 0.15s var(--motion),
+    box-shadow 0.15s var(--motion);
+}
+
+.panelPill:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface-glass-fill));
+  transform: translateY(-1px);
+}
+
+.panelPill:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.panelPillActive {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface-glass-fill));
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.panelBody {
+  margin-top: clamp(18px, 3vh, 28px);
+  scroll-margin-top: 24px;
+  animation: dashboardViewFadeIn 0.25s var(--motion) both;
+}
+
+/* ── The panel head: the evidence's caption, and where a pinned note berths ──
+   At rest it carries the section's lead. Pin a term in the verdict and the note
+   lands HERE rather than floating over the rows it cites, because an annotation
+   that covers its own evidence is a poor instrument. The connector still draws,
+   term to head, so the tie is shown rather than implied.
+
+   The reserved height is what keeps the table still: the note runs taller than the
+   lead it replaces, and a table that jumps 60px under the cursor you just clicked
+   with is the page flinching. */
+.panelHead {
+  position: relative;
+}
+
+@container (min-width: 1140px) {
+  .panelHead {
+    min-height: 84px;
+  }
+}
+
+/* The panel body, and only the body, remounts on a section swap: the head above it
+   holds the connector's target and must not be torn out from under the wire. */
+.panelSwap {
+  animation: dashboardViewFadeIn 0.25s var(--motion) both;
+}
+
+.panelHeadNote {
+  animation: agentsNoteIn 0.26s var(--motion) both;
+}
+
+/* The head is already the panel's caption; its title carries the weight, so the
+   note's own detail line drops back to the lead's register rather than shouting. */
+.panelHeadNote .noteDetail {
+  margin-top: 10px;
+  max-width: 40rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .note,
+  .noteLane,
+  .noteBelow,
+  .connectorSvg,
+  .panelBody,
+  .panelSwap,
+  .panelHeadNote {
+    animation: none;
+  }
+
+  .panelPill:hover {
+    transform: none;
+  }
+}
+
+/* ── Evidence panel copy ── */
+
+.sectionLead {
+  margin: 8px 0 0;
+  max-width: 36rem;
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--ink) 62%, transparent);
+}
+
+.disclosure {
+  margin: 14px 0 0;
+  max-width: 44rem;
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--ink) 58%, transparent);
+}
+
+.disclosure:first-of-type {
+  margin-top: 20px;
+}
+
+.empty {
+  margin: 18px 0 0;
+  font-family: var(--mono);
+  font-size: var(--text-sm);
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+}
+
+/* ── Matrix / where tables (Compare-shaped) ── */
+
+.table {
+  --agent-cols: 2;
+  display: grid;
+  overflow-x: auto;
+  margin-top: 20px;
+  padding-bottom: 8px;
+}
+
+.headRow,
+.row {
+  display: grid;
+  grid-template-columns: minmax(120px, 180px) repeat(var(--agent-cols), minmax(0, 1fr));
+  column-gap: var(--space-lg);
+  align-items: baseline;
+  min-width: calc(280px + var(--agent-cols) * 140px);
+}
+
+.headRow {
+  align-items: end;
+  padding: 6px 0 14px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.row {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--hairline);
+  animation: agentsRowIn 0.3s var(--motion) both;
+  animation-delay: calc(min(var(--row-index, 0), 10) * 16ms);
+}
+
+@keyframes agentsRowIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.metricHead,
+.agentHead {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-table);
+  text-transform: uppercase;
+  color: var(--soft);
+}
+
+/* Agent identity in the header only: brand mark + a brand-tinted label mixed
+   toward ink for legibility. Cell values below stay ink. */
+.agentHead {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: color-mix(in srgb, var(--agent-brand, var(--soft)) 60%, var(--ink));
+}
+
+.agentHead[data-leader='true'] {
+  font-weight: 500;
+}
+
+.agentHeadIcon {
+  flex-shrink: 0;
+}
+
+.metricLabel {
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  color: color-mix(in srgb, var(--ink) 78%, transparent);
+  transition:
+    color 0.18s var(--motion),
+    background 0.18s var(--motion),
+    box-shadow 0.18s var(--motion);
+}
+
+/* A row the pinned note is citing. It takes the SAME highlight the term takes in the
+   verdict: you lit up a phrase in the sentence, and the row that phrase came from
+   lights up the same way, in the same hue. That is the whole citation, drawn.
+
+   The spread shadow pads the highlight without adding padding, so marking a row
+   shifts nothing. The VALUES stay ink: the mark says which row you asked about, and
+   a tint on a number would read as something about the number. */
+.metricLabelCited {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--note-accent, var(--accent)) 22%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--note-accent, var(--accent)) 22%, transparent);
+  border-radius: 3px;
+}
+
+.projectCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.multiMark {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  color: var(--soft);
+}
+
+.cell,
+.cellPartial,
+.cellEmpty {
+  font-family: var(--mono);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-stat);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A leg the tool reports on SOME of its calls. Deliberately its own weight: reading it
+   at full strength claims a completeness the capture does not have, and dimming it to
+   `cellEmpty` throws away a real measurement. It sits between them because the truth
+   does. `--muted` is already the token between `--ink` and `--soft`, in both themes. */
+.cellPartial {
+  color: var(--muted);
+}
+
+.cellEmpty {
+  color: var(--soft);
+}
+
+/* ── Models list ── */
+
+.modelList {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  max-width: 36rem;
+}
+
+.modelRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  column-gap: var(--space-md);
+  align-items: baseline;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.modelName {
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  color: var(--ink);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modelValue {
+  font-family: var(--mono);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-stat);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.modelMeta {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-stat);
+  color: var(--soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Models panel — per-agent groups ── */
+
+.modelGroup {
+  margin-top: 26px;
+  max-width: 36rem;
+}
+
+.modelGroup:first-of-type {
+  margin-top: 18px;
+}
+
+/* Same identity treatment as the table's agent columnheaders. */
+.modelGroupHead {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-table);
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--agent-brand, var(--soft)) 60%, var(--ink));
+}
+
+.modelGroupEmpty {
+  margin: 10px 0 0;
+  font-family: var(--mono);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-stat);
+  color: var(--soft);
+}
+
+/* ── When panel — the past-activity charts ── */
+
+.history {
+  margin-top: 18px;
+  max-width: 46rem;
+}
+
+.historyLegend {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 4px;
+}
+
+.historyLegendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--text-sm);
+}
+
+.historyLegendSwatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.historyBlock {
+  margin-top: 22px;
+}
+
+.historyHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.historyTitle {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-table);
+  text-transform: uppercase;
+  color: var(--soft);
+}
+
+.historyScale {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-stat);
+  color: var(--soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.historySvg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.historyBaseline {
+  stroke: var(--hairline);
+  stroke-width: 1;
+}
+
+.historyBar {
+  shape-rendering: crispEdges;
+}
+
+.historyUnmeasured {
+  fill: none;
+  stroke-width: 1.2;
+  opacity: 0.7;
+}
+
+/* ── Record rail ──
+   The stretch of the window Seorak actually holds a record of, per tool, on the same
+   x-scale as the bars below. .railHeld is the record (brand-tinted, same mix as a bar, so
+   the eye ties rail to bars without a legend). .railEmpty is the window it does NOT cover:
+   a hairline, NOT a tint or a hatch, because the point is that nothing was observed there
+   and a filled treatment would be drawing something we did not measure. */
+.railHeld {
+  shape-rendering: geometricPrecision;
+}
+
+.railEmpty {
+  stroke: var(--hairline);
+  stroke-width: 1;
+}
+
+/* Its own line, NOT squeezed into the date axis: it is long enough that sharing that flex
+   row wraps the dates mid-token. Chart chrome, in the same register as the hollow-dot
+   footnote, not a caveat: it names what the empty stretch on the rail means. */
+.railNote {
+  margin: 8px 0 0;
+  max-width: 40rem;
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--ink) 62%, transparent);
+}
+
+.historyAxis {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-stat);
+  color: var(--soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.historyFootnote {
+  text-transform: none;
+  letter-spacing: normal;
+}

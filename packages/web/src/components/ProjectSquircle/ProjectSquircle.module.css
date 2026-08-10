@@ -1,0 +1,77 @@
+.projectSquircle {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
+  background: var(--project-squircle-gradient);
+}
+
+.sizeXs {
+  width: 14px;
+  height: 14px;
+  border-radius: 5px;
+}
+
+.sizeSm {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+}
+
+.sizeMd {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  transition:
+    transform var(--motion-base) var(--motion),
+    box-shadow var(--motion-base) var(--motion);
+}
+
+.active {
+  transform: scale(1.06);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.identity {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.identityLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+/* Inline-in-prose identity. The name is normal inline text so it sits on the
+ * SURROUNDING prose baseline (not trapped in a flex box that drops below it) and
+ * gets a natural word-space after it. The squircle is an inline-block, em-sized
+ * so it scales with the prose. white-space: nowrap keeps the squircle and name
+ * from breaking across a wrap. */
+.inline {
+  white-space: nowrap;
+}
+
+.inlineSquircle {
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  border-radius: 0.26em;
+  margin-right: 0.2em;
+  /* Center the mark on the text's x-height midpoint (baseline + half x-height).
+   * Font-metric based, so it tracks the word's optical middle at any size
+   * without a magic pixel nudge. */
+  vertical-align: middle;
+}
+
+.inlineLabel {
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}

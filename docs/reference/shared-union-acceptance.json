@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-08-07",
+  "measuredAtCommit": "1f81a02e",
+  "definition": "scripts/check-shared-union-parity.mjs",
+  "note": "Every narrowing `union-parity:check` reports today, with the condition that falsifies its acceptance. THIS FILE IS THE ONLY ESCAPE HATCH IN AN ENFORCING GATE: a narrowing not listed here fails the check, and an entry here that no longer matches a narrowing fails it too, so the file cannot outlive what it excuses. It is also the only enumerated list in the system; the script names no union, no field, and no file. An entry's `why` is not decoration — it is what a later reader re-verifies against the tree, so it must state facts that can be checked and cite the lines that carry them.",
+  "entries": [
+    {
+      "file": "packages/types/src/event-validation.ts",
+      "symbol": "ToolCallEventSchema",
+      "field": ".toolName",
+      "category": "unbounded",
+      "acceptedOn": "2026-08-07",
+      "why": "THIS NARROWING IS A PRIVACY GUARD, AND IT IS THE ONE PLACE IN THIS TREE WHERE REJECTING A LEGAL-LOOKING VALUE IS THE POINT. `ToolCallEvent.toolName` is declared `string` at packages/types/src/events.ts:196 and the comment above `KnownToolName` (packages/types/src/events.ts:147-164) says why: the type stays open on the wire, and every collector adapter sanitizes to a closed set BEFORE emit. packages/collector/src/tool-name.ts:53 is that sanitizer — 21 built-in tokens pass through, every `mcp__<server>__<tool>` name folds to the single `mcp` bucket so a private MCP server name never ships, and anything else becomes `other`. packages/collector/src/adapters/claude-code.ts:239 is the only call site that sets the field. The 23 values here are exactly those 21 plus `mcp` plus `other`, so this schema is the server-side backstop for the P0 leak fix that CAPTURE-FOUNDATION ADR-CF2 records: an event carrying a raw tool name is refused at ingest rather than stored. Widening it to `z.string()` would delete the backstop and let one un-sanitized adapter write a customer's internal server name into D1, where an append-only log cannot un-write it.",
+      "falsifiedWhen": "`ToolCallEvent.toolName` stops being `string` and is declared as its real closed set (`KnownToolName | \"mcp\" | \"other\"`), at which point this becomes an ordinary closed-contract comparison, the gate checks the 23 values against the union mechanically, and this entry is stale; or the sanitize-before-emit rule is dropped, so a raw tool name is allowed to reach an event and the schema has nothing left to back-stop."
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+/* Shared detail-drill table: mono header + grid rows. Non-interactive.
+ * See DetailTable.tsx. Row stagger mirrors HeroStatRow / BreakdownList so
+ * every viz in the main column reveals with the same rhythm. */
+
+.table {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  /* Safety net, not a phone layout: the web dashboard is desktop-first (the
+   * phone app is a separate surface). A wide table (many columns, or a
+   * narrower main column in a repo-scoped view) scrolls horizontally as one
+   * unit instead of overflowing the page. Columns that carry a px floor in
+   * their track (minmax(120px, …)) stay aligned across header + rows while
+   * scrolling. */
+  overflow-x: auto;
+}
+
+/* No header rule / no row dividers: matches the widget-table vocabulary
+ * (widget-shared .tableHead + .rowBase carry neither). Columns read apart by
+ * the grid gap; rows by padding. Keeping a border here made detail tables the
+ * odd one out against every widget table. */
+.header {
+  display: grid;
+  gap: 16px;
+  padding: 0 0 8px;
+}
+
+.headerCell {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row {
+  display: grid;
+  gap: 16px;
+  align-items: center;
+  padding: 10px 0;
+  animation: rowReveal 0.3s var(--motion) both;
+  animation-delay: calc(var(--row-index, 0) * 40ms);
+}
+
+.cell {
+  font-size: var(--text-sm);
+  color: var(--ink);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A prose column: let it wrap instead of clipping. Rows carrying one switch to
+ * top alignment so the short cells sit at the wrapped cell's first line. */
+.wrap {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  line-height: 1.45;
+}
+
+.rowWrap {
+  align-items: start;
+}
+
+.end {
+  text-align: right;
+  justify-self: end;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row {
+    animation: none;
+  }
+}

@@ -1,0 +1,57 @@
+.modeGroup {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  /* Opt-in: a control row that sets its own height (Replay's transport) can
+     size this with the buttons beside it instead of reaching in with an
+     override that outlives whatever it was compensating for. */
+  min-height: var(--segmented-min-h, 24px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+}
+
+.modeGroup > span {
+  display: flex;
+  align-self: stretch;
+}
+
+.button,
+.buttonActive {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  border: none;
+  border-right: 1px solid var(--hairline);
+  background: transparent;
+  padding: 0 8px;
+  color: var(--soft);
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.button:last-child,
+.buttonActive:last-child {
+  border-right: none;
+}
+
+.button:hover,
+.button:focus-visible {
+  color: var(--muted);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.buttonActive {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.button:focus-visible,
+.buttonActive:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}

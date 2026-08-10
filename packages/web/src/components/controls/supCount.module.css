@@ -1,0 +1,16 @@
+.supCount {
+  flex-shrink: 0;
+  margin-left: 2px;
+  transform: translateY(-0.42em);
+  font-family: var(--mono);
+  font-size: 0.68em;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.supCountActive {
+  color: color-mix(in srgb, var(--accent) 58%, var(--muted));
+}

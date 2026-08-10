@@ -1,0 +1,128 @@
+/* Double-squircle button primitive (see SplitSquircleButton.tsx).
+ * Two segments (icon + label) side by side, each a 32px-tall rounded rect.
+ * Tones: `muted` (ghost/faint background, used by DrillUpButton)
+ *        `accent` (saturated fill via --split-squircle-accent, used by SplitSquircleForward). */
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+}
+
+.root:focus-visible {
+  outline: none;
+}
+
+.root:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.root:disabled .icon,
+.root:disabled .label {
+  filter: none;
+}
+
+.icon,
+.label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  border-radius: var(--radius-md);
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    filter 0.15s ease;
+}
+
+.icon {
+  width: 32px;
+  font-size: var(--text-md);
+  font-family: var(--sans);
+}
+
+.label {
+  padding: 0 12px;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-eyebrow);
+}
+
+.sizeMd .icon,
+.sizeMd .label {
+  height: 46px;
+  border-radius: var(--radius);
+}
+
+.sizeMd .icon {
+  width: 46px;
+  font-size: 1.125rem;
+}
+
+.sizeMd .label {
+  padding: 0 20px;
+  font-size: var(--text-xs);
+}
+
+.block {
+  width: 100%;
+}
+
+.block .label {
+  flex: 1;
+}
+
+/* ── Muted (DrillUpButton) ── */
+
+.muted .icon,
+.muted .label {
+  background: var(--ghost);
+  color: var(--soft);
+}
+
+.muted:hover:not(:disabled) .icon,
+.muted:hover:not(:disabled) .label,
+.muted:focus-visible:not(:disabled) .icon,
+.muted:focus-visible:not(:disabled) .label {
+  background: var(--faint);
+  color: var(--ink);
+}
+
+/* ── Accent (SplitSquircleForward) ── */
+
+.accent .icon,
+.accent .label {
+  background: var(--split-squircle-accent, var(--ink));
+  color: var(--on-accent);
+}
+
+.accent:hover:not(:disabled) .icon,
+.accent:hover:not(:disabled) .label,
+.accent:focus-visible:not(:disabled) .icon,
+.accent:focus-visible:not(:disabled) .label {
+  filter: brightness(1.08);
+}
+
+/* ── Danger (destructive actions, e.g. sign out) ── */
+
+.danger .icon,
+.danger .label {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.danger:hover:not(:disabled) .icon,
+.danger:hover:not(:disabled) .label,
+.danger:focus-visible:not(:disabled) .icon,
+.danger:focus-visible:not(:disabled) .label {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: color-mix(in srgb, var(--danger) 88%, var(--ink));
+}

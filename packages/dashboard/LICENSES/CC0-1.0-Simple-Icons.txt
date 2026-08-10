@@ -1,0 +1,22 @@
+Simple Icons
+Source: https://github.com/simple-icons/simple-icons, version 15.0.0
+Collection licence: CC0-1.0 (Creative Commons Zero v1.0 Universal)
+Full text: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+
+The 72 SVG files under `dist/assets/stack/` in this package are taken from the
+Simple Icons collection. Simple Icons is released into the public domain under
+the CC0 1.0 Universal Public Domain Dedication. CC0 waives copyright and related
+rights; it imposes no condition to reproduce its text, so this file records the
+dedication and its canonical location rather than copying the legalcode.
+
+The vendored bytes were verified byte-identical to upstream v15.0.0 on
+2026-08-04. `docs/reference/vendored-assets.json` in the source repository
+records a digest that `npm run vendored-assets:check` recomputes offline. That
+digest proves the bytes are the ones verified on that date; confirming upstream
+still matches needs a network and the re-sync command.
+
+Individual logo trademarks remain with their respective owners. Their inclusion
+identifies detected languages, frameworks, package managers, and file categories
+in this dashboard's views. It is descriptive use, and it is neither an
+endorsement by nor an affiliation with those owners. Per-icon licence details:
+https://simpleicons.org

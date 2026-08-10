@@ -1,0 +1,65 @@
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: 24px 0;
+  text-align: left;
+  animation: fadeIn 0.4s var(--motion) both;
+}
+
+.large {
+  padding: 64px 0;
+}
+
+.emptyTitle {
+  font-family: var(--sans);
+  font-size: var(--text-lg);
+  font-weight: 300;
+  color: var(--ink);
+  opacity: var(--opacity-secondary);
+  line-height: 1.4;
+}
+
+.large .emptyTitle {
+  font-family: var(--display);
+  font-size: 1.8rem;
+  letter-spacing: var(--display-spacing);
+  line-height: var(--display-line);
+  opacity: 0.7;
+}
+
+.emptyHint {
+  font-family: var(--sans);
+  font-size: var(--text-base);
+  font-weight: 400;
+  color: var(--ink);
+  opacity: var(--opacity-tertiary);
+  line-height: 1.5;
+  max-width: 34ch;
+}
+
+.large .emptyHint {
+  font-size: var(--text-md);
+  opacity: 0.45;
+}
+
+/* Allow code tags inside hint HTML */
+.emptyHint code {
+  font-family: var(--mono);
+  font-size: 0.92em;
+  background: var(--ghost);
+  padding: 2px 6px;
+  border-radius: var(--radius-2xs);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

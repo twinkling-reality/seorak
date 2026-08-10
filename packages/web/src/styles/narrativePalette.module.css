@@ -1,0 +1,38 @@
+/*
+ * The categorical hue ramp Agents and Model both draw their section / facet
+ * colours from.
+ *
+ * Only the four hues the two views ALREADY define identically live here. Their
+ * meanings do not correspond (Agents' amber is "matrix", Model's is "rhythm"),
+ * so what is shared is the ramp, not the category — hence colour-literal names.
+ * Each view keeps its own domain aliases and its own one-off hues:
+ *
+ *   Agents only: --sect-outcomes (pink), --sect-coverage (slate)
+ *   Model only:  --facet-focus, which is var(--accent) rather than a ramp hue
+ *
+ * Do not add a hue here until a second view needs the same value. tokens.css is
+ * for values shared across 3+ modules; this ramp is at two and stays local.
+ *
+ * Each target hue leads with a touch of --accent mixed in to keep the family
+ * (DESIGN_LANGUAGE.md: lavender stays the reserved live/selected accent, so
+ * colour may encode CATEGORY but never STATE).
+ */
+.narrativeHues {
+  --narrative-amber: color-mix(in srgb, #b3782c 82%, var(--accent));
+  --narrative-blue: color-mix(in srgb, #4a83c6 80%, var(--accent));
+  --narrative-violet: color-mix(in srgb, #9061c4 80%, var(--accent));
+  --narrative-green: color-mix(in srgb, #3c9773 80%, var(--accent));
+  /* The restrained inset white highlight the glass spec asks for. On the dark
+     field the same white would read as a lit edge, so it drops to a whisper. */
+  --note-inset: rgba(255, 255, 255, 0.55);
+}
+
+/* Dark field needs brighter hues to stay legible. Composed onto the same
+   element, so the view aliases resolve to these without restating them. */
+:global([data-theme='dark']) .narrativeHues {
+  --narrative-amber: color-mix(in srgb, #d9a758 82%, var(--accent));
+  --narrative-blue: color-mix(in srgb, #84b4ea 82%, var(--accent));
+  --narrative-violet: color-mix(in srgb, #b795e6 82%, var(--accent));
+  --narrative-green: color-mix(in srgb, #63c59e 82%, var(--accent));
+  --note-inset: rgba(255, 255, 255, 0.07);
+}

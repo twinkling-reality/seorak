@@ -1,0 +1,49 @@
+/* ── RenderErrorBoundary: view-level crash fallback ── */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: 64px 0;
+  animation: fadeSlideIn 0.4s var(--motion) both;
+}
+
+.title {
+  font-family: var(--display);
+  font-size: 1.8rem;
+  font-weight: 300;
+  letter-spacing: var(--display-spacing);
+  line-height: var(--display-line);
+  color: var(--ink);
+  opacity: 0.7;
+}
+
+.hint {
+  font-family: var(--sans);
+  font-size: var(--text-md);
+  font-weight: 400;
+  color: var(--ink);
+  opacity: 0.45;
+  line-height: 1.5;
+}
+
+.action {
+  margin-top: var(--space-xs);
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  color: var(--danger);
+  opacity: 0.72;
+  transition: opacity var(--motion-fast) ease;
+}
+
+.action:hover {
+  opacity: 1;
+}

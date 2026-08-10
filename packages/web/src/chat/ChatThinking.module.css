@@ -1,0 +1,11 @@
+.thinking {
+  align-self: flex-start;
+  padding: 2px 0;
+}
+
+.thinkingShimmer {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-stat);
+  line-height: 1.4;
+}

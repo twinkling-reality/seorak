@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-08-07",
+  "measuredAtCommit": "07817e52",
+  "definition": "scripts/check-types-publish-safety.mjs",
+  "rule": "CLAUDE.md rule 2",
+  "note": "Every placement `types-boundary:check` reports today, with the condition that falsifies its acceptance. THIS FILE IS THE ONLY ESCAPE HATCH IN AN ENFORCING GATE: a finding not listed here fails the check, and an entry here that no longer matches a finding fails it too, so the file cannot outlive what it excuses. It is also the only enumerated list in the gate; the script names no symbol. An entry's `why` is not decoration — it is what a later reader re-verifies against the tree, so it must state facts that can be checked and cite the lines that carry them.",
+  "amendments": [
+    {
+      "at": "2026-08-06",
+      "note": "parseSignalBody's entry is gone because the definition changed, not because the acceptance was renewed. EXTRACTION grew clause 4: a function whose non-nullable return type is a shape its own file encodes is reading back what that file writes, which derives nothing and is not extraction. The entry's own argument was that build and parse have to sit in one file for a round-trip test to pin them; clause 4 is that argument written as code shape, so no symbol is named. Its stated falsification condition still applies to the rule that replaced it: if a stored fire ever carries its measured context as fields, nothing has to be parsed back out of prose and the placement disappears on its own."
+    },
+    {
+      "at": "2026-08-07",
+      "note": "Re-verified all 15 entries against the code before the gate was switched to enforcing by default, because enforcing on top of a wrong acceptance file makes the wrong answer permanent. Ten held exactly. Six were rewritten, and none of the six was a placement error: (a) priceModelUsage and priceModels rested on 'no dollar is stored anywhere', which was false when it was written — the collector had been storing one since 2026-08-01 — and their falsification clause named that exact circumstance, so the clause was replaced rather than repaired and the true fact was written in, being the stronger argument; (b) sessionToSummary, sessionToLiveActivity and costFor hung on 'the ADR 003 section 4 extraction lands', which section 4c superseded on 2026-08-06 by making machine-checked parity the plan of record and section 4's removal condition a standing option, leaving one entry with no condition that could fire; (c) sessionToSummary's evaluation entry described the `totalCostUsd == null` equality beside the finding rather than the `elapsedMinutes > 0` comparison the gate actually reports. The equality gets no entry of its own: it is not a finding, and an entry with no matching finding is stale and fails."
+    }
+  ],
+  "entries": [
+    {
+      "file": "packages/types/src/entitlements.ts",
+      "symbol": "expectedHosted",
+      "category": "evaluation",
+      "acceptedOn": "2026-08-06",
+      "why": "SETTLED BY P6 ON 2026-08-06, with hostedCapabilitiesForAuthority, which it is the body of. It is unexported and reached only from inside this package, where parseServerEntitlement uses it to refuse a payload whose matrix disagrees with the canonical one. Authorised by the published-contract statement in docs/ARCHITECTURE.md.",
+      "falsifiedWhen": "hostedCapabilitiesForAuthority leaves the package, or the client keeps only a comparison against a server-issued matrix it never reconstructs."
+    },
+    {
+      "file": "packages/types/src/entitlements.ts",
+      "symbol": "hostedCapabilitiesForAuthority",
+      "category": "evaluation",
+      "acceptedOn": "2026-08-06",
+      "why": "SETTLED BY P6 ON 2026-08-06, and the resolution is the second branch this entry's own falsifiedWhen named. docs/ARCHITECTURE.md now states that the hosted capability matrix is a published contract every consumer must be able to reconstruct, so this is an authorised placement rather than a deferral. The symbol is how the issuing cell CONSTRUCTS the hosted block (packages/worker/src/entitlements.ts:161, inside serverEntitlement, reaching GET /entitlements and the 402 middleware); expectedHosted is how a client VALIDATES one. Moving the constructor to the private cloud would put the table in two places, and drift there refuses every hosted entitlement payload silently. It maps two enums to a fixed capability record and touches no measurement.",
+      "falsifiedWhen": "The client stops reconstructing the matrix and only compares against a server-supplied one, which would end the need for a shared table; or the matrix stops being a published contract in docs/ARCHITECTURE.md; or a second production caller appears that is not constructing an entitlement payload."
+    },
+    {
+      "file": "packages/types/src/entitlements.ts",
+      "symbol": "parseServerEntitlement",
+      "category": "evaluation",
+      "acceptedOn": "2026-08-06",
+      "why": "SETTLED BY P6 ON 2026-08-06, with the two symbols above. It reaches expectedHosted only to REJECT a response whose matrix disagrees with the canonical one. The verdict it forms is admissibility, and it forms that verdict by reconstructing the policy, so it carries the same authorised placement: docs/ARCHITECTURE.md states the matrix is a published contract every consumer must be able to reconstruct.",
+      "falsifiedWhen": "expectedHosted leaves the package, or the agreement check becomes an equality test against a matrix the server supplies."
+    },
+    {
+      "file": "packages/types/src/entitlements.ts",
+      "symbol": "parseServerEntitlement",
+      "category": "scoring",
+      "acceptedOn": "2026-08-04",
+      "why": "Derives epoch milliseconds from the issued timestamps so cache lifetime can be bounded. A clock reading is not a developer measurement, and the bound it feeds is a client-side freshness contract.",
+      "falsifiedWhen": "the derived timestamp reaches a product field rather than a cache or expiry bound."
+    },
+    {
+      "file": "packages/types/src/entitlements.ts",
+      "symbol": "resolveEffectiveEntitlements",
+      "category": "evaluation",
+      "acceptedOn": "2026-08-04",
+      "why": "Compares now against the grant expiry so an expired cache falls back to local defaults. Local work is never made conditional on the result, so this decides staleness, not entitlement.",
+      "falsifiedWhen": "the comparison gates a local capability, or the expiry decision moves behind an authenticated read."
+    },
+    {
+      "file": "packages/types/src/entitlements.ts",
+      "symbol": "resolveEffectiveEntitlements",
+      "category": "scoring",
+      "acceptedOn": "2026-08-04",
+      "why": "Inherited from parseServerEntitlement; same clock reading, same bound.",
+      "falsifiedWhen": "parseServerEntitlement stops deriving a timestamp, or this function derives one of its own that reaches a product field."
+    },
+    {
+      "file": "packages/types/src/identity.ts",
+      "symbol": "hashCode",
+      "category": "scoring",
+      "acceptedOn": "2026-08-04",
+      "why": "djb2 over a salted repoId. The number it produces is a rendering seed, never a performance figure, and it must be byte-identical on the phone and in the browser, which is exactly the case rule 2 authorises a shared package to carry.",
+      "falsifiedWhen": "the hash reaches any value a surface presents as a measurement, or a platform-specific hash makes cross-surface identity a server concern."
+    },
+    {
+      "file": "packages/types/src/identity.ts",
+      "symbol": "projectHues",
+      "category": "scoring",
+      "acceptedOn": "2026-08-04",
+      "why": "Turns that seed into hue geometry. Same reasoning as hashCode: an identity mark, not a measurement.",
+      "falsifiedWhen": "the hue geometry stops being derived on every surface, or any of its numbers is read as product data."
+    },
+    {
+      "file": "packages/types/src/pricing.ts",
+      "symbol": "priceModelUsage",
+      "category": "scoring",
+      "acceptedOn": "2026-08-06",
+      "why": "Multiplies token counts by the vendor list price. CLAUDE.md rule 2 permits vendor list prices here when every consumer needs the same contract, and a price table without its arithmetic is not one contract: it is two chances to round differently. This is the principle P6 settled for parseSignalBody and hostedCapabilitiesForAuthority, that a contract's halves belong in the package both of its consumers depend on. THE EARLIER ACCEPTANCE ARGUED THIS FROM RE-PRICE-ON-READ, AND THAT WAS FALSE ABOUT THIS TREE; the true fact is the stronger argument. A dollar IS stored, by this arithmetic. packages/collector/src/local-store.ts:278 and :302 declare cost_usd on local_session and local_hour, :720 and :792 write priceModels(event.models) into it, and packages/collector/src/local-projection.ts:2006 reads the stored figure back as a session's rendered cost, re-pricing nothing. packages/collector/src/compact-sync.ts:209 then ships it to the worker with models: [], which is exactly the shape packages/worker/migrations/0007_create_rollups.sql:41 parks in legacy_cost_usd as a figure 'already frozen when written', re-priceable by nothing. So two implementations of this multiplication would not disagree until the next deploy corrected them. They would bake a permanent disagreement into rows no later correction can reach.",
+      "falsifiedWhen": "MODEL_PRICES leaves @seorak/types, so the table and its arithmetic stop being one unit; or consumers stop needing to agree because a single authority computes every dollar and the rest only read what it published."
+    },
+    {
+      "file": "packages/types/src/pricing.ts",
+      "symbol": "priceModels",
+      "category": "scoring",
+      "acceptedOn": "2026-08-06",
+      "why": "Sums priceModelUsage across a call's per-model breakdown, keeping the priced flag so a fully unpriced breakdown reports null rather than a fabricated $0. Rides the decision above and carries its evidence directly: packages/collector/src/local-store.ts:720 and :792 call THIS function, and what it returns is the dollar that lands in the stored cost_usd.",
+      "falsifiedWhen": "priceModelUsage moves, or the condition that falsifies it fires: MODEL_PRICES leaves @seorak/types, or a single authority computes every dollar and the rest only read it."
+    },
+    {
+      "file": "packages/types/src/projections.ts",
+      "symbol": "sessionToSummary",
+      "category": "scoring",
+      "acceptedOn": "2026-08-06",
+      "why": "Derives elapsed seconds and the burn rate from session state. This is the shared projection ADR 003 section 4c made the plan of record on 2026-08-06, superseding the section 4 removal condition the earlier acceptance cited: that extraction is a standing option now rather than owed work, so the placement is settled and not deferred. Being one function is the whole of it — packages/worker/src/overviewWindow.ts:163, packages/collector/src/local-projection.ts:2011 and apps/mobile/src/screens/SessionDetailScreen.tsx:81 all read session figures through it, and packages/web/src/lib/schemas/__tests__/contract-parity.test.ts:101 pins the shape web expects to the shape it emits. NOTE, because the sibling gate makes it easy to assume otherwise: projection-parity:check does NOT cover this function. It compares the worker's D1 projection against the collector's local one, and this projection has no second implementation to compare against, which is the point of it living here.",
+      "falsifiedWhen": "a second implementation of this projection appears on any surface, which would move it from a shared-contract question to a parity one; or a surface renders a session figure this function did not derive."
+    },
+    {
+      "file": "packages/types/src/projections.ts",
+      "symbol": "sessionToSummary",
+      "category": "evaluation",
+      "acceptedOn": "2026-08-06",
+      "why": "The divide guard at packages/types/src/projections.ts:74. `elapsedMinutes > 0` decides only whether the burn-rate division can be performed at all; a zero-elapsed session reports 0 rather than dividing by zero, and no product verdict turns on it. IT IS NOT THE HONEST-NULL DECISION, which is what the earlier acceptance described: that is the `totalCostUsd == null` equality beside it, which is not a relational comparison, is not a finding this gate reports, and therefore gets no entry of its own — an entry with no matching finding is stale and fails the check. Same shared-projection placement as the scoring entry above.",
+      "falsifiedWhen": "the comparison starts gating something other than whether the division can be performed, or the scoring entry above is falsified."
+    },
+    {
+      "file": "packages/types/src/projections.ts",
+      "symbol": "sessionToLiveActivity",
+      "category": "scoring",
+      "acceptedOn": "2026-08-06",
+      "why": "Derives elapsed seconds for the live-ambient surface. Same shared-projection placement as sessionToSummary under ADR 003 section 4c, plus its own reason to be exactly one function: packages/worker/src/liveActivity.ts:152 pushes what this returns and apps/mobile/src/lib/liveActivityPreview.ts:19 renders the same projection on-device, so the local preview and the pushed snapshot cannot drift apart. Its earlier acceptance carried ONE condition, 'the ADR 003 section 4 extraction lands', which section 4c demoted to a standing option on 2026-08-06 — leaving the entry with nothing that could fire, which is the defect this file exists to prevent.",
+      "falsifiedWhen": "the phone stops deriving its preview from this function and renders only a server-computed snapshot, which would end the need for one shared derivation; or a second implementation of the live-ambient projection appears."
+    },
+    {
+      "file": "packages/types/src/projections.ts",
+      "symbol": "sessionToLiveActivity",
+      "category": "evaluation",
+      "acceptedOn": "2026-08-04",
+      "why": "Decides whether a just-started session shows a tool-call count at all, which is the honest-empty rule rather than a threshold on performance.",
+      "falsifiedWhen": "the comparison starts gating anything other than whether a measured count is shown."
+    },
+    {
+      "file": "packages/types/src/projections.ts",
+      "symbol": "costFor",
+      "category": "scoring",
+      "acceptedOn": "2026-08-06",
+      "why": "Accumulates the priced portion of a session's per-model breakdown, keeping the priced flag so a fully unpriced breakdown reports null instead of a silent 0. Rides the pricing decision above and the same shared-projection placement under ADR 003 section 4c, rather than the section 4 extraction the earlier acceptance cited.",
+      "falsifiedWhen": "priceModelUsage moves, or a surface computes a session's cost without going through this function."
+    }
+  ]
+}

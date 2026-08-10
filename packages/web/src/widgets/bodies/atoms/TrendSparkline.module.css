@@ -1,0 +1,73 @@
+/* Compact line+area chart for the per-day trend widget. Single-series uses
+ * --viz-series (validated blue); axis text stays muted ink. */
+
+.wrap {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  touch-action: pan-y;
+}
+
+.scanner {
+  stroke: var(--ink);
+  stroke-width: 1;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* Endpoint date anchors + peak value label: recessive mono, muted ink. */
+.axisDate,
+.peakLabel {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  fill: var(--soft);
+  letter-spacing: var(--tracking-stat);
+}
+
+.peakLabel {
+  font-variant-numeric: tabular-nums;
+}
+
+/* A thin surface ring lifts the peak dot off the line where they meet. */
+.peakDot {
+  stroke: var(--surface, #fff);
+  stroke-width: 1.5;
+  paint-order: stroke;
+}
+
+.tooltip {
+  position: absolute;
+  top: -4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 72px;
+  padding: 6px 8px;
+  background: var(--surface-frost, rgba(255, 255, 255, 0.96));
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.tooltipDate {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+}
+
+.tooltipValue {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-sm);
+  color: var(--ink);
+}

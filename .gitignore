@@ -1,0 +1,42 @@
+node_modules/
+dist/
+build/
+.build/
+.env
+.env.local
+.env.*.local
+.dev.vars
+.dev.vars.*
+# Signing keys and certificate material are local secrets regardless of which
+# package an operator places them in.
+*.p8
+*.pem
+*.key
+*.p12
+*.log
+.DS_Store
+.vscode/
+.idea/
+.playwright-mcp/
+/playwright-report/
+/test-results/
+
+apps/mobile/ios/
+apps/mobile/android/
+apps/mobile/.expo/
+apps/mobile/expo-env.d.ts
+apps/mobile/*.tsbuildinfo
+apps/mobile/.metro-health-check*
+
+.wrangler/
+packages/worker/worker-configuration.d.ts
+packages/control-plane/worker-configuration.d.ts
+packages/public-directory/worker-configuration.d.ts
+wrangler.owner-cell.*.toml
+.cf/
+.port/
+
+# User-owned local audit/session tool state.
+/.devstack
+/.orchescope/
+/.yummycode/

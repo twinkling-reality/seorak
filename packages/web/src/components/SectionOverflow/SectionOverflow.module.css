@@ -1,0 +1,59 @@
+.sectionOverflow {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 0;
+  /*
+   * margin-left offsets the label pill's own 10px horizontal padding so the
+   * pill's inner text sits on the same left rail as the section title and
+   * list-row text (both at widget content x=0). Without this, the pill's
+   * background starts flush with the rail but the text inside is inset by
+   * 10px, breaking the vertical alignment.
+   */
+  margin: 14px 0 0 -10px;
+  cursor: pointer;
+  color: inherit;
+}
+
+.label,
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 26px;
+  background: var(--ghost);
+  color: var(--soft);
+  border-radius: var(--radius-md);
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.label {
+  padding: 0 10px;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-eyebrow);
+}
+
+.icon {
+  width: 26px;
+  font-size: var(--text-base);
+  font-family: var(--sans);
+}
+
+.sectionOverflow:hover .label,
+.sectionOverflow:hover .icon,
+.sectionOverflow:focus-visible .label,
+.sectionOverflow:focus-visible .icon {
+  background: var(--faint);
+  color: var(--ink);
+}
+
+.sectionOverflow:focus-visible {
+  outline: none;
+}

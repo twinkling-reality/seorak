@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-08-04",
+  "measuredAtCommit": "36bcfd0",
+  "definition": [
+    "scripts/check-package-boundaries.mjs",
+    "scripts/check-open-core-boundaries.mjs"
+  ],
+  "map": "docs/reference/open-core-ownership.json",
+  "note": "Every boundary violation the two gates report today, with the condition that falsifies each acceptance and the stage that owns it. THIS FILE IS THE ONLY ESCAPE HATCH. A violation not listed here is undiscovered: both gates print it under 'Undeclared violations' and EXIT NON-ZERO. An entry here that no longer matches a violation is itself falsified, printed as stale, and also exits non-zero, so the file cannot outlive the thing it excuses. `--strict` ignores this file entirely and fails on every violation, which is how B1b measures its own work.",
+  "entries": [
+    {
+      "check": "open-core-boundaries",
+      "key": "asset-crosses-workspace::packages/control-plane/wrangler.toml::assets.directory",
+      "acceptedOn": "2026-08-04",
+      "owner": "ADR 005 stage B4",
+      "why": "The private control plane binds ../web/public, reaching whole into another workspace's asset directory. ADR 005 decision 8 names this as the live example import gates cannot see, and says the control plane gets its own small font directory rather than reaching across the boundary. That is a deploy change, not a gate change, so B1a records it and B4 makes it.",
+      "falsifiedWhen": "the control plane's [assets] directory resolves inside packages/control-plane."
+    },
+    {
+      "check": "open-core-boundaries",
+      "key": "asset-mixed-visibility::packages/control-plane/wrangler.toml::assets.directory",
+      "acceptedOn": "2026-08-04",
+      "owner": "ADR 005 stage B4",
+      "why": "The same binding deploys 81 tracked files the ownership map splits three ways: 72 public icons, 5 private brand assets, and the 4 excluded TypeType binaries. The excluded four are the sharp end. They are served today from the control plane's own worker origin, and after the split this directory exists whole in neither repository, so the binding cannot survive as written. The count was 95 across four visibilities when B1a recorded it; B7 deleted the 13 vendored AI-tool marks and B4 deleted the committed public/_headers, which the build now writes per entry. Neither changed the finding, which is that ONE binding deploys files of more than one visibility.",
+      "falsifiedWhen": "the control plane's asset directory holds files of exactly one visibility, which the B4 font directory produces. It is NOT falsified by B5 alone: substituting the face removes the excluded files but leaves public and private assets mixed in one binding."
+    },
+    {
+      "check": "open-core-boundaries",
+      "key": "asset-crosses-workspace::packages/worker/wrangler.toml::assets.directory",
+      "acceptedOn": "2026-08-04",
+      "owner": "ADR 005 stage B4",
+      "why": "The worker binds ../web/dist, the combined site build. ADR 005 decision 3 keeps the private site build merging private marketing source with the pinned public dashboard package, so the worker will still deploy a build output from another workspace after B4. The finding is kept rather than waived because the path it names is the one decision 3 warns must never become the dashboard package alone: pointing it at a dashboard-only artifact deletes Seorak's website from its own origin, and single-page-application not_found_handling then renders the dashboard at /.",
+      "falsifiedWhen": "B4 gives the site build an output directory the worker owns, or the worker's asset root stops resolving outside packages/worker."
+    },
+    {
+      "check": "open-core-boundaries",
+      "key": "asset-unplaceable::packages/worker/wrangler.toml::assets.directory",
+      "acceptedOn": "2026-08-04",
+      "owner": "ADR 005 stage B4",
+      "why": "packages/web/dist is a build output, so no file rule can place what it carries: its visibility follows the build inputs B4 split. Recording it keeps the gate honest about what it cannot see, rather than reporting clean on the one binding that deploys the most bytes. B4 split the entries and this stayed: dist is now the SITE build alone, but the site build still resolves the dashboard from source in the same tree rather than from a pinned package, so the directory still carries files of both visibilities and no rule can say which.",
+      "falsifiedWhen": "B6 makes the site build consume @seorak/dashboard as a pinned package, at which point the question is answered by the pin rather than by this directory. Also falsified if the worker's asset root stops resolving outside packages/worker."
+    },
+    {
+      "check": "package-boundaries",
+      "key": "packages/worker/scripts/trigger-delivery-test.mts imports outside packages/worker: ../../types/src/api.ts",
+      "acceptedOn": "2026-08-04",
+      "owner": "ADR 005 stage B4",
+      "why": "A private operator script reaches into @seorak/types SOURCE by relative path instead of importing the published package. The direction is legal, private to public, but the mechanism is not: after the split that relative path leaves the repository. Left as a finding rather than fixed here so the gate landing carries no behaviour change.",
+      "falsifiedWhen": "the script imports @seorak/types by package name, or the file is deleted."
+    },
+    {
+      "check": "package-boundaries",
+      "key": "packages/worker/test/agent-first-seen.test.ts imports undeclared development dependency @cloudflare/workers-types",
+      "acceptedOn": "2026-08-04",
+      "owner": "ADR 005 stage B4",
+      "why": "The worker suite reads a type package it never declares and resolves it by hoisting from wrangler's own dependency tree. A hoisted resolution is not a contract, and it breaks the moment the workspace root changes, which is what the split does.",
+      "falsifiedWhen": "packages/worker declares @cloudflare/workers-types in devDependencies, or the suite stops importing it."
+    },
+    {
+      "check": "package-boundaries",
+      "key": "packages/worker/test/headline-cost-coherence.test.ts imports undeclared development dependency @cloudflare/workers-types",
+      "acceptedOn": "2026-08-04",
+      "owner": "ADR 005 stage B4",
+      "why": "The second file with the same undeclared resolution.",
+      "falsifiedWhen": "packages/worker declares @cloudflare/workers-types in devDependencies, or the suite stops importing it."
+    },
+    {
+      "check": "package-boundaries",
+      "key": "packages/web/src/views/SettingsView/__tests__/settingsSectionParity.test.jsx contains a non-literal dynamic import",
+      "acceptedOn": "2026-08-04",
+      "owner": "ADR 005 stage B1b",
+      "why": "Two computed dynamic imports in one public test file. They are not a boundary violation in themselves, but they are an edge NO static gate can follow, so the file is a hole in the public file set's coverage and a known hole belongs here rather than nowhere.",
+      "falsifiedWhen": "the suite enumerates its modules with literal specifiers, or the parity check moves to a data table the test reads rather than a computed import."
+    }
+  ]
+}

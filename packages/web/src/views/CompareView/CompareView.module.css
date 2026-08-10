@@ -1,0 +1,353 @@
+.page {
+  composes: narrativeHues from '../../styles/narrativePalette.module.css';
+  --facet-rhythm: var(--narrative-amber);
+  --facet-focus: var(--accent);
+  --facet-shape: var(--narrative-violet);
+  --facet-payoff: var(--narrative-green);
+  --facet-volume: var(--narrative-blue);
+  --facet-cost: color-mix(in srgb, #c0567a 78%, var(--accent));
+  animation: dashboardViewFadeIn 0.25s var(--motion) both;
+}
+
+/* ── Question controls ── */
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 26px 0 8px;
+}
+
+.modeSwitch {
+  display: inline-flex;
+  align-items: stretch;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  isolation: isolate;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.48);
+}
+
+.modeButton {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    color var(--motion-fast) ease,
+    background var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
+}
+
+.modeButton:hover {
+  color: var(--ink);
+}
+
+.modeButtonActive {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-glass-fill-ctrl));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    0 6px 14px rgba(18, 19, 23, 0.05);
+}
+
+.modeButton:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+/* ── States ── */
+
+.loading {
+  margin-top: 28px;
+}
+
+/* ── Period comparison ── */
+
+.periodMode {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 58rem;
+  margin: clamp(26px, 5vh, 52px) 0 8px;
+}
+
+/* ── Compare table ──
+ * Metric | A | swap | B. A and B are equal 1fr tracks so the swap sits in the
+ * true middle of the pair. Pickers fill their column (not fit-content): a short
+ * name like "seorak" used to leave dead space inside column A, which made B look
+ * glued to the swap. No trailing 1fr — leftover width is shared by A and B. */
+
+.table {
+  --compare-cols: minmax(120px, 180px) minmax(0, 1fr) 44px minmax(0, 1fr);
+  overflow-x: auto;
+  padding: 0 0 8px;
+}
+
+.headRow,
+.row {
+  display: grid;
+  grid-template-columns: var(--compare-cols);
+  column-gap: var(--space-lg);
+  align-items: baseline;
+  min-width: 640px;
+}
+
+.headRow {
+  align-items: end;
+  padding: 6px 0 18px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.row {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--hairline);
+  animation: compareRowIn 0.3s var(--motion) both;
+  /* Capped at row 12: the full 35-row registry would otherwise stagger the last
+   * row 816ms after expand, well past the 500ms Structural tier. */
+  animation-delay: calc(min(var(--row-index, 0), 12) * 18ms);
+}
+
+.sectionRow {
+  display: grid;
+  grid-template-columns: var(--compare-cols);
+  column-gap: var(--space-lg);
+  align-items: baseline;
+  min-width: 640px;
+  padding: 22px 0 4px;
+}
+
+.sectionRow:first-of-type {
+  padding-top: 8px;
+}
+
+.sectionLabel {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-table);
+  text-transform: uppercase;
+  color: var(--soft);
+}
+
+.detailFooter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 640px;
+  padding: 20px 0 4px;
+}
+
+.repoState {
+  min-width: 640px;
+  padding: 24px 0 4px;
+}
+
+.detailToggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 28px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--radius-xs);
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-stat);
+  color: var(--soft);
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
+  transition:
+    color var(--motion-fast) ease,
+    background var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease,
+    transform var(--motion-fast) ease;
+}
+
+.detailToggle:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface-glass-fill-ctrl));
+  transform: translateY(-1px);
+}
+
+.detailToggle:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.detailToggleIcon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  opacity: 0.72;
+}
+
+.detailToggle:hover .detailToggleIcon {
+  opacity: 1;
+}
+
+.metricHead {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-table);
+  text-transform: uppercase;
+  color: var(--soft);
+}
+
+/* ── Repo picker (column header) ── */
+
+.repoHead {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  width: 100%;
+}
+
+/* Picker fills the A/B track so short and long names share the same rail and the
+ * swap stays visually centered between them. Override ProjectDropdown's fill cap
+ * (min(280px, 36vw)) — that left short names floating left of the swap. */
+.pickerWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  width: 100%;
+}
+
+.pickerWrap > div {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
+.pickerWrap button {
+  width: 100%;
+}
+
+.pickerWrapCompact {
+  width: auto;
+  max-width: min(260px, 46vw);
+}
+
+.pickerWrapCompact > div {
+  width: auto;
+  max-width: 100%;
+}
+
+.pickerWrapCompact button {
+  width: auto;
+  max-width: 100%;
+}
+
+.pickerNote {
+  font-size: var(--text-2xs);
+  color: var(--muted);
+}
+
+.swapSlot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: end;
+  min-width: 0;
+}
+
+.swapButton {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: var(--control-radius);
+  color: var(--muted);
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    0 6px 14px rgba(18, 19, 23, 0.04);
+  transition:
+    color var(--motion-fast) ease,
+    background var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease,
+    transform var(--motion-fast) ease;
+}
+
+.swapButton:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface-glass-fill-ctrl));
+  transform: translateY(-1px);
+}
+
+.swapIcon {
+  width: 18px;
+  height: 18px;
+}
+
+/* ── Rows ── */
+
+.metricLabel {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  min-width: 0;
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cellFace {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cellValue {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.cellValueEmpty {
+  font-size: var(--text-sm);
+  color: var(--soft);
+}
+
+.cellSub {
+  font-size: var(--text-2xs);
+  color: var(--muted);
+}
+
+@keyframes compareRowIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page,
+  .row {
+    animation: none;
+  }
+}
+
+@media (max-width: 720px) {
+}

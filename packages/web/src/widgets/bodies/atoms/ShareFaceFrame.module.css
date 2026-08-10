@@ -1,0 +1,7 @@
+.frame {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  width: 100%;
+  min-height: 0;
+}

@@ -1,0 +1,13 @@
+.sectionTitle {
+  display: block;
+  margin: 0;
+  font-family: var(--display);
+  font-size: var(--text-xl);
+  font-weight: 400;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

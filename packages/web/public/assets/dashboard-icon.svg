@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Dashboard">
+  <!-- The tab icon for the dashboard entry document, and the static twin of
+       NeutralMark in src/brand/brand.tsx: the same rounded square and rising
+       two-step, at the same viewBox and stroke weight.
+
+       WHY IT IS NOT THE SEORAK MARK. dashboard/index.html is the entry the
+       collector's local plane serves and @seorak/dashboard publishes, and it is
+       a public file; assets/favicon.svg is Seorak's mark and the ownership map
+       places it private. A public document that links a private file is the
+       failure C0 exists to remove, and Apache-2.0 section 6 grants a fork no
+       rights in the mark anyway. Seorak's own website is unaffected: it serves
+       /dashboard from site/index.html, which is private and links the mark.
+
+       Deliberately generic. It is a placeholder, not a second logo. -->
+  <style>
+    .stroke { stroke: #5b6570; }
+    @media (prefers-color-scheme: dark) {
+      .stroke { stroke: #c3ccd6; }
+    }
+  </style>
+  <defs>
+    <clipPath id="frame">
+      <rect x="14" y="14" width="72" height="72" rx="18" />
+    </clipPath>
+  </defs>
+  <rect
+    class="stroke"
+    x="14"
+    y="14"
+    width="72"
+    height="72"
+    rx="18"
+    fill="none"
+    stroke-width="7"
+    opacity="0.55"
+  />
+  <g clip-path="url(#frame)">
+    <path
+      class="stroke"
+      d="M26 66L44 66L44 50L62 50L62 34L80 34"
+      fill="none"
+      stroke-width="7"
+      stroke-linecap="square"
+    />
+  </g>
+</svg>

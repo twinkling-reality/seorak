@@ -1,0 +1,4 @@
+dist
+dist-dashboard
+node_modules
+*.local

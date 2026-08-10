@@ -1,0 +1,6 @@
+.empty {
+  font-family: var(--mono);
+  font-size: var(--text-sm);
+  color: var(--muted);
+  letter-spacing: var(--tracking-stat);
+}

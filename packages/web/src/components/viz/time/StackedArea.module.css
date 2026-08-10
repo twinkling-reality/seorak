@@ -1,0 +1,127 @@
+/* Stacked-area chart: positive single-value-per-day series. Paired
+ * with a ring chart above for palette identity (no in-chart legend). */
+
+.wrap {
+  position: relative;
+  width: 100%;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  touch-action: pan-y;
+}
+
+.grid {
+  stroke: var(--hover-bg);
+  stroke-width: 1;
+}
+
+.axisText {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  fill: var(--soft);
+  letter-spacing: var(--tracking-stat);
+}
+
+.caption {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  fill: var(--soft);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+}
+
+.area {
+  opacity: var(--opacity-bar-fill, 0.6);
+  transition: opacity var(--motion-fast) ease;
+}
+
+.scanner {
+  stroke: var(--ink);
+  stroke-width: 1;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.dot {
+  stroke: var(--surface-frost, #fff);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+.tooltip {
+  position: absolute;
+  top: 8px;
+  min-width: 180px;
+  padding: 10px 12px;
+  background: var(--surface-frost, rgba(255, 255, 255, 0.96));
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  pointer-events: none;
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  color: var(--ink);
+  z-index: 2;
+}
+
+.tooltipHeader {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.tooltipRow {
+  display: grid;
+  grid-template-columns: 8px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.tooltipLabel {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.tooltipValue {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-sm);
+  color: var(--ink);
+}
+
+.tooltipFooter {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding-top: 6px;
+  margin-top: 6px;
+  border-top: 1px solid var(--hover-bg);
+}
+
+.tooltipFooter .tooltipLabel {
+  color: var(--ink);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+}
+
+@media (max-width: 640px) {
+  .tooltip {
+    min-width: 140px;
+  }
+}

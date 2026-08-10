@@ -1,0 +1,9 @@
+.sectionEmpty {
+  display: block;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--muted);
+  letter-spacing: var(--tracking-stat);
+  opacity: 0.4;
+  margin-top: 8px;
+}

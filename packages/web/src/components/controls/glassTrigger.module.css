@@ -1,0 +1,70 @@
+.glassTrigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--radius-xs);
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-stat);
+  white-space: nowrap;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.glassTrigger:hover,
+.glassTrigger:focus-visible {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface-glass-fill-ctrl));
+}
+
+.glassTrigger:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.glassTriggerActive {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface-glass-fill-ctrl));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    0 6px 14px rgba(18, 19, 23, 0.05);
+  transform: translateY(-1px);
+}
+
+.glassTriggerFill {
+  width: 100%;
+  gap: 10px;
+  text-align: left;
+}
+
+.glassTriggerLg {
+  height: auto;
+  min-height: 44px;
+  padding: 8px 12px;
+  gap: 10px;
+  font-family: var(--sans);
+  font-size: var(--text-base);
+  font-weight: 500;
+  letter-spacing: normal;
+}
+
+:global([data-theme='dark']) .glassTrigger:hover,
+:global([data-theme='dark']) .glassTrigger:focus-visible {
+  background: color-mix(in srgb, var(--accent) 15%, var(--surface-glass-fill-ctrl));
+}
+
+:global([data-theme='dark']) .glassTriggerActive {
+  background: color-mix(in srgb, var(--accent) 20%, var(--surface-glass-fill-ctrl));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 8px 18px rgba(0, 0, 0, 0.22);
+}

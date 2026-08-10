@@ -1,0 +1,356 @@
+/* Demo scenario catalog. Single-column layout: header → lede → filter
+   stack → table. No nested cards. The table is the primary surface;
+   filter chips above it narrow what's shown without changing layout. */
+
+.view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-lg) var(--space-xl);
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.lede {
+  margin: 0;
+  max-width: 720px;
+  font-family: var(--sans);
+  font-size: var(--text-md);
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+/* ── Filters ────────────────────────────────────────────────── */
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--soft);
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.filterLabel {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--muted);
+  width: 96px;
+  flex-shrink: 0;
+}
+
+.chipGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filterChip {
+  background: none;
+  border: 1px solid var(--soft);
+  border-radius: var(--radius-pill);
+  padding: 4px 12px;
+  font-family: var(--sans);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    color 120ms ease,
+    border-color 120ms ease,
+    background 120ms ease;
+}
+
+.filterChip:hover {
+  color: var(--ink);
+  border-color: var(--muted);
+}
+
+.filterChipActive {
+  color: var(--ink);
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-top: var(--space-xs);
+}
+
+.search {
+  flex: 1 1 240px;
+  max-width: 360px;
+  background: var(--ghost);
+  border: 1px solid var(--soft);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  color: var(--ink);
+  transition: border-color 120ms ease;
+}
+
+.search:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.search::placeholder {
+  color: var(--soft);
+}
+
+.clearBtn {
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+
+.clearBtn:hover {
+  color: var(--ink);
+}
+
+.count {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+/* ── Table ─────────────────────────────────────────────────── */
+
+.tableWrap {
+  width: 100%;
+  overflow-x: auto;
+  border-top: 1px solid var(--soft);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+}
+
+.table thead th {
+  text-align: left;
+  padding: var(--space-md) var(--space-md);
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--soft);
+  font-weight: 400;
+}
+
+.colName {
+  width: 26%;
+  min-width: 220px;
+}
+
+.colCategory {
+  width: 11%;
+  min-width: 100px;
+}
+
+.colDimensions {
+  width: 18%;
+  min-width: 160px;
+}
+
+.colViews {
+  width: 17%;
+  min-width: 160px;
+}
+
+.colCheck {
+  width: 28%;
+  min-width: 240px;
+}
+
+.row {
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.row:hover {
+  background: var(--hover-bg);
+}
+
+.row:focus {
+  outline: none;
+  background: var(--hover-bg);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.rowActive {
+  background: var(--accent-bg);
+}
+
+.rowActive:hover {
+  background: var(--accent-bg);
+}
+
+.row td {
+  padding: var(--space-md);
+  vertical-align: top;
+  border-bottom: 1px solid var(--ghost);
+  color: var(--ink);
+}
+
+/* Name column: dot + label + summary + id stacked. The id is small and
+   muted because devs only need it for url construction; the label and
+   summary are the comprehension surface. */
+.cellNameInner {
+  display: grid;
+  grid-template-columns: 8px 1fr;
+  gap: var(--space-sm);
+  align-items: start;
+}
+
+.activeDot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-circle);
+  background: var(--soft);
+  margin-top: 6px;
+}
+
+.rowActive .activeDot {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.nameStack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nameLabel {
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: 0.005em;
+}
+
+.nameSummary {
+  font-family: var(--sans);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.nameId {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--soft);
+  letter-spacing: 0.02em;
+  margin-top: 2px;
+}
+
+/* Category tag: single capitalised pill in muted ink. */
+.categoryTag {
+  display: inline-block;
+  font-family: var(--sans);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  background: var(--ghost);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.01em;
+}
+
+.rowActive .categoryTag {
+  color: var(--ink);
+}
+
+/* Chip lists: dimensions and views. Two distinct styles so the two
+   columns are visually disambiguable at a glance. */
+.chipList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chip {
+  font-family: var(--sans);
+  font-size: var(--text-2xs);
+  color: var(--muted);
+  background: var(--ghost);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+.viewChip {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--muted);
+  border: 1px solid var(--soft);
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.rowActive .chip,
+.rowActive .viewChip {
+  color: var(--ink);
+}
+
+.muted {
+  color: var(--soft);
+  font-style: normal;
+}
+
+.cellCheck {
+  color: var(--muted);
+  line-height: 1.45;
+  font-size: var(--text-xs);
+}
+
+.rowActive .cellCheck {
+  color: var(--ink);
+}
+
+/* Empty state when filters exclude everything. */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-xl);
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  border: 1px dashed var(--soft);
+  border-radius: var(--radius-md);
+}
+
+@media (max-width: 720px) {
+  .colCategory,
+  .colDimensions {
+    display: none;
+  }
+}

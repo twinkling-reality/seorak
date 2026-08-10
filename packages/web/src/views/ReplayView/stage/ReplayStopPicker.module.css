@@ -1,0 +1,109 @@
+.picker {
+  position: relative;
+  flex: 0 0 auto;
+  width: auto;
+}
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  max-width: 100%;
+  /* Reads the transport's control height so the row stays one size. */
+  min-height: var(--replay-control-h, 28px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-pill);
+  background: var(--ghost);
+  padding: 0 16px;
+  color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.triggerText {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.triggerIcon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--soft);
+  flex-shrink: 0;
+}
+
+.trigger:hover,
+.trigger:focus-visible,
+.pickerOpen .trigger {
+  background: color-mix(in srgb, var(--accent) 10%, var(--ghost));
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Opens UPWARD. This control lives in the transport, on the bottom edge of a
+   cockpit that clips its own overflow — a menu hung below the trigger rendered
+   past that edge and was invisible, so the trigger read as dead. Upward puts it
+   over the stage, inside the clip, which is also where a control this close to
+   the bottom of the screen should open. */
+.menu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: min(320px, calc(100vw - 48px));
+  padding: 6px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--page-bg);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  border: none;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  padding: 8px 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.option:hover,
+.option:focus-visible,
+.optionActive {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.option:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.optionLabel {
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+}
+
+.optionHint {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  line-height: 1.25;
+}

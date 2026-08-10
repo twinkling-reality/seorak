@@ -1,0 +1,55 @@
+{
+  "name": "@seorak/collector",
+  "version": "0.1.0",
+  "author": "Twinkling Reality",
+  "license": "Apache-2.0",
+  "files": [
+    "dist",
+    "README.md",
+    "NEWS.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/twinkling-reality/seorak.git",
+    "directory": "packages/collector"
+  },
+  "type": "module",
+  "exports": {},
+  "bin": {
+    "seorak": "dist/seorak.mjs",
+    "seorak-hook-session-start": "dist/hook-session-start.mjs",
+    "seorak-hook-tool-use": "dist/hook-tool-use.mjs",
+    "seorak-hook-session-end": "dist/hook-session-end.mjs",
+    "seorak-hook-notification": "dist/hook-notification.mjs",
+    "seorak-hook-user-prompt": "dist/hook-user-prompt.mjs",
+    "seorak-collector": "dist/daemon.mjs"
+  },
+  "scripts": {
+    "build:publish": "node scripts/build-package.mjs",
+    "prepare": "npm run build:publish",
+    "dev": "tsx watch src/daemon.ts",
+    "start": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/daemon.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.0.0",
+    "@seorak/dashboard": "0.1.0",
+    "@seorak/types": "^0.1.0"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.0.0",
+    "@types/node": "22.10.2",
+    "esbuild": "0.28.1",
+    "tsx": "4.23.1",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
+  }
+}

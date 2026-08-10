@@ -1,0 +1,37 @@
+/* Interpretation caveat below a viz, tagged so it reads as a crafted annotation
+ * rather than trailing filler. Visible by design (a misread-guard, not an
+ * on-demand caveat) but subordinate to the answer: a quiet mono tag beside a
+ * soft sans body. See VizNote.tsx for the one-line rule. */
+
+.note {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 8px 0 0;
+  max-width: 64ch;
+}
+
+/* Quiet label pill — same ghost material as the delta chip, so annotations read
+ * as one family. Mono because it is a chrome label, not prose. */
+.tag {
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-stat);
+  color: var(--muted);
+  background: var(--ghost);
+  border-radius: var(--radius-xs);
+  padding: 2px 7px;
+}
+
+/* Sans, not mono: the note is prose (an interpretation), so it reads as a
+ * considered annotation rather than a code comment. Soft and small keeps it
+ * subordinate to the answer sentence above. */
+.body {
+  font-family: var(--sans);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  color: var(--soft);
+}

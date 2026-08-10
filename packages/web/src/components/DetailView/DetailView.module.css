@@ -1,0 +1,50 @@
+/*
+ * Shared shell for drilled-in detail views (Live, Usage, and future
+ * category detail views). Owns the outer layout and the panel
+ * wrapper. Tab-row rendering is delegated to <StatTabs> so the
+ * "uppercase mono label / large display value" pattern stays
+ * synchronized with ProjectView's hero strip, a single source of truth.
+ */
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  animation: detailFadeIn 0.25s var(--motion) both;
+}
+
+@keyframes detailFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Panel (tab content) ── */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  /* Tighter than the old 40px because DetailSection titles now carry
+   * their own visual weight, whitespace doesn't have to do all of the
+   * section demarcation. */
+  gap: 32px;
+  animation: detailFadeIn 0.2s var(--motion) both;
+}
+
+/* Tighter panel gap for live-style panels where section framing is
+ * minimal (a single table dominates the panel). Historical views use
+ * the default wider gap between multiple sections. */
+.panelCompact {
+  gap: 14px;
+}
+
+.empty {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--soft);
+}

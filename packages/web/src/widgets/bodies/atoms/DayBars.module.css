@@ -1,0 +1,71 @@
+/* Bars-over-days chart for a discrete per-day count. Single series uses
+ * --viz-series (validated blue); axis + peak labels stay muted mono ink. */
+
+.wrap {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  touch-action: pan-y;
+}
+
+/* Bars carry the value by height on a common baseline; the hover state darkens
+ * to ink so the read-out bar is unambiguous without relying on color alone. */
+.bar {
+  transition: fill 0.12s ease;
+}
+
+.barHover {
+  fill: var(--ink) !important;
+}
+
+/* Endpoint date anchors + peak value label: recessive mono, muted ink. */
+.axisDate,
+.peakLabel {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  fill: var(--soft);
+  letter-spacing: var(--tracking-stat);
+}
+
+.peakLabel {
+  font-variant-numeric: tabular-nums;
+  fill: var(--ink);
+}
+
+.tooltip {
+  position: absolute;
+  top: -4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 72px;
+  padding: 6px 8px;
+  background: var(--surface-frost, rgba(255, 255, 255, 0.96));
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  pointer-events: none;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+.tooltipDate {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+}
+
+.tooltipValue {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-sm);
+  color: var(--ink);
+}

@@ -1,0 +1,261 @@
+.panel {
+  width: 100%;
+  margin: 0 auto 34px;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.treeHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(13rem, 1.45fr);
+  gap: var(--space-lg);
+  margin-bottom: 8px;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-table);
+  text-transform: uppercase;
+  color: var(--soft);
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.item:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.itemHead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(13rem, 1.45fr);
+  align-items: baseline;
+  gap: var(--space-lg);
+}
+
+.itemLabel {
+  font-weight: 500;
+  color: var(--ink);
+  font-size: var(--text-sm);
+}
+
+.itemProgress {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  color: var(--soft);
+}
+
+.pendingList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pendingItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(13rem, 1.45fr);
+  gap: var(--space-lg);
+  align-items: baseline;
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+
+.statName {
+  padding-left: var(--space-lg);
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--ink);
+}
+
+.statMessage {
+  color: var(--muted);
+}
+
+.dialogLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 206;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--page-bg) 62%, transparent);
+  backdrop-filter: blur(14px) saturate(1.12);
+  -webkit-backdrop-filter: blur(14px) saturate(1.12);
+}
+
+.dialog {
+  width: min(560px, 100%);
+  max-height: min(620px, calc(100dvh - 48px));
+  overflow: auto;
+  border-radius: var(--control-radius-lg);
+  box-shadow: var(--shadow-lg), var(--shadow-xs);
+  padding: 18px;
+  animation: dialogIn 180ms var(--motion) both;
+}
+
+@keyframes dialogIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dialogHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.dialogEyebrow {
+  margin: 0 0 4px;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--soft);
+}
+
+.dialogTitle {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: var(--text-lg);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: var(--radius-2xs);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.close svg {
+  width: 12px;
+  height: 12px;
+}
+
+.close:hover {
+  color: var(--ink);
+  background: var(--hover-bg);
+}
+
+.dialogCopy {
+  margin: 14px 0 16px;
+  max-width: 48ch;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.dialogActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hairline);
+}
+
+.footerNote {
+  min-width: 0;
+  font-size: var(--text-xs);
+  color: var(--soft);
+}
+
+.primaryAction,
+.secondaryAction {
+  flex: 0 0 auto;
+  border: none;
+  border-radius: var(--radius-xs);
+  padding: 7px 10px;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    color 0.12s ease,
+    background 0.12s ease;
+}
+
+.primaryAction {
+  background: var(--ink);
+  color: var(--page-bg);
+}
+
+.secondaryAction {
+  background: transparent;
+  color: var(--soft);
+}
+
+.primaryAction:hover {
+  background: color-mix(in srgb, var(--ink) 88%, var(--page-bg));
+}
+
+.secondaryAction:hover {
+  color: var(--ink);
+  background: var(--ghost);
+}
+
+.close:focus-visible,
+.primaryAction:focus-visible,
+.secondaryAction:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@media (max-width: 560px) {
+  .pendingItem,
+  .itemHead,
+  .treeHeader,
+  .dialogActions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dialogActions {
+    align-items: stretch;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog {
+    animation: none;
+  }
+}

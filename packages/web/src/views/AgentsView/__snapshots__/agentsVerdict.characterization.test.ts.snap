@@ -1,0 +1,5711 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`agents verdict output, pinned over a fixture matrix > is unchanged for: a single agent, which is honest-empty by construction 1`] = `
+{
+  "cadences": [],
+  "coverage": [
+    {
+      "cells": [
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+      ],
+      "hint": "Whether the tool reports input and output token counts.",
+      "id": "tokens",
+      "label": "Tokens",
+    },
+    {
+      "cells": [
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+      ],
+      "hint": "Cache-read tokens reported separately — what the cache reuse stat needs.",
+      "id": "cache-split",
+      "label": "Cache split",
+    },
+    {
+      "cells": [
+        {
+          "text": "derived from tokens",
+          "tone": "can",
+        },
+      ],
+      "hint": "A dollar figure exists only where tokens can price it. Never a bill, never a stand-in $0.",
+      "id": "cost",
+      "label": "Cost",
+    },
+    {
+      "cells": [
+        {
+          "text": "observable, not captured yet",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "A rate needs both result legs. A tool that reports on only some of the calls it makes shows the share it could actually see, because a partial rate read as a complete one is the most damaging cell on this page.",
+      "id": "tool-errors",
+      "label": "Tool errors",
+    },
+    {
+      "cells": [
+        {
+          "text": "pass and fail runs",
+          "tone": "can",
+        },
+      ],
+      "hint": "Test, build, typecheck, lint pass rates. Success-only results would pin a fabricated 100%, so the rate stays off until both legs exist.",
+      "id": "verification",
+      "label": "Verification runs",
+    },
+    {
+      "cells": [
+        {
+          "text": "reports why it ended",
+          "tone": "can",
+        },
+      ],
+      "hint": "Whether the tool says why a session ended.",
+      "id": "end-reason",
+      "label": "End reason",
+    },
+    {
+      "cells": [
+        {
+          "text": "measured end",
+          "tone": "can",
+        },
+      ],
+      "hint": "Measured end vs an idle-horizon estimate from the sweep that closes quiet sessions.",
+      "id": "duration",
+      "label": "Duration",
+    },
+  ],
+  "editVolume": [
+    [
+      "claude-code",
+      null,
+    ],
+  ],
+  "history": {
+    "agents": [
+      "claude-code",
+    ],
+    "days": [
+      "2026-07-07",
+      "2026-07-08",
+      "2026-07-09",
+      "2026-07-10",
+      "2026-07-11",
+      "2026-07-12",
+      "2026-07-13",
+    ],
+    "hourly": [
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+    ],
+    "lines": [
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        45,
+      ],
+      [
+        0,
+      ],
+      [
+        null,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+    ],
+    "maxHourly": 0,
+    "maxLines": 45,
+    "maxSessions": 3,
+    "recordStart": [
+      null,
+    ],
+    "sessions": [
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+      [
+        3,
+      ],
+      [
+        0,
+      ],
+      [
+        2,
+      ],
+      [
+        0,
+      ],
+      [
+        0,
+      ],
+    ],
+  },
+  "majorityModels": [],
+  "matrix": {
+    "agents": [
+      {
+        "id": "claude-code",
+        "label": "Claude Code",
+      },
+    ],
+    "disclosures": [],
+    "rows": [
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "On-machine edit-tool line counts. The fairest cross-tool compare today.",
+        "id": "edit-lines",
+        "label": "Edit lines",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "3",
+          },
+        ],
+        "hint": "Sessions in this window keyed by agent.",
+        "id": "sessions",
+        "label": "Sessions",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "5",
+          },
+        ],
+        "hint": "Call volume. Can diverge from edit-line share.",
+        "id": "tool-calls",
+        "label": "Tool calls",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Derived estimate when the agent emits priced tokens. Never a fabricated $0.",
+        "id": "cost",
+        "label": "Estimated cost",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Input + output when the agent emits tokens. Absent agents stay empty.",
+        "id": "tokens",
+        "label": "Tokens",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Errored calls over calls that reported a result. Both legs are counts, because a rate whose denominator you cannot see is not a measurement. A tool that reports on only some of its calls is disclosed under the table.",
+        "id": "tool-errors",
+        "label": "Tool errors",
+      },
+    ],
+  },
+  "narrative": {
+    "leaderId": null,
+    "notes": [],
+    "segments": [
+      {
+        "text": "Agent compare fills in once a second tool records sessions in this window.",
+        "type": "text",
+      },
+    ],
+  },
+  "outcomes": {
+    "agents": [],
+    "disclosures": [],
+    "rows": [],
+  },
+  "paragraphs": [
+    [
+      {
+        "text": "Agent compare fills in once a second tool records sessions in this window.",
+        "type": "text",
+      },
+    ],
+  ],
+  "rank": [
+    "claude-code",
+  ],
+  "survival": [],
+  "where": [
+    {
+      "agentLabels": "Claude Code, Codex",
+      "cells": [
+        {
+          "empty": false,
+          "text": "+640 / −120",
+        },
+      ],
+      "multi": true,
+      "project": "seorak",
+      "repoId": "r-1",
+    },
+    {
+      "agentLabels": "Claude Code",
+      "cells": [
+        {
+          "empty": false,
+          "text": "+260 / −80",
+        },
+      ],
+      "multi": false,
+      "project": "chinmeister",
+      "repoId": "r-2",
+    },
+  ],
+}
+`;
+
+exports[`agents verdict output, pinned over a fixture matrix > is unchanged for: close shares, unpriced models, non-comparable outcome coverage 1`] = `
+{
+  "cadences": [],
+  "coverage": [
+    {
+      "cells": [
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+      ],
+      "hint": "Whether the tool reports input and output token counts.",
+      "id": "tokens",
+      "label": "Tokens",
+    },
+    {
+      "cells": [
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+      ],
+      "hint": "Cache-read tokens reported separately — what the cache reuse stat needs.",
+      "id": "cache-split",
+      "label": "Cache split",
+    },
+    {
+      "cells": [
+        {
+          "text": "derived from tokens",
+          "tone": "can",
+        },
+        {
+          "text": "derived from tokens",
+          "tone": "can",
+        },
+      ],
+      "hint": "A dollar figure exists only where tokens can price it. Never a bill, never a stand-in $0.",
+      "id": "cost",
+      "label": "Cost",
+    },
+    {
+      "cells": [
+        {
+          "text": "observable, not captured yet",
+          "tone": "cannot",
+        },
+        {
+          "text": "observable, not captured yet",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "A rate needs both result legs. A tool that reports on only some of the calls it makes shows the share it could actually see, because a partial rate read as a complete one is the most damaging cell on this page.",
+      "id": "tool-errors",
+      "label": "Tool errors",
+    },
+    {
+      "cells": [
+        {
+          "text": "pass and fail runs",
+          "tone": "can",
+        },
+        {
+          "text": "no result data",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "Test, build, typecheck, lint pass rates. Success-only results would pin a fabricated 100%, so the rate stays off until both legs exist.",
+      "id": "verification",
+      "label": "Verification runs",
+    },
+    {
+      "cells": [
+        {
+          "text": "reports why it ended",
+          "tone": "can",
+        },
+        {
+          "text": "no recorded end",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "Whether the tool says why a session ended.",
+      "id": "end-reason",
+      "label": "End reason",
+    },
+    {
+      "cells": [
+        {
+          "text": "measured end",
+          "tone": "can",
+        },
+        {
+          "text": "inferred from idle",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "Measured end vs an idle-horizon estimate from the sweep that closes quiet sessions.",
+      "id": "duration",
+      "label": "Duration",
+    },
+  ],
+  "editVolume": [
+    [
+      "claude-code",
+      52,
+    ],
+    [
+      "codex",
+      48,
+    ],
+  ],
+  "history": {
+    "agents": [
+      "claude-code",
+      "codex",
+    ],
+    "days": [
+      "2026-07-07",
+      "2026-07-08",
+      "2026-07-09",
+      "2026-07-10",
+      "2026-07-11",
+      "2026-07-12",
+      "2026-07-13",
+    ],
+    "hourly": [
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+    ],
+    "lines": [
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        45,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        null,
+        0,
+      ],
+      [
+        0,
+        10,
+      ],
+      [
+        0,
+        0,
+      ],
+    ],
+    "maxHourly": 0,
+    "maxLines": 45,
+    "maxSessions": 3,
+    "recordStart": [
+      null,
+      null,
+    ],
+    "sessions": [
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        3,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        2,
+        0,
+      ],
+      [
+        0,
+        1,
+      ],
+      [
+        0,
+        0,
+      ],
+    ],
+  },
+  "majorityModels": [
+    [
+      "claude-code",
+      {
+        "model": "claude-opus-4-8",
+        "share": 1,
+        "tokensTotal": 5000,
+      },
+    ],
+  ],
+  "matrix": {
+    "agents": [
+      {
+        "id": "claude-code",
+        "label": "Claude Code",
+      },
+      {
+        "id": "codex",
+        "label": "Codex",
+      },
+    ],
+    "disclosures": [],
+    "rows": [
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "+52 / −0",
+          },
+          {
+            "empty": false,
+            "text": "+48 / −0",
+          },
+        ],
+        "hint": "On-machine edit-tool line counts. The fairest cross-tool compare today.",
+        "id": "edit-lines",
+        "label": "Edit lines",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "5",
+          },
+          {
+            "empty": false,
+            "text": "5",
+          },
+        ],
+        "hint": "Sessions in this window keyed by agent.",
+        "id": "sessions",
+        "label": "Sessions",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "50",
+          },
+          {
+            "empty": false,
+            "text": "50",
+          },
+        ],
+        "hint": "Call volume. Can diverge from edit-line share.",
+        "id": "tool-calls",
+        "label": "Tool calls",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Derived estimate when the agent emits priced tokens. Never a fabricated $0.",
+        "id": "cost",
+        "label": "Estimated cost",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Input + output when the agent emits tokens. Absent agents stay empty.",
+        "id": "tokens",
+        "label": "Tokens",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Errored calls over calls that reported a result. Both legs are counts, because a rate whose denominator you cannot see is not a measurement. A tool that reports on only some of its calls is disclosed under the table.",
+        "id": "tool-errors",
+        "label": "Tool errors",
+      },
+    ],
+  },
+  "narrative": {
+    "leaderId": null,
+    "notes": [
+      {
+        "citations": [
+          "Claude Code wrote +52 / −0 edit lines",
+          "Codex wrote +48 / −0 edit lines",
+        ],
+        "cites": [
+          "edit-lines",
+        ],
+        "detail": "Line counts are derived on your machine from each tool's edit calls. They are the fairest cross-tool compare Seorak has today.",
+        "id": "edit-volume",
+        "label": "Edit volume",
+        "section": "matrix",
+      },
+      {
+        "citations": [
+          "seorak saw Claude Code and Codex",
+          "chinmeister saw Claude Code",
+        ],
+        "detail": "1 project ran more than one tool this window; the rest stayed single-tool.",
+        "id": "projects",
+        "label": "Where the work landed",
+        "section": "where",
+      },
+      {
+        "citations": [
+          "Claude Code: 700 of 1,000 committed lines still on the branch (70%), across 10 commits",
+          "Codex: 760 of 800 committed lines still on the branch (95%), across 10 commits",
+        ],
+        "cites": [
+          "lines-lasted",
+          "survival",
+          "commits",
+        ],
+        "detail": "Seorak traces each committed line back to the tool that edited that file, then re-blames it against a live branch three days later. It comes from git, so it never asks a tool how it did.",
+        "id": "survival",
+        "label": "Line survival",
+        "section": "outcomes",
+      },
+      {
+        "citations": [
+          "gpt-5.5 used 20.0K tokens across 4 calls",
+          "Opus 4.8 used 5.0K tokens across 10 calls",
+        ],
+        "detail": "Some models in this window carried no priced tokens, so the split is by tokens instead of a stand-in $0.",
+        "id": "models",
+        "label": "Models behind the work",
+        "section": "models",
+      },
+      {
+        "citations": [
+          "Claude Code ran in seorak and chinmeister",
+          "Codex ran in seorak",
+        ],
+        "detail": "Which repos each tool saw this window. This is where you already reach for each one, not a ranking.",
+        "id": "reach",
+        "label": "Where you point each tool",
+        "section": "where",
+      },
+    ],
+    "segments": [
+      {
+        "text": "Neither tool dominated your edit volume this window: ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " led narrowly at ",
+        "type": "text",
+      },
+      {
+        "noteId": "edit-volume",
+        "term": "52% of edit lines",
+        "type": "note",
+      },
+      {
+        "text": " across ",
+        "type": "text",
+      },
+      {
+        "noteId": "projects",
+        "term": "2 projects",
+        "type": "note",
+      },
+      {
+        "text": ".",
+        "type": "text",
+      },
+      {
+        "text": "
+
+",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " kept ",
+        "type": "text",
+      },
+      {
+        "noteId": "survival",
+        "term": "95% of its 800 committed lines",
+        "type": "note",
+      },
+      {
+        "text": " on the branch and ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " kept 70% of its 1,000. Those two rates are not measured on the same ground, though: Seorak could place far more of one tool's committed lines than the other's, so the gap between them may be a difference in what Seorak can see rather than in the work. Coverage below has the numbers.",
+        "type": "text",
+      },
+      {
+        "text": " Most of the window's tokens ran through ",
+        "type": "text",
+      },
+      {
+        "noteId": "models",
+        "term": "gpt-5.5",
+        "type": "note",
+      },
+      {
+        "text": ".",
+        "type": "text",
+      },
+      {
+        "text": "
+
+You use them differently. ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " stays in seorak",
+        "type": "text",
+      },
+      {
+        "text": "; ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " roams ",
+        "type": "text",
+      },
+      {
+        "noteId": "reach",
+        "term": "both",
+        "type": "note",
+      },
+      {
+        "text": ".",
+        "type": "text",
+      },
+    ],
+  },
+  "outcomes": {
+    "agents": [
+      {
+        "id": "claude-code",
+        "label": "Claude Code",
+      },
+      {
+        "id": "codex",
+        "label": "Codex",
+      },
+    ],
+    "disclosures": [
+      "Seorak traced 85% of the lines in Claude Code's commits but only 30% of Codex's. That gap is about what Seorak can see, not about the tools, so the difference between their survival rates may be a capture artifact rather than a real one. Read the two rates on their own, not against each other.",
+    ],
+    "rows": [
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "700 of 1,000",
+          },
+          {
+            "empty": false,
+            "text": "760 of 800",
+          },
+        ],
+        "hint": "Committed lines this tool wrote that are still on the branch, over the committed lines it wrote. Both legs, because a survival percentage on its own hides how much work it is about.",
+        "id": "lines-lasted",
+        "label": "Lines that lasted",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "70%",
+          },
+          {
+            "empty": false,
+            "text": "95%",
+          },
+        ],
+        "hint": "Needs 500 attributed lines and 3 commits before a percentage means anything. A lower rate means more of that work was changed back later, which is not the same as worse.",
+        "id": "survival",
+        "label": "Survival",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "10",
+          },
+          {
+            "empty": false,
+            "text": "10",
+          },
+        ],
+        "hint": "Distinct commits this tool got work into. A tool can carry a lot of lines across very few commits, and a rate over few commits is a small sample however many lines it holds.",
+        "id": "commits",
+        "label": "Commits landed",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "What you paid for work that lasted. Only a tool that reports priced tokens can fill this. A tool that reports no cost reads empty here, never a $0, because a $0 would say its work was free.",
+        "id": "cost-per-line",
+        "label": "Cost per surviving line",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "1,000 of 1,176",
+          },
+          {
+            "empty": false,
+            "text": "800 of 2,667",
+          },
+        ],
+        "hint": "Of every line in the commits this tool landed work in, how many Seorak could place with some tool. The rest are your own hand edits, script-written files, or a gap in capture. Two tools can only be compared when this number is close.",
+        "id": "traced",
+        "label": "Lines Seorak could trace",
+      },
+    ],
+  },
+  "paragraphs": [
+    [
+      {
+        "text": "Neither tool dominated your edit volume this window: ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " led narrowly at ",
+        "type": "text",
+      },
+      {
+        "noteId": "edit-volume",
+        "term": "52% of edit lines",
+        "type": "note",
+      },
+      {
+        "text": " across ",
+        "type": "text",
+      },
+      {
+        "noteId": "projects",
+        "term": "2 projects",
+        "type": "note",
+      },
+      {
+        "text": ".",
+        "type": "text",
+      },
+    ],
+    [
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " kept ",
+        "type": "text",
+      },
+      {
+        "noteId": "survival",
+        "term": "95% of its 800 committed lines",
+        "type": "note",
+      },
+      {
+        "text": " on the branch and ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " kept 70% of its 1,000. Those two rates are not measured on the same ground, though: Seorak could place far more of one tool's committed lines than the other's, so the gap between them may be a difference in what Seorak can see rather than in the work. Coverage below has the numbers.",
+        "type": "text",
+      },
+      {
+        "text": " Most of the window's tokens ran through ",
+        "type": "text",
+      },
+      {
+        "noteId": "models",
+        "term": "gpt-5.5",
+        "type": "note",
+      },
+      {
+        "text": ".",
+        "type": "text",
+      },
+    ],
+    [
+      {
+        "text": "You use them differently. ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " stays in seorak",
+        "type": "text",
+      },
+      {
+        "text": "; ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " roams ",
+        "type": "text",
+      },
+      {
+        "noteId": "reach",
+        "term": "both",
+        "type": "note",
+      },
+      {
+        "text": ".",
+        "type": "text",
+      },
+    ],
+  ],
+  "rank": [
+    "claude-code",
+    "codex",
+  ],
+  "survival": [
+    [
+      "claude-code",
+      0.7,
+      0.8503401360544217,
+    ],
+    [
+      "codex",
+      0.95,
+      0.29996250468691416,
+    ],
+  ],
+  "where": [
+    {
+      "agentLabels": "Claude Code, Codex",
+      "cells": [
+        {
+          "empty": false,
+          "text": "+640 / −120",
+        },
+        {
+          "empty": false,
+          "text": "+180 / −40",
+        },
+      ],
+      "multi": true,
+      "project": "seorak",
+      "repoId": "r-1",
+    },
+    {
+      "agentLabels": "Claude Code",
+      "cells": [
+        {
+          "empty": false,
+          "text": "+260 / −80",
+        },
+        {
+          "empty": true,
+          "text": "—",
+        },
+      ],
+      "multi": false,
+      "project": "chinmeister",
+      "repoId": "r-2",
+    },
+  ],
+}
+`;
+
+exports[`agents verdict output, pinned over a fixture matrix > is unchanged for: no edit lines at all, so the read falls back to sessions 1`] = `
+{
+  "cadences": [],
+  "coverage": [
+    {
+      "cells": [
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+      ],
+      "hint": "Whether the tool reports input and output token counts.",
+      "id": "tokens",
+      "label": "Tokens",
+    },
+    {
+      "cells": [
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+      ],
+      "hint": "Cache-read tokens reported separately — what the cache reuse stat needs.",
+      "id": "cache-split",
+      "label": "Cache split",
+    },
+    {
+      "cells": [
+        {
+          "text": "derived from tokens",
+          "tone": "can",
+        },
+        {
+          "text": "derived from tokens",
+          "tone": "can",
+        },
+      ],
+      "hint": "A dollar figure exists only where tokens can price it. Never a bill, never a stand-in $0.",
+      "id": "cost",
+      "label": "Cost",
+    },
+    {
+      "cells": [
+        {
+          "text": "observable, not captured yet",
+          "tone": "cannot",
+        },
+        {
+          "text": "observable, not captured yet",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "A rate needs both result legs. A tool that reports on only some of the calls it makes shows the share it could actually see, because a partial rate read as a complete one is the most damaging cell on this page.",
+      "id": "tool-errors",
+      "label": "Tool errors",
+    },
+    {
+      "cells": [
+        {
+          "text": "pass and fail runs",
+          "tone": "can",
+        },
+        {
+          "text": "no result data",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "Test, build, typecheck, lint pass rates. Success-only results would pin a fabricated 100%, so the rate stays off until both legs exist.",
+      "id": "verification",
+      "label": "Verification runs",
+    },
+    {
+      "cells": [
+        {
+          "text": "reports why it ended",
+          "tone": "can",
+        },
+        {
+          "text": "no recorded end",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "Whether the tool says why a session ended.",
+      "id": "end-reason",
+      "label": "End reason",
+    },
+    {
+      "cells": [
+        {
+          "text": "measured end",
+          "tone": "can",
+        },
+        {
+          "text": "inferred from idle",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "Measured end vs an idle-horizon estimate from the sweep that closes quiet sessions.",
+      "id": "duration",
+      "label": "Duration",
+    },
+  ],
+  "editVolume": [
+    [
+      "claude-code",
+      null,
+    ],
+    [
+      "codex",
+      null,
+    ],
+  ],
+  "history": {
+    "agents": [
+      "claude-code",
+      "codex",
+    ],
+    "days": [
+      "2026-07-07",
+      "2026-07-08",
+      "2026-07-09",
+      "2026-07-10",
+      "2026-07-11",
+      "2026-07-12",
+      "2026-07-13",
+    ],
+    "hourly": [
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+    ],
+    "lines": [
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        45,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        null,
+        0,
+      ],
+      [
+        0,
+        10,
+      ],
+      [
+        0,
+        0,
+      ],
+    ],
+    "maxHourly": 0,
+    "maxLines": 45,
+    "maxSessions": 3,
+    "recordStart": [
+      null,
+      null,
+    ],
+    "sessions": [
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        3,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        2,
+        0,
+      ],
+      [
+        0,
+        1,
+      ],
+      [
+        0,
+        0,
+      ],
+    ],
+  },
+  "majorityModels": [],
+  "matrix": {
+    "agents": [
+      {
+        "id": "claude-code",
+        "label": "Claude Code",
+      },
+      {
+        "id": "codex",
+        "label": "Codex",
+      },
+    ],
+    "disclosures": [],
+    "rows": [
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "On-machine edit-tool line counts. The fairest cross-tool compare today.",
+        "id": "edit-lines",
+        "label": "Edit lines",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "8",
+          },
+          {
+            "empty": false,
+            "text": "1",
+          },
+        ],
+        "hint": "Sessions in this window keyed by agent.",
+        "id": "sessions",
+        "label": "Sessions",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "10",
+          },
+          {
+            "empty": false,
+            "text": "2",
+          },
+        ],
+        "hint": "Call volume. Can diverge from edit-line share.",
+        "id": "tool-calls",
+        "label": "Tool calls",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Derived estimate when the agent emits priced tokens. Never a fabricated $0.",
+        "id": "cost",
+        "label": "Estimated cost",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Input + output when the agent emits tokens. Absent agents stay empty.",
+        "id": "tokens",
+        "label": "Tokens",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Errored calls over calls that reported a result. Both legs are counts, because a rate whose denominator you cannot see is not a measurement. A tool that reports on only some of its calls is disclosed under the table.",
+        "id": "tool-errors",
+        "label": "Tool errors",
+      },
+    ],
+  },
+  "narrative": {
+    "leaderId": "claude-code",
+    "notes": [
+      {
+        "citations": [
+          "Claude Code ran 8 sessions",
+          "Codex ran 1 session",
+        ],
+        "cites": [
+          "sessions",
+        ],
+        "detail": "Session counts in this window keyed by agent. Activity, not an outcome claim.",
+        "id": "sessions",
+        "label": "Sessions by agent",
+        "section": "matrix",
+      },
+      {
+        "citations": [
+          "Claude Code: 700 of 1,000 committed lines still on the branch (70%), across 10 commits",
+        ],
+        "cites": [
+          "lines-lasted",
+          "survival",
+          "commits",
+        ],
+        "detail": "Seorak traces each committed line back to the tool that edited that file, then re-blames it against a live branch three days later. It comes from git, so it never asks a tool how it did.",
+        "id": "survival",
+        "label": "Line survival",
+        "section": "outcomes",
+      },
+    ],
+    "segments": [
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " ran more of your sessions this window, carrying ",
+        "type": "text",
+      },
+      {
+        "noteId": "sessions",
+        "term": "89% of them",
+        "type": "note",
+      },
+      {
+        "text": ". Edit lines are the fairer compare once both tools report them.",
+        "type": "text",
+      },
+      {
+        "text": "
+
+",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " kept ",
+        "type": "text",
+      },
+      {
+        "noteId": "survival",
+        "term": "70% of the 1,000 lines it committed",
+        "type": "note",
+      },
+      {
+        "text": " on the branch, across 10 commits.",
+        "type": "text",
+      },
+      {
+        "text": " ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " has run sessions here too, but none of its committed work has matured past the three-day check yet.",
+        "type": "text",
+      },
+    ],
+  },
+  "outcomes": {
+    "agents": [
+      {
+        "id": "claude-code",
+        "label": "Claude Code",
+      },
+      {
+        "id": "codex",
+        "label": "Codex",
+      },
+    ],
+    "disclosures": [
+      "Codex ran sessions in this window, but none of its committed work has matured past the three-day check yet. Outcomes fill in on their own.",
+      "12 files from Claude Code no longer exist at the path they were written to. Their lines count as gone, which is right for a deletion and an undercount for a move, so these survival numbers are floors rather than ceilings.",
+    ],
+    "rows": [
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "700 of 1,000",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Committed lines this tool wrote that are still on the branch, over the committed lines it wrote. Both legs, because a survival percentage on its own hides how much work it is about.",
+        "id": "lines-lasted",
+        "label": "Lines that lasted",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "70%",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Needs 500 attributed lines and 3 commits before a percentage means anything. A lower rate means more of that work was changed back later, which is not the same as worse.",
+        "id": "survival",
+        "label": "Survival",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "10",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Distinct commits this tool got work into. A tool can carry a lot of lines across very few commits, and a rate over few commits is a small sample however many lines it holds.",
+        "id": "commits",
+        "label": "Commits landed",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "What you paid for work that lasted. Only a tool that reports priced tokens can fill this. A tool that reports no cost reads empty here, never a $0, because a $0 would say its work was free.",
+        "id": "cost-per-line",
+        "label": "Cost per surviving line",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "1,000 of 1,000",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Of every line in the commits this tool landed work in, how many Seorak could place with some tool. The rest are your own hand edits, script-written files, or a gap in capture. Two tools can only be compared when this number is close.",
+        "id": "traced",
+        "label": "Lines Seorak could trace",
+      },
+    ],
+  },
+  "paragraphs": [
+    [
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " ran more of your sessions this window, carrying ",
+        "type": "text",
+      },
+      {
+        "noteId": "sessions",
+        "term": "89% of them",
+        "type": "note",
+      },
+      {
+        "text": ". Edit lines are the fairer compare once both tools report them.",
+        "type": "text",
+      },
+    ],
+    [
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " kept ",
+        "type": "text",
+      },
+      {
+        "noteId": "survival",
+        "term": "70% of the 1,000 lines it committed",
+        "type": "note",
+      },
+      {
+        "text": " on the branch, across 10 commits.",
+        "type": "text",
+      },
+      {
+        "text": " ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " has run sessions here too, but none of its committed work has matured past the three-day check yet.",
+        "type": "text",
+      },
+    ],
+  ],
+  "rank": [
+    "claude-code",
+    "codex",
+  ],
+  "survival": [
+    [
+      "claude-code",
+      0.7,
+      1,
+    ],
+  ],
+  "where": [],
+}
+`;
+
+exports[`agents verdict output, pinned over a fixture matrix > is unchanged for: only one tool reports lines, a silent error leg, nothing rateable yet 1`] = `
+{
+  "cadences": [],
+  "coverage": [
+    {
+      "cells": [
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+      ],
+      "hint": "Whether the tool reports input and output token counts.",
+      "id": "tokens",
+      "label": "Tokens",
+    },
+    {
+      "cells": [
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+      ],
+      "hint": "Cache-read tokens reported separately — what the cache reuse stat needs.",
+      "id": "cache-split",
+      "label": "Cache split",
+    },
+    {
+      "cells": [
+        {
+          "text": "derived from tokens",
+          "tone": "can",
+        },
+        {
+          "text": "derived from tokens",
+          "tone": "can",
+        },
+      ],
+      "hint": "A dollar figure exists only where tokens can price it. Never a bill, never a stand-in $0.",
+      "id": "cost",
+      "label": "Cost",
+    },
+    {
+      "cells": [
+        {
+          "text": "pass and fail captured",
+          "tone": "can",
+        },
+        {
+          "text": "observable, not captured yet",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "A rate needs both result legs. A tool that reports on only some of the calls it makes shows the share it could actually see, because a partial rate read as a complete one is the most damaging cell on this page.",
+      "id": "tool-errors",
+      "label": "Tool errors",
+    },
+    {
+      "cells": [
+        {
+          "text": "pass and fail runs",
+          "tone": "can",
+        },
+        {
+          "text": "no result data",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "Test, build, typecheck, lint pass rates. Success-only results would pin a fabricated 100%, so the rate stays off until both legs exist.",
+      "id": "verification",
+      "label": "Verification runs",
+    },
+    {
+      "cells": [
+        {
+          "text": "reports why it ended",
+          "tone": "can",
+        },
+        {
+          "text": "no recorded end",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "Whether the tool says why a session ended.",
+      "id": "end-reason",
+      "label": "End reason",
+    },
+    {
+      "cells": [
+        {
+          "text": "measured end",
+          "tone": "can",
+        },
+        {
+          "text": "inferred from idle",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "Measured end vs an idle-horizon estimate from the sweep that closes quiet sessions.",
+      "id": "duration",
+      "label": "Duration",
+    },
+  ],
+  "editVolume": [
+    [
+      "claude-code",
+      1000,
+    ],
+    [
+      "codex",
+      null,
+    ],
+  ],
+  "history": {
+    "agents": [
+      "claude-code",
+      "codex",
+    ],
+    "days": [
+      "2026-07-07",
+      "2026-07-08",
+      "2026-07-09",
+      "2026-07-10",
+      "2026-07-11",
+      "2026-07-12",
+      "2026-07-13",
+    ],
+    "hourly": [
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+    ],
+    "lines": [
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        45,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        null,
+        0,
+      ],
+      [
+        0,
+        10,
+      ],
+      [
+        0,
+        0,
+      ],
+    ],
+    "maxHourly": 0,
+    "maxLines": 45,
+    "maxSessions": 3,
+    "recordStart": [
+      null,
+      null,
+    ],
+    "sessions": [
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        3,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        2,
+        0,
+      ],
+      [
+        0,
+        1,
+      ],
+      [
+        0,
+        0,
+      ],
+    ],
+  },
+  "majorityModels": [],
+  "matrix": {
+    "agents": [
+      {
+        "id": "claude-code",
+        "label": "Claude Code",
+      },
+      {
+        "id": "codex",
+        "label": "Codex",
+      },
+    ],
+    "disclosures": [
+      "Codex made 60 tool calls in this window and none of them reported whether it worked, so it has no error rate rather than a zero one.",
+    ],
+    "rows": [
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "+900 / −100",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "On-machine edit-tool line counts. The fairest cross-tool compare today.",
+        "id": "edit-lines",
+        "label": "Edit lines",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "10",
+          },
+          {
+            "empty": false,
+            "text": "2",
+          },
+        ],
+        "hint": "Sessions in this window keyed by agent.",
+        "id": "sessions",
+        "label": "Sessions",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "100",
+          },
+          {
+            "empty": false,
+            "text": "60",
+          },
+        ],
+        "hint": "Call volume. Can diverge from edit-line share.",
+        "id": "tool-calls",
+        "label": "Tool calls",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Derived estimate when the agent emits priced tokens. Never a fabricated $0.",
+        "id": "cost",
+        "label": "Estimated cost",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Input + output when the agent emits tokens. Absent agents stay empty.",
+        "id": "tokens",
+        "label": "Tokens",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "5.0% (5 of 100)",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Errored calls over calls that reported a result. Both legs are counts, because a rate whose denominator you cannot see is not a measurement. A tool that reports on only some of its calls is disclosed under the table.",
+        "id": "tool-errors",
+        "label": "Tool errors",
+      },
+    ],
+  },
+  "narrative": {
+    "leaderId": null,
+    "notes": [
+      {
+        "citations": [
+          "Claude Code wrote +900 / −100 edit lines",
+          "Codex did not report line counts this window",
+        ],
+        "cites": [
+          "edit-lines",
+        ],
+        "detail": "Line counts are derived on your machine from each tool's edit calls. They are the fairest cross-tool compare Seorak has today.",
+        "id": "edit-volume",
+        "label": "Edit volume",
+        "section": "matrix",
+      },
+      {
+        "citations": [
+          "seorak saw Claude Code and Codex",
+          "chinmeister saw Claude Code",
+        ],
+        "detail": "1 project ran more than one tool this window; the rest stayed single-tool.",
+        "id": "projects",
+        "label": "Where the work landed",
+        "section": "where",
+      },
+      {
+        "citations": [
+          "Claude Code: 150 of 200 committed lines still on the branch, too little to put a percentage on",
+        ],
+        "cites": [
+          "lines-lasted",
+          "survival",
+          "commits",
+        ],
+        "detail": "Seorak traces each committed line back to the tool that edited that file, then re-blames it against a live branch three days later. It comes from git, so it never asks a tool how it did.",
+        "id": "survival",
+        "label": "Line survival",
+        "section": "outcomes",
+      },
+      {
+        "citations": [
+          "Claude Code made 100 tool calls across 10 sessions",
+          "Codex made 60 tool calls across 2 sessions",
+        ],
+        "cites": [
+          "tool-calls",
+          "sessions",
+        ],
+        "detail": "How much a sitting carries for each tool. This is activity shape, not effectiveness.",
+        "id": "shape",
+        "label": "Session shape",
+        "section": "matrix",
+      },
+      {
+        "citations": [
+          "Claude Code ran in seorak and chinmeister",
+          "Codex ran in seorak",
+        ],
+        "detail": "Which repos each tool saw this window. This is where you already reach for each one, not a ranking.",
+        "id": "reach",
+        "label": "Where you point each tool",
+        "section": "where",
+      },
+    ],
+    "segments": [
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " is the only tool reporting edit lines this window, at ",
+        "type": "text",
+      },
+      {
+        "noteId": "edit-volume",
+        "term": "+900 / −100 lines",
+        "type": "note",
+      },
+      {
+        "text": " across ",
+        "type": "text",
+      },
+      {
+        "noteId": "projects",
+        "term": "2 projects",
+        "type": "note",
+      },
+      {
+        "text": ". A line-for-line compare fills in once ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " reports line counts too.",
+        "type": "text",
+      },
+      {
+        "text": "
+
+No tool has landed enough committed work to rate yet. ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " is closest, with ",
+        "type": "text",
+      },
+      {
+        "noteId": "survival",
+        "term": "200 attributed lines",
+        "type": "note",
+      },
+      {
+        "text": " against the 500 a survival rate needs.",
+        "type": "text",
+      },
+      {
+        "text": "
+
+You use them differently. ",
+        "type": "text",
+      },
+      {
+        "text": "A ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " session averages ",
+        "type": "text",
+      },
+      {
+        "noteId": "shape",
+        "term": "30 tool calls",
+        "type": "note",
+      },
+      {
+        "text": "; ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " runs lighter at 10 per session.",
+        "type": "text",
+      },
+      {
+        "text": " ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " stays in seorak",
+        "type": "text",
+      },
+      {
+        "text": "; ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " roams ",
+        "type": "text",
+      },
+      {
+        "noteId": "reach",
+        "term": "both",
+        "type": "note",
+      },
+      {
+        "text": ".",
+        "type": "text",
+      },
+    ],
+  },
+  "outcomes": {
+    "agents": [
+      {
+        "id": "claude-code",
+        "label": "Claude Code",
+      },
+      {
+        "id": "codex",
+        "label": "Codex",
+      },
+    ],
+    "disclosures": [
+      "Codex ran sessions in this window, but none of its committed work has matured past the three-day check yet. Outcomes fill in on their own.",
+    ],
+    "rows": [
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "150 of 200",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Committed lines this tool wrote that are still on the branch, over the committed lines it wrote. Both legs, because a survival percentage on its own hides how much work it is about.",
+        "id": "lines-lasted",
+        "label": "Lines that lasted",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "not enough yet",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Needs 500 attributed lines and 3 commits before a percentage means anything. A lower rate means more of that work was changed back later, which is not the same as worse.",
+        "id": "survival",
+        "label": "Survival",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "1",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Distinct commits this tool got work into. A tool can carry a lot of lines across very few commits, and a rate over few commits is a small sample however many lines it holds.",
+        "id": "commits",
+        "label": "Commits landed",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "What you paid for work that lasted. Only a tool that reports priced tokens can fill this. A tool that reports no cost reads empty here, never a $0, because a $0 would say its work was free.",
+        "id": "cost-per-line",
+        "label": "Cost per surviving line",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "200 of 200",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Of every line in the commits this tool landed work in, how many Seorak could place with some tool. The rest are your own hand edits, script-written files, or a gap in capture. Two tools can only be compared when this number is close.",
+        "id": "traced",
+        "label": "Lines Seorak could trace",
+      },
+    ],
+  },
+  "paragraphs": [
+    [
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " is the only tool reporting edit lines this window, at ",
+        "type": "text",
+      },
+      {
+        "noteId": "edit-volume",
+        "term": "+900 / −100 lines",
+        "type": "note",
+      },
+      {
+        "text": " across ",
+        "type": "text",
+      },
+      {
+        "noteId": "projects",
+        "term": "2 projects",
+        "type": "note",
+      },
+      {
+        "text": ". A line-for-line compare fills in once ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " reports line counts too.",
+        "type": "text",
+      },
+    ],
+    [
+      {
+        "text": "No tool has landed enough committed work to rate yet. ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " is closest, with ",
+        "type": "text",
+      },
+      {
+        "noteId": "survival",
+        "term": "200 attributed lines",
+        "type": "note",
+      },
+      {
+        "text": " against the 500 a survival rate needs.",
+        "type": "text",
+      },
+    ],
+    [
+      {
+        "text": "You use them differently. ",
+        "type": "text",
+      },
+      {
+        "text": "A ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " session averages ",
+        "type": "text",
+      },
+      {
+        "noteId": "shape",
+        "term": "30 tool calls",
+        "type": "note",
+      },
+      {
+        "text": "; ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " runs lighter at 10 per session.",
+        "type": "text",
+      },
+      {
+        "text": " ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " stays in seorak",
+        "type": "text",
+      },
+      {
+        "text": "; ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " roams ",
+        "type": "text",
+      },
+      {
+        "noteId": "reach",
+        "term": "both",
+        "type": "note",
+      },
+      {
+        "text": ".",
+        "type": "text",
+      },
+    ],
+  ],
+  "rank": [
+    "claude-code",
+    "codex",
+  ],
+  "survival": [
+    [
+      "claude-code",
+      null,
+      1,
+    ],
+  ],
+  "where": [
+    {
+      "agentLabels": "Claude Code, Codex",
+      "cells": [
+        {
+          "empty": false,
+          "text": "+640 / −120",
+        },
+        {
+          "empty": false,
+          "text": "+180 / −40",
+        },
+      ],
+      "multi": true,
+      "project": "seorak",
+      "repoId": "r-1",
+    },
+    {
+      "agentLabels": "Claude Code",
+      "cells": [
+        {
+          "empty": false,
+          "text": "+260 / −80",
+        },
+        {
+          "empty": true,
+          "text": "—",
+        },
+      ],
+      "multi": false,
+      "project": "chinmeister",
+      "repoId": "r-2",
+    },
+  ],
+}
+`;
+
+exports[`agents verdict output, pinned over a fixture matrix > is unchanged for: rich two-tool window with a clear leader and a rateable compare 1`] = `
+{
+  "cadences": [
+    {
+      "agent": "claude-code",
+      "calls": 100,
+      "top": "morning",
+      "topCalls": 80,
+      "topShare": 0.8,
+    },
+    {
+      "agent": "codex",
+      "calls": 36,
+      "top": "afternoon",
+      "topCalls": 36,
+      "topShare": 1,
+    },
+  ],
+  "coverage": [
+    {
+      "cells": [
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+      ],
+      "hint": "Whether the tool reports input and output token counts.",
+      "id": "tokens",
+      "label": "Tokens",
+    },
+    {
+      "cells": [
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+      ],
+      "hint": "Cache-read tokens reported separately — what the cache reuse stat needs.",
+      "id": "cache-split",
+      "label": "Cache split",
+    },
+    {
+      "cells": [
+        {
+          "text": "derived from tokens",
+          "tone": "can",
+        },
+        {
+          "text": "derived from tokens",
+          "tone": "can",
+        },
+      ],
+      "hint": "A dollar figure exists only where tokens can price it. Never a bill, never a stand-in $0.",
+      "id": "cost",
+      "label": "Cost",
+    },
+    {
+      "cells": [
+        {
+          "text": "pass and fail captured",
+          "tone": "can",
+        },
+        {
+          "text": "on 224 of 509 calls",
+          "tone": "partial",
+        },
+      ],
+      "hint": "A rate needs both result legs. A tool that reports on only some of the calls it makes shows the share it could actually see, because a partial rate read as a complete one is the most damaging cell on this page.",
+      "id": "tool-errors",
+      "label": "Tool errors",
+    },
+    {
+      "cells": [
+        {
+          "text": "pass and fail runs",
+          "tone": "can",
+        },
+        {
+          "text": "no result data",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "Test, build, typecheck, lint pass rates. Success-only results would pin a fabricated 100%, so the rate stays off until both legs exist.",
+      "id": "verification",
+      "label": "Verification runs",
+    },
+    {
+      "cells": [
+        {
+          "text": "reports why it ended",
+          "tone": "can",
+        },
+        {
+          "text": "no recorded end",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "Whether the tool says why a session ended.",
+      "id": "end-reason",
+      "label": "End reason",
+    },
+    {
+      "cells": [
+        {
+          "text": "measured end",
+          "tone": "can",
+        },
+        {
+          "text": "inferred from idle",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "Measured end vs an idle-horizon estimate from the sweep that closes quiet sessions.",
+      "id": "duration",
+      "label": "Duration",
+    },
+  ],
+  "editVolume": [
+    [
+      "claude-code",
+      1100,
+    ],
+    [
+      "codex",
+      220,
+    ],
+  ],
+  "history": {
+    "agents": [
+      "claude-code",
+      "codex",
+    ],
+    "days": [
+      "2026-07-07",
+      "2026-07-08",
+      "2026-07-09",
+      "2026-07-10",
+      "2026-07-11",
+      "2026-07-12",
+      "2026-07-13",
+    ],
+    "hourly": [
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        20,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        20,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        20,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        20,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        12,
+      ],
+      [
+        0,
+        12,
+      ],
+      [
+        20,
+        0,
+      ],
+      [
+        0,
+        12,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+    ],
+    "lines": [
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        45,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        null,
+        0,
+      ],
+      [
+        0,
+        10,
+      ],
+      [
+        0,
+        0,
+      ],
+    ],
+    "maxHourly": 20,
+    "maxLines": 45,
+    "maxSessions": 3,
+    "recordStart": [
+      0,
+      5,
+    ],
+    "sessions": [
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        3,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        2,
+        0,
+      ],
+      [
+        0,
+        1,
+      ],
+      [
+        0,
+        0,
+      ],
+    ],
+  },
+  "majorityModels": [
+    [
+      "claude-code",
+      {
+        "model": "claude-opus-4-8",
+        "share": 0.75,
+        "tokensTotal": 900000,
+      },
+    ],
+    [
+      "codex",
+      {
+        "model": "gpt-5.5",
+        "share": 1,
+        "tokensTotal": 90000,
+      },
+    ],
+  ],
+  "matrix": {
+    "agents": [
+      {
+        "id": "claude-code",
+        "label": "Claude Code",
+      },
+      {
+        "id": "codex",
+        "label": "Codex",
+      },
+    ],
+    "disclosures": [
+      "Codex only tells you how a call went on 224 of the 509 calls it made, so its error rate covers 44% of its work and says nothing about the rest. Claude Code reports on everything it runs. Both rates are real, but they are not measured over the same work, so the lower one is not the better one.",
+    ],
+    "rows": [
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "+900 / −200",
+          },
+          {
+            "empty": false,
+            "text": "+180 / −40",
+          },
+        ],
+        "hint": "On-machine edit-tool line counts. The fairest cross-tool compare today.",
+        "id": "edit-lines",
+        "label": "Edit lines",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "9",
+          },
+          {
+            "empty": false,
+            "text": "3",
+          },
+        ],
+        "hint": "Sessions in this window keyed by agent.",
+        "id": "sessions",
+        "label": "Sessions",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "330",
+          },
+          {
+            "empty": false,
+            "text": "82",
+          },
+        ],
+        "hint": "Call volume. Can diverge from edit-line share.",
+        "id": "tool-calls",
+        "label": "Tool calls",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "$42.50",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Derived estimate when the agent emits priced tokens. Never a fabricated $0.",
+        "id": "cost",
+        "label": "Estimated cost",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "1.2M",
+          },
+          {
+            "empty": false,
+            "text": "90.0K",
+          },
+        ],
+        "hint": "Input + output when the agent emits tokens. Absent agents stay empty.",
+        "id": "tokens",
+        "label": "Tokens",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "5.2% (489 of 9,412)",
+          },
+          {
+            "empty": false,
+            "text": "3.6% (8 of 224)",
+          },
+        ],
+        "hint": "Errored calls over calls that reported a result. Both legs are counts, because a rate whose denominator you cannot see is not a measurement. A tool that reports on only some of its calls is disclosed under the table.",
+        "id": "tool-errors",
+        "label": "Tool errors",
+      },
+    ],
+  },
+  "narrative": {
+    "leaderId": "claude-code",
+    "notes": [
+      {
+        "citations": [
+          "Claude Code wrote +900 / −200 edit lines",
+          "Codex wrote +180 / −40 edit lines",
+        ],
+        "cites": [
+          "edit-lines",
+        ],
+        "detail": "Line counts are derived on your machine from each tool's edit calls. They are the fairest cross-tool compare Seorak has today.",
+        "id": "edit-volume",
+        "label": "Edit volume",
+        "section": "matrix",
+      },
+      {
+        "citations": [
+          "seorak saw Claude Code and Codex",
+          "chinmeister saw Claude Code",
+        ],
+        "detail": "1 project ran more than one tool this window; the rest stayed single-tool.",
+        "id": "projects",
+        "label": "Where the work landed",
+        "section": "where",
+      },
+      {
+        "citations": [
+          "Claude Code: 840 of 1,200 committed lines still on the branch (70%), across 10 commits",
+          "Codex: 810 of 900 committed lines still on the branch (90%), across 7 commits",
+        ],
+        "cites": [
+          "lines-lasted",
+          "survival",
+          "commits",
+        ],
+        "detail": "Seorak traces each committed line back to the tool that edited that file, then re-blames it against a live branch three days later. It comes from git, so it never asks a tool how it did.",
+        "id": "survival",
+        "label": "Line survival",
+        "section": "outcomes",
+      },
+      {
+        "citations": [
+          "Claude Code ran 75% of its tokens through Opus 4.8",
+          "Codex ran 100% of its tokens through gpt-5.5",
+        ],
+        "detail": "Each tool's majority model by measured tokens this window. Spend stays per-model below; an unpriced model is never a stand-in $0.",
+        "id": "models",
+        "label": "Models behind each tool",
+        "section": "models",
+      },
+      {
+        "citations": [
+          "Claude Code ran in seorak and chinmeister",
+          "Codex ran in seorak",
+        ],
+        "detail": "Which repos each tool saw this window. This is where you already reach for each one, not a ranking.",
+        "id": "reach",
+        "label": "Where you point each tool",
+        "section": "where",
+      },
+      {
+        "citations": [
+          "Claude Code put 80 of its 100 calls in your morning (05:00 to 11:59)",
+          "Codex put 36 of its 36 calls in your afternoon (12:00 to 16:59)",
+        ],
+        "detail": "Each tool's call volume by clock hour, in your browser's local time. This is when you reached for each one, not a recommendation.",
+        "id": "cadence",
+        "label": "When the calls land",
+        "section": "when",
+      },
+    ],
+    "segments": [
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " led your agent work this window, carrying ",
+        "type": "text",
+      },
+      {
+        "noteId": "edit-volume",
+        "term": "83% of edit volume",
+        "type": "note",
+      },
+      {
+        "text": " across ",
+        "type": "text",
+      },
+      {
+        "noteId": "projects",
+        "term": "2 projects",
+        "type": "note",
+      },
+      {
+        "text": ". ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " wrote the other 17%.",
+        "type": "text",
+      },
+      {
+        "text": "
+
+More of ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": "'s landed work is still on the branch: ",
+        "type": "text",
+      },
+      {
+        "noteId": "survival",
+        "term": "90% of its 900 committed lines",
+        "type": "note",
+      },
+      {
+        "text": ", against ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": "'s 70% of 1,200. Seorak traced a comparable share of both tools' commits, so that is a real difference in what survived and not an artifact of what it could see.",
+        "type": "text",
+      },
+      {
+        "text": " You run ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " on ",
+        "type": "text",
+      },
+      {
+        "noteId": "models",
+        "term": "Opus 4.8",
+        "type": "note",
+      },
+      {
+        "text": " and ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " on gpt-5.5.",
+        "type": "text",
+      },
+      {
+        "text": "
+
+You use them differently. ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " stays in seorak",
+        "type": "text",
+      },
+      {
+        "text": "; ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " roams ",
+        "type": "text",
+      },
+      {
+        "noteId": "reach",
+        "term": "both",
+        "type": "note",
+      },
+      {
+        "text": ".",
+        "type": "text",
+      },
+      {
+        "text": " ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " is your ",
+        "type": "text",
+      },
+      {
+        "noteId": "cadence",
+        "term": "afternoon tool",
+        "type": "note",
+      },
+      {
+        "text": ": 100% of its calls land there; ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " leans morning.",
+        "type": "text",
+      },
+    ],
+  },
+  "outcomes": {
+    "agents": [
+      {
+        "id": "claude-code",
+        "label": "Claude Code",
+      },
+      {
+        "id": "codex",
+        "label": "Codex",
+      },
+    ],
+    "disclosures": [
+      "Seorak traced 90% of the lines in Codex's commits and 85% of Claude Code's, so the two rates sit on comparable ground.",
+      "3 sessions landed committed work in this window that Seorak could not attribute to any tool, so it is in neither column. Those rows still count toward the overall survival stat on Overview.",
+    ],
+    "rows": [
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "840 of 1,200",
+          },
+          {
+            "empty": false,
+            "text": "810 of 900",
+          },
+        ],
+        "hint": "Committed lines this tool wrote that are still on the branch, over the committed lines it wrote. Both legs, because a survival percentage on its own hides how much work it is about.",
+        "id": "lines-lasted",
+        "label": "Lines that lasted",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "70%",
+          },
+          {
+            "empty": false,
+            "text": "90%",
+          },
+        ],
+        "hint": "Needs 500 attributed lines and 3 commits before a percentage means anything. A lower rate means more of that work was changed back later, which is not the same as worse.",
+        "id": "survival",
+        "label": "Survival",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "10",
+          },
+          {
+            "empty": false,
+            "text": "7",
+          },
+        ],
+        "hint": "Distinct commits this tool got work into. A tool can carry a lot of lines across very few commits, and a rate over few commits is a small sample however many lines it holds.",
+        "id": "commits",
+        "label": "Commits landed",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "What you paid for work that lasted. Only a tool that reports priced tokens can fill this. A tool that reports no cost reads empty here, never a $0, because a $0 would say its work was free.",
+        "id": "cost-per-line",
+        "label": "Cost per surviving line",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "1,200 of 1,412",
+          },
+          {
+            "empty": false,
+            "text": "900 of 1,000",
+          },
+        ],
+        "hint": "Of every line in the commits this tool landed work in, how many Seorak could place with some tool. The rest are your own hand edits, script-written files, or a gap in capture. Two tools can only be compared when this number is close.",
+        "id": "traced",
+        "label": "Lines Seorak could trace",
+      },
+    ],
+  },
+  "paragraphs": [
+    [
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " led your agent work this window, carrying ",
+        "type": "text",
+      },
+      {
+        "noteId": "edit-volume",
+        "term": "83% of edit volume",
+        "type": "note",
+      },
+      {
+        "text": " across ",
+        "type": "text",
+      },
+      {
+        "noteId": "projects",
+        "term": "2 projects",
+        "type": "note",
+      },
+      {
+        "text": ". ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " wrote the other 17%.",
+        "type": "text",
+      },
+    ],
+    [
+      {
+        "text": "More of ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": "'s landed work is still on the branch: ",
+        "type": "text",
+      },
+      {
+        "noteId": "survival",
+        "term": "90% of its 900 committed lines",
+        "type": "note",
+      },
+      {
+        "text": ", against ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": "'s 70% of 1,200. Seorak traced a comparable share of both tools' commits, so that is a real difference in what survived and not an artifact of what it could see.",
+        "type": "text",
+      },
+      {
+        "text": " You run ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " on ",
+        "type": "text",
+      },
+      {
+        "noteId": "models",
+        "term": "Opus 4.8",
+        "type": "note",
+      },
+      {
+        "text": " and ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " on gpt-5.5.",
+        "type": "text",
+      },
+    ],
+    [
+      {
+        "text": "You use them differently. ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " stays in seorak",
+        "type": "text",
+      },
+      {
+        "text": "; ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " roams ",
+        "type": "text",
+      },
+      {
+        "noteId": "reach",
+        "term": "both",
+        "type": "note",
+      },
+      {
+        "text": ".",
+        "type": "text",
+      },
+      {
+        "text": " ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " is your ",
+        "type": "text",
+      },
+      {
+        "noteId": "cadence",
+        "term": "afternoon tool",
+        "type": "note",
+      },
+      {
+        "text": ": 100% of its calls land there; ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " leans morning.",
+        "type": "text",
+      },
+    ],
+  ],
+  "rank": [
+    "claude-code",
+    "codex",
+  ],
+  "survival": [
+    [
+      "claude-code",
+      0.7,
+      0.8498583569405099,
+    ],
+    [
+      "codex",
+      0.9,
+      0.9,
+    ],
+  ],
+  "where": [
+    {
+      "agentLabels": "Claude Code, Codex",
+      "cells": [
+        {
+          "empty": false,
+          "text": "+640 / −120",
+        },
+        {
+          "empty": false,
+          "text": "+180 / −40",
+        },
+      ],
+      "multi": true,
+      "project": "seorak",
+      "repoId": "r-1",
+    },
+    {
+      "agentLabels": "Claude Code",
+      "cells": [
+        {
+          "empty": false,
+          "text": "+260 / −80",
+        },
+        {
+          "empty": true,
+          "text": "—",
+        },
+      ],
+      "multi": false,
+      "project": "chinmeister",
+      "repoId": "r-2",
+    },
+  ],
+}
+`;
+
+exports[`agents verdict output, pinned over a fixture matrix > is unchanged for: the rounding edge, where a 100 / 0 split would overclaim 1`] = `
+{
+  "cadences": [],
+  "coverage": [
+    {
+      "cells": [
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+      ],
+      "hint": "Whether the tool reports input and output token counts.",
+      "id": "tokens",
+      "label": "Tokens",
+    },
+    {
+      "cells": [
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+      ],
+      "hint": "Cache-read tokens reported separately — what the cache reuse stat needs.",
+      "id": "cache-split",
+      "label": "Cache split",
+    },
+    {
+      "cells": [
+        {
+          "text": "derived from tokens",
+          "tone": "can",
+        },
+        {
+          "text": "derived from tokens",
+          "tone": "can",
+        },
+      ],
+      "hint": "A dollar figure exists only where tokens can price it. Never a bill, never a stand-in $0.",
+      "id": "cost",
+      "label": "Cost",
+    },
+    {
+      "cells": [
+        {
+          "text": "observable, not captured yet",
+          "tone": "cannot",
+        },
+        {
+          "text": "observable, not captured yet",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "A rate needs both result legs. A tool that reports on only some of the calls it makes shows the share it could actually see, because a partial rate read as a complete one is the most damaging cell on this page.",
+      "id": "tool-errors",
+      "label": "Tool errors",
+    },
+    {
+      "cells": [
+        {
+          "text": "pass and fail runs",
+          "tone": "can",
+        },
+        {
+          "text": "no result data",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "Test, build, typecheck, lint pass rates. Success-only results would pin a fabricated 100%, so the rate stays off until both legs exist.",
+      "id": "verification",
+      "label": "Verification runs",
+    },
+    {
+      "cells": [
+        {
+          "text": "reports why it ended",
+          "tone": "can",
+        },
+        {
+          "text": "no recorded end",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "Whether the tool says why a session ended.",
+      "id": "end-reason",
+      "label": "End reason",
+    },
+    {
+      "cells": [
+        {
+          "text": "measured end",
+          "tone": "can",
+        },
+        {
+          "text": "inferred from idle",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "Measured end vs an idle-horizon estimate from the sweep that closes quiet sessions.",
+      "id": "duration",
+      "label": "Duration",
+    },
+  ],
+  "editVolume": [
+    [
+      "claude-code",
+      70490,
+    ],
+    [
+      "codex",
+      2,
+    ],
+  ],
+  "history": {
+    "agents": [
+      "claude-code",
+      "codex",
+    ],
+    "days": [
+      "2026-07-07",
+      "2026-07-08",
+      "2026-07-09",
+      "2026-07-10",
+      "2026-07-11",
+      "2026-07-12",
+      "2026-07-13",
+    ],
+    "hourly": [
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+    ],
+    "lines": [
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        45,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        null,
+        0,
+      ],
+      [
+        0,
+        10,
+      ],
+      [
+        0,
+        0,
+      ],
+    ],
+    "maxHourly": 0,
+    "maxLines": 45,
+    "maxSessions": 3,
+    "recordStart": [
+      null,
+      null,
+    ],
+    "sessions": [
+      [
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        3,
+        0,
+      ],
+      [
+        0,
+        0,
+      ],
+      [
+        2,
+        0,
+      ],
+      [
+        0,
+        1,
+      ],
+      [
+        0,
+        0,
+      ],
+    ],
+  },
+  "majorityModels": [],
+  "matrix": {
+    "agents": [
+      {
+        "id": "claude-code",
+        "label": "Claude Code",
+      },
+      {
+        "id": "codex",
+        "label": "Codex",
+      },
+    ],
+    "disclosures": [],
+    "rows": [
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "+70,000 / −490",
+          },
+          {
+            "empty": false,
+            "text": "+1 / −1",
+          },
+        ],
+        "hint": "On-machine edit-tool line counts. The fairest cross-tool compare today.",
+        "id": "edit-lines",
+        "label": "Edit lines",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "10",
+          },
+          {
+            "empty": false,
+            "text": "2",
+          },
+        ],
+        "hint": "Sessions in this window keyed by agent.",
+        "id": "sessions",
+        "label": "Sessions",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "300",
+          },
+          {
+            "empty": false,
+            "text": "3",
+          },
+        ],
+        "hint": "Call volume. Can diverge from edit-line share.",
+        "id": "tool-calls",
+        "label": "Tool calls",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Derived estimate when the agent emits priced tokens. Never a fabricated $0.",
+        "id": "cost",
+        "label": "Estimated cost",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Input + output when the agent emits tokens. Absent agents stay empty.",
+        "id": "tokens",
+        "label": "Tokens",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Errored calls over calls that reported a result. Both legs are counts, because a rate whose denominator you cannot see is not a measurement. A tool that reports on only some of its calls is disclosed under the table.",
+        "id": "tool-errors",
+        "label": "Tool errors",
+      },
+    ],
+  },
+  "narrative": {
+    "leaderId": "claude-code",
+    "notes": [
+      {
+        "citations": [
+          "Claude Code wrote +70,000 / −490 edit lines",
+          "Codex wrote +1 / −1 edit lines",
+        ],
+        "cites": [
+          "edit-lines",
+        ],
+        "detail": "Line counts are derived on your machine from each tool's edit calls. They are the fairest cross-tool compare Seorak has today.",
+        "id": "edit-volume",
+        "label": "Edit volume",
+        "section": "matrix",
+      },
+      {
+        "citations": [
+          "Claude Code: 1,100 of 1,400 committed lines still on the branch (79%), across 10 commits",
+          "Codex: 700 of 900 committed lines still on the branch (78%), across 10 commits",
+        ],
+        "cites": [
+          "lines-lasted",
+          "survival",
+          "commits",
+        ],
+        "detail": "Seorak traces each committed line back to the tool that edited that file, then re-blames it against a live branch three days later. It comes from git, so it never asks a tool how it did.",
+        "id": "survival",
+        "label": "Line survival",
+        "section": "outcomes",
+      },
+      {
+        "citations": [
+          "Claude Code made 300 tool calls across 10 sessions",
+          "Codex made 3 tool calls across 2 sessions",
+        ],
+        "cites": [
+          "tool-calls",
+          "sessions",
+        ],
+        "detail": "How much a sitting carries for each tool. This is activity shape, not effectiveness.",
+        "id": "shape",
+        "label": "Session shape",
+        "section": "matrix",
+      },
+    ],
+    "segments": [
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " led your agent work this window, carrying ",
+        "type": "text",
+      },
+      {
+        "noteId": "edit-volume",
+        "term": "nearly all edit volume",
+        "type": "note",
+      },
+      {
+        "text": ". ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " wrote 2 of the 70,492 measured lines.",
+        "type": "text",
+      },
+      {
+        "text": "
+
+Both tools' landed work held up about the same: ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " at 79% of ",
+        "type": "text",
+      },
+      {
+        "noteId": "survival",
+        "term": "1,400 committed lines",
+        "type": "note",
+      },
+      {
+        "text": ", ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " at 78% of 900.",
+        "type": "text",
+      },
+      {
+        "text": "
+
+You use them differently. ",
+        "type": "text",
+      },
+      {
+        "text": "A ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " session averages ",
+        "type": "text",
+      },
+      {
+        "noteId": "shape",
+        "term": "30 tool calls",
+        "type": "note",
+      },
+      {
+        "text": "; ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " runs lighter at 2 per session.",
+        "type": "text",
+      },
+    ],
+  },
+  "outcomes": {
+    "agents": [
+      {
+        "id": "claude-code",
+        "label": "Claude Code",
+      },
+      {
+        "id": "codex",
+        "label": "Codex",
+      },
+    ],
+    "disclosures": [
+      "Seorak traced 100% of the lines in Claude Code's commits and 100% of Codex's, so the two rates sit on comparable ground.",
+      "3 sessions from Codex landed work that a squash, rebase, or reset has since rewritten. Those lines may well live on under a new commit, but Seorak cannot follow them there, so they are left out of the rates above rather than counted as dead.",
+      "4 files from Codex no longer exist at the path they were written to. Their lines count as gone, which is right for a deletion and an undercount for a move, so these survival numbers are floors rather than ceilings.",
+    ],
+    "rows": [
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "1,100 of 1,400",
+          },
+          {
+            "empty": false,
+            "text": "700 of 900",
+          },
+        ],
+        "hint": "Committed lines this tool wrote that are still on the branch, over the committed lines it wrote. Both legs, because a survival percentage on its own hides how much work it is about.",
+        "id": "lines-lasted",
+        "label": "Lines that lasted",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "79%",
+          },
+          {
+            "empty": false,
+            "text": "78%",
+          },
+        ],
+        "hint": "Needs 500 attributed lines and 3 commits before a percentage means anything. A lower rate means more of that work was changed back later, which is not the same as worse.",
+        "id": "survival",
+        "label": "Survival",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "10",
+          },
+          {
+            "empty": false,
+            "text": "10",
+          },
+        ],
+        "hint": "Distinct commits this tool got work into. A tool can carry a lot of lines across very few commits, and a rate over few commits is a small sample however many lines it holds.",
+        "id": "commits",
+        "label": "Commits landed",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "What you paid for work that lasted. Only a tool that reports priced tokens can fill this. A tool that reports no cost reads empty here, never a $0, because a $0 would say its work was free.",
+        "id": "cost-per-line",
+        "label": "Cost per surviving line",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "1,400 of 1,400",
+          },
+          {
+            "empty": false,
+            "text": "900 of 900",
+          },
+        ],
+        "hint": "Of every line in the commits this tool landed work in, how many Seorak could place with some tool. The rest are your own hand edits, script-written files, or a gap in capture. Two tools can only be compared when this number is close.",
+        "id": "traced",
+        "label": "Lines Seorak could trace",
+      },
+    ],
+  },
+  "paragraphs": [
+    [
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " led your agent work this window, carrying ",
+        "type": "text",
+      },
+      {
+        "noteId": "edit-volume",
+        "term": "nearly all edit volume",
+        "type": "note",
+      },
+      {
+        "text": ". ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " wrote 2 of the 70,492 measured lines.",
+        "type": "text",
+      },
+    ],
+    [
+      {
+        "text": "Both tools' landed work held up about the same: ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " at 79% of ",
+        "type": "text",
+      },
+      {
+        "noteId": "survival",
+        "term": "1,400 committed lines",
+        "type": "note",
+      },
+      {
+        "text": ", ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " at 78% of 900.",
+        "type": "text",
+      },
+    ],
+    [
+      {
+        "text": "You use them differently. ",
+        "type": "text",
+      },
+      {
+        "text": "A ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " session averages ",
+        "type": "text",
+      },
+      {
+        "noteId": "shape",
+        "term": "30 tool calls",
+        "type": "note",
+      },
+      {
+        "text": "; ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " runs lighter at 2 per session.",
+        "type": "text",
+      },
+    ],
+  ],
+  "rank": [
+    "claude-code",
+    "codex",
+  ],
+  "survival": [
+    [
+      "claude-code",
+      0.7857142857142857,
+      1,
+    ],
+    [
+      "codex",
+      0.7777777777777778,
+      1,
+    ],
+  ],
+  "where": [],
+}
+`;
+
+exports[`agents verdict output, pinned over a fixture matrix > is unchanged for: three tools sharing the window 1`] = `
+{
+  "cadences": [],
+  "coverage": [
+    {
+      "cells": [
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+        {
+          "text": "not reported",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "Whether the tool reports input and output token counts.",
+      "id": "tokens",
+      "label": "Tokens",
+    },
+    {
+      "cells": [
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+        {
+          "text": "reported",
+          "tone": "can",
+        },
+        {
+          "text": "not reported",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "Cache-read tokens reported separately — what the cache reuse stat needs.",
+      "id": "cache-split",
+      "label": "Cache split",
+    },
+    {
+      "cells": [
+        {
+          "text": "derived from tokens",
+          "tone": "can",
+        },
+        {
+          "text": "derived from tokens",
+          "tone": "can",
+        },
+        {
+          "text": "no dollar path",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "A dollar figure exists only where tokens can price it. Never a bill, never a stand-in $0.",
+      "id": "cost",
+      "label": "Cost",
+    },
+    {
+      "cells": [
+        {
+          "text": "observable, not captured yet",
+          "tone": "cannot",
+        },
+        {
+          "text": "observable, not captured yet",
+          "tone": "cannot",
+        },
+        {
+          "text": "no result data",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "A rate needs both result legs. A tool that reports on only some of the calls it makes shows the share it could actually see, because a partial rate read as a complete one is the most damaging cell on this page.",
+      "id": "tool-errors",
+      "label": "Tool errors",
+    },
+    {
+      "cells": [
+        {
+          "text": "pass and fail runs",
+          "tone": "can",
+        },
+        {
+          "text": "no result data",
+          "tone": "cannot",
+        },
+        {
+          "text": "no result data",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "Test, build, typecheck, lint pass rates. Success-only results would pin a fabricated 100%, so the rate stays off until both legs exist.",
+      "id": "verification",
+      "label": "Verification runs",
+    },
+    {
+      "cells": [
+        {
+          "text": "reports why it ended",
+          "tone": "can",
+        },
+        {
+          "text": "no recorded end",
+          "tone": "cannot",
+        },
+        {
+          "text": "no recorded end",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "Whether the tool says why a session ended.",
+      "id": "end-reason",
+      "label": "End reason",
+    },
+    {
+      "cells": [
+        {
+          "text": "measured end",
+          "tone": "can",
+        },
+        {
+          "text": "inferred from idle",
+          "tone": "cannot",
+        },
+        {
+          "text": "inferred from idle",
+          "tone": "cannot",
+        },
+      ],
+      "hint": "Measured end vs an idle-horizon estimate from the sweep that closes quiet sessions.",
+      "id": "duration",
+      "label": "Duration",
+    },
+  ],
+  "editVolume": [
+    [
+      "claude-code",
+      1000,
+    ],
+    [
+      "codex",
+      240,
+    ],
+    [
+      "cursor",
+      70,
+    ],
+  ],
+  "history": {
+    "agents": [
+      "claude-code",
+      "codex",
+      "cursor",
+    ],
+    "days": [
+      "2026-07-07",
+      "2026-07-08",
+      "2026-07-09",
+      "2026-07-10",
+      "2026-07-11",
+      "2026-07-12",
+      "2026-07-13",
+    ],
+    "hourly": [
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+    ],
+    "lines": [
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        45,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        null,
+        0,
+        0,
+      ],
+      [
+        0,
+        10,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+    ],
+    "maxHourly": 0,
+    "maxLines": 45,
+    "maxSessions": 3,
+    "recordStart": [
+      null,
+      null,
+      null,
+    ],
+    "sessions": [
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        3,
+        0,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+      [
+        2,
+        0,
+        0,
+      ],
+      [
+        0,
+        1,
+        0,
+      ],
+      [
+        0,
+        0,
+        0,
+      ],
+    ],
+  },
+  "majorityModels": [],
+  "matrix": {
+    "agents": [
+      {
+        "id": "claude-code",
+        "label": "Claude Code",
+      },
+      {
+        "id": "codex",
+        "label": "Codex",
+      },
+      {
+        "id": "cursor",
+        "label": "Cursor",
+      },
+    ],
+    "disclosures": [],
+    "rows": [
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "+900 / −100",
+          },
+          {
+            "empty": false,
+            "text": "+200 / −40",
+          },
+          {
+            "empty": false,
+            "text": "+60 / −10",
+          },
+        ],
+        "hint": "On-machine edit-tool line counts. The fairest cross-tool compare today.",
+        "id": "edit-lines",
+        "label": "Edit lines",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "9",
+          },
+          {
+            "empty": false,
+            "text": "4",
+          },
+          {
+            "empty": false,
+            "text": "2",
+          },
+        ],
+        "hint": "Sessions in this window keyed by agent.",
+        "id": "sessions",
+        "label": "Sessions",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "300",
+          },
+          {
+            "empty": false,
+            "text": "120",
+          },
+          {
+            "empty": false,
+            "text": "40",
+          },
+        ],
+        "hint": "Call volume. Can diverge from edit-line share.",
+        "id": "tool-calls",
+        "label": "Tool calls",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Derived estimate when the agent emits priced tokens. Never a fabricated $0.",
+        "id": "cost",
+        "label": "Estimated cost",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Input + output when the agent emits tokens. Absent agents stay empty.",
+        "id": "tokens",
+        "label": "Tokens",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+        ],
+        "hint": "Errored calls over calls that reported a result. Both legs are counts, because a rate whose denominator you cannot see is not a measurement. A tool that reports on only some of its calls is disclosed under the table.",
+        "id": "tool-errors",
+        "label": "Tool errors",
+      },
+    ],
+  },
+  "narrative": {
+    "leaderId": "claude-code",
+    "notes": [
+      {
+        "citations": [
+          "Claude Code wrote +900 / −100 edit lines",
+          "Codex wrote +200 / −40 edit lines",
+          "Cursor wrote +60 / −10 edit lines",
+        ],
+        "cites": [
+          "edit-lines",
+        ],
+        "detail": "Line counts are derived on your machine from each tool's edit calls. They are the fairest cross-tool compare Seorak has today.",
+        "id": "edit-volume",
+        "label": "Edit volume",
+        "section": "matrix",
+      },
+      {
+        "citations": [
+          "seorak saw Claude Code and Codex",
+          "chinmeister saw Claude Code",
+        ],
+        "detail": "1 project ran more than one tool this window; the rest stayed single-tool.",
+        "id": "projects",
+        "label": "Where the work landed",
+        "section": "where",
+      },
+      {
+        "citations": [
+          "Claude Code: 900 of 1,200 committed lines still on the branch (75%), across 10 commits",
+          "Codex: 880 of 1,000 committed lines still on the branch (88%), across 10 commits",
+          "Cursor: 100 of 120 committed lines still on the branch, too little to put a percentage on",
+        ],
+        "cites": [
+          "lines-lasted",
+          "survival",
+          "commits",
+        ],
+        "detail": "Seorak traces each committed line back to the tool that edited that file, then re-blames it against a live branch three days later. It comes from git, so it never asks a tool how it did.",
+        "id": "survival",
+        "label": "Line survival",
+        "section": "outcomes",
+      },
+      {
+        "citations": [
+          "Claude Code ran in seorak and chinmeister",
+          "Codex ran in seorak",
+        ],
+        "detail": "Which repos each tool saw this window. This is where you already reach for each one, not a ranking.",
+        "id": "reach",
+        "label": "Where you point each tool",
+        "section": "where",
+      },
+    ],
+    "segments": [
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " led your agent work this window, carrying ",
+        "type": "text",
+      },
+      {
+        "noteId": "edit-volume",
+        "term": "76% of edit volume",
+        "type": "note",
+      },
+      {
+        "text": " across ",
+        "type": "text",
+      },
+      {
+        "noteId": "projects",
+        "term": "2 projects",
+        "type": "note",
+      },
+      {
+        "text": ". ",
+        "type": "text",
+      },
+      {
+        "text": "The rest split across 2 other tools.",
+        "type": "text",
+      },
+      {
+        "text": "
+
+More of ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": "'s landed work is still on the branch: ",
+        "type": "text",
+      },
+      {
+        "noteId": "survival",
+        "term": "88% of its 1,000 committed lines",
+        "type": "note",
+      },
+      {
+        "text": ", against ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": "'s 75% of 1,200. Seorak traced a comparable share of both tools' commits, so that is a real difference in what survived and not an artifact of what it could see.",
+        "type": "text",
+      },
+      {
+        "text": "
+
+You use them differently. ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " stays in seorak",
+        "type": "text",
+      },
+      {
+        "text": "; ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " roams ",
+        "type": "text",
+      },
+      {
+        "noteId": "reach",
+        "term": "both",
+        "type": "note",
+      },
+      {
+        "text": ".",
+        "type": "text",
+      },
+    ],
+  },
+  "outcomes": {
+    "agents": [
+      {
+        "id": "claude-code",
+        "label": "Claude Code",
+      },
+      {
+        "id": "codex",
+        "label": "Codex",
+      },
+      {
+        "id": "cursor",
+        "label": "Cursor",
+      },
+    ],
+    "disclosures": [
+      "Seorak traced 100% of the lines in Cursor's commits and 88% of Codex's, so the two rates sit on comparable ground.",
+    ],
+    "rows": [
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "900 of 1,200",
+          },
+          {
+            "empty": false,
+            "text": "880 of 1,000",
+          },
+          {
+            "empty": false,
+            "text": "100 of 120",
+          },
+        ],
+        "hint": "Committed lines this tool wrote that are still on the branch, over the committed lines it wrote. Both legs, because a survival percentage on its own hides how much work it is about.",
+        "id": "lines-lasted",
+        "label": "Lines that lasted",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "75%",
+          },
+          {
+            "empty": false,
+            "text": "88%",
+          },
+          {
+            "empty": true,
+            "text": "not enough yet",
+          },
+        ],
+        "hint": "Needs 500 attributed lines and 3 commits before a percentage means anything. A lower rate means more of that work was changed back later, which is not the same as worse.",
+        "id": "survival",
+        "label": "Survival",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "10",
+          },
+          {
+            "empty": false,
+            "text": "10",
+          },
+          {
+            "empty": false,
+            "text": "1",
+          },
+        ],
+        "hint": "Distinct commits this tool got work into. A tool can carry a lot of lines across very few commits, and a rate over few commits is a small sample however many lines it holds.",
+        "id": "commits",
+        "label": "Commits landed",
+      },
+      {
+        "cells": [
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "—",
+          },
+          {
+            "empty": true,
+            "text": "reports no cost",
+          },
+        ],
+        "hint": "What you paid for work that lasted. Only a tool that reports priced tokens can fill this. A tool that reports no cost reads empty here, never a $0, because a $0 would say its work was free.",
+        "id": "cost-per-line",
+        "label": "Cost per surviving line",
+      },
+      {
+        "cells": [
+          {
+            "empty": false,
+            "text": "1,200 of 1,333",
+          },
+          {
+            "empty": false,
+            "text": "1,000 of 1,136",
+          },
+          {
+            "empty": false,
+            "text": "120 of 120",
+          },
+        ],
+        "hint": "Of every line in the commits this tool landed work in, how many Seorak could place with some tool. The rest are your own hand edits, script-written files, or a gap in capture. Two tools can only be compared when this number is close.",
+        "id": "traced",
+        "label": "Lines Seorak could trace",
+      },
+    ],
+  },
+  "paragraphs": [
+    [
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " led your agent work this window, carrying ",
+        "type": "text",
+      },
+      {
+        "noteId": "edit-volume",
+        "term": "76% of edit volume",
+        "type": "note",
+      },
+      {
+        "text": " across ",
+        "type": "text",
+      },
+      {
+        "noteId": "projects",
+        "term": "2 projects",
+        "type": "note",
+      },
+      {
+        "text": ". ",
+        "type": "text",
+      },
+      {
+        "text": "The rest split across 2 other tools.",
+        "type": "text",
+      },
+    ],
+    [
+      {
+        "text": "More of ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": "'s landed work is still on the branch: ",
+        "type": "text",
+      },
+      {
+        "noteId": "survival",
+        "term": "88% of its 1,000 committed lines",
+        "type": "note",
+      },
+      {
+        "text": ", against ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": "'s 75% of 1,200. Seorak traced a comparable share of both tools' commits, so that is a real difference in what survived and not an artifact of what it could see.",
+        "type": "text",
+      },
+    ],
+    [
+      {
+        "text": "You use them differently. ",
+        "type": "text",
+      },
+      {
+        "agentId": "codex",
+        "type": "agent",
+      },
+      {
+        "text": " stays in seorak",
+        "type": "text",
+      },
+      {
+        "text": "; ",
+        "type": "text",
+      },
+      {
+        "agentId": "claude-code",
+        "type": "agent",
+      },
+      {
+        "text": " roams ",
+        "type": "text",
+      },
+      {
+        "noteId": "reach",
+        "term": "both",
+        "type": "note",
+      },
+      {
+        "text": ".",
+        "type": "text",
+      },
+    ],
+  ],
+  "rank": [
+    "claude-code",
+    "codex",
+    "cursor",
+  ],
+  "survival": [
+    [
+      "claude-code",
+      0.75,
+      0.900225056264066,
+    ],
+    [
+      "codex",
+      0.88,
+      0.8802816901408451,
+    ],
+    [
+      "cursor",
+      null,
+      1,
+    ],
+  ],
+  "where": [
+    {
+      "agentLabels": "Claude Code, Codex",
+      "cells": [
+        {
+          "empty": false,
+          "text": "+640 / −120",
+        },
+        {
+          "empty": false,
+          "text": "+180 / −40",
+        },
+        {
+          "empty": true,
+          "text": "—",
+        },
+      ],
+      "multi": true,
+      "project": "seorak",
+      "repoId": "r-1",
+    },
+    {
+      "agentLabels": "Claude Code",
+      "cells": [
+        {
+          "empty": false,
+          "text": "+260 / −80",
+        },
+        {
+          "empty": true,
+          "text": "—",
+        },
+        {
+          "empty": true,
+          "text": "—",
+        },
+      ],
+      "multi": false,
+      "project": "chinmeister",
+      "repoId": "r-2",
+    },
+  ],
+}
+`;
+
+exports[`record rail and clock helpers, pinned > is unchanged across every record-depth shape 1`] = `
+[
+  {
+    "first": "2026-06-05T11:48:00.048Z",
+    "rail": true,
+    "second": "2026-07-12T02:44:46.662Z",
+    "starts": [
+      0,
+      3,
+    ],
+  },
+  {
+    "first": "2026-07-09T23:59:59.999Z",
+    "rail": true,
+    "second": "2026-07-11T00:00:00.000Z",
+    "starts": [
+      0,
+      2,
+    ],
+  },
+  {
+    "first": "2026-06-05T00:00:00.000Z",
+    "rail": false,
+    "second": "2026-06-05T00:00:00.000Z",
+    "starts": [
+      0,
+      0,
+    ],
+  },
+  {
+    "first": undefined,
+    "rail": false,
+    "second": "2026-07-12T00:00:00.000Z",
+    "starts": [
+      null,
+      3,
+    ],
+  },
+  {
+    "first": "nonsense",
+    "rail": false,
+    "second": "2026-07-12T00:00:00.000Z",
+    "starts": [
+      null,
+      3,
+    ],
+  },
+  {
+    "first": "",
+    "rail": false,
+    "second": "",
+    "starts": [
+      null,
+      null,
+    ],
+  },
+  {
+    "first": "2030-01-01T00:00:00.000Z",
+    "rail": true,
+    "second": "2026-07-12T00:00:00.000Z",
+    "starts": [
+      4,
+      3,
+    ],
+  },
+]
+`;
+
+exports[`record rail and clock helpers, pinned > is unchanged for every UTC hour at a set of viewer offsets 1`] = `
+[
+  {
+    "hours": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+    ],
+    "offset": -720,
+  },
+  {
+    "hours": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      0,
+      1,
+      2,
+      3,
+      4,
+    ],
+    "offset": -330,
+  },
+  {
+    "hours": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      0,
+      1,
+    ],
+    "offset": -120,
+  },
+  {
+    "hours": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+    ],
+    "offset": 0,
+  },
+  {
+    "hours": [
+      23,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+    ],
+    "offset": 60,
+  },
+  {
+    "hours": [
+      20,
+      21,
+      22,
+      23,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+    ],
+    "offset": 240,
+  },
+  {
+    "hours": [
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+    ],
+    "offset": 570,
+  },
+  {
+    "hours": [
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+    ],
+    "offset": 840,
+  },
+]
+`;

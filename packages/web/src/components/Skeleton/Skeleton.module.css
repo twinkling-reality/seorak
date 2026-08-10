@@ -1,0 +1,73 @@
+/* ── Skeleton primitives ── */
+
+.line {
+  display: block;
+  border-radius: var(--radius-xs);
+  background: linear-gradient(90deg, var(--ghost) 0%, var(--shimmer-peak) 40%, var(--ghost) 80%);
+  background-size: 300% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* ── Stat grid skeleton ── */
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-xs);
+  animation: fadeSlideIn 0.3s var(--motion) both;
+}
+
+.statCell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: 0;
+  animation: fadeSlideIn 0.35s var(--motion) both;
+}
+
+/* ── Table rows skeleton ── */
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: fadeSlideIn 0.3s var(--motion) 0.1s both;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 11px 12px;
+  border-radius: var(--radius-sm);
+  animation: fadeSlideIn 0.3s var(--motion) both;
+}
+
+/* ── Shimmer text ── */
+
+.shimmerText {
+  display: block;
+  background: linear-gradient(
+    90deg,
+    var(--ink) 0%,
+    color-mix(in srgb, var(--live) 50%, var(--ink)) 40%,
+    var(--ink) 60%,
+    var(--ink) 100%
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 2.8s ease-in-out infinite;
+  padding-bottom: 0.15em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 980px) {
+  .statGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

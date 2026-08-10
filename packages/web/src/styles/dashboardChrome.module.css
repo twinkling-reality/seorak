@@ -1,0 +1,80 @@
+/*
+ * Shared dashboard page chrome for customizable grid views (Overview, Project).
+ *
+ * Alignment contract (see also tokens.css + WidgetGrid.module.css):
+ *   page text guide = content column left edge
+ *   tile border guide = page text guide − var(--widget-shell-pad)
+ *
+ * gridBleed pulls the WidgetGrid outward so var(--widget-shell-pad) on .widget
+ * absorbs into the gutter and widget titles line up with ViewHeader + controlTray.
+ */
+
+.gridBleed {
+  margin-inline: var(--dashboard-grid-bleed);
+}
+
+/* Header controls — a plain inline row, no container chrome. */
+.controlTray {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.rangeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@media (max-width: 980px) {
+  .controlTray {
+    flex-wrap: wrap;
+  }
+}
+
+/* Cursor-carried chip rendered inside the dnd-kit DragOverlay while a catalog
+ * widget is being dragged. The real drop indicator is the sized ghost placeholder
+ * in the grid (see WidgetGrid.module.css `.placeholder`); this chip is just a
+ * lightweight "thing in hand" bridging the catalog panel and the grid. */
+.dragOverlayCard {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--page-bg);
+  border-radius: var(--radius-xs);
+  box-shadow: var(--shadow-lg), var(--shadow-xs);
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--ink);
+  letter-spacing: var(--tracking-stat);
+  opacity: 0.92;
+  pointer-events: none;
+}
+
+.dragOverlayName {
+  font-family: inherit;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* Sortable drag overlay: sized inline to match the original cell's measured w × h. */
+.dragOverlayWidget {
+  background: var(--page-bg);
+  padding: var(--widget-shell-pad);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg), var(--shadow-xs);
+  cursor: grabbing;
+  pointer-events: none;
+  transform: rotate(0.5deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dragOverlayWidget {
+    transform: none;
+  }
+}

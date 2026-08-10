@@ -1,0 +1,241 @@
+/* ChatPanel — right-anchored liquid glass over the dashboard.
+ *
+ * Material notes:
+ * - The glass material itself (fill, blur, rim, @supports fallback, dark
+ *   variants) lives in the shared --surface-glass-* tokens + the
+ *   components/surface/glass.module.css primitives; the TSX composes
+ *   glass.sheet / glass.rim alongside the classes here. This file keeps only
+ *   what is ChatPanel-specific.
+ * - The .glass layer's LEFT edge is dissolved with a mask-image gradient, so
+ *   there is no hard drawer border: the page bleeds through and the panel
+ *   fades out leftward. Masking the element also fades the backdrop-filter
+ *   itself, which is what makes the dissolve read as liquid rather than a
+ *   cropped sheet.
+ * - The content column inset (padding-left) keeps opaque controls out of the
+ *   dissolve band so hovers are not clipped by the glass mask.
+ * - Rims (the 1px iridescent edge) go on the SMALL controls only: input row,
+ *   citation chips, suggestions. The big region deliberately has no rim; a
+ *   rimmed full-height sheet would read as a solid drawer again.
+ *
+ * Motion: structural tier, 280ms slide+fade from the right; opacity-only under
+ * prefers-reduced-motion.
+ */
+
+.root {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100dvh;
+  width: min(440px, 92vw);
+  z-index: 205; /* above tooltips (200) and the widget-catalog family (201-203) */
+  display: flex;
+  /* Transform ONLY on the container. Animating (or fill-holding) opacity here
+   * would make .root a backdrop root, which blinds the .glass layer's
+   * backdrop-filter to the page behind it (verified: blur silently vanishes).
+   * The fade rides on .glass/.column instead — opacity on the filter element
+   * itself is applied after its backdrop sampling, so the blur survives. */
+  animation: panelSlide 280ms cubic-bezier(0.32, 0.72, 0.28, 1) both;
+}
+
+.glass,
+.column {
+  animation: panelFade 280ms ease both;
+}
+
+@keyframes panelSlide {
+  from {
+    transform: translateX(18px);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes panelFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    animation: none;
+  }
+
+  .glass,
+  .column {
+    animation-duration: 200ms;
+  }
+}
+
+/* ── The glass sheet ─────────────────────────────── */
+
+/* Fill, blur, dark variants, and the no-backdrop-filter fallback all ride in
+ * on glass.sheet (composed in the TSX); the mask below fades whatever that
+ * class paints, so the fallback's near-solid sheet still gets a soft left
+ * edge. */
+/* Shared left-edge dissolve on the glass sheet only. Do NOT mask .column:
+ * masking descendants clips hover rims/glows on pills and chrome controls. */
+.dissolveMask {
+  mask-image: linear-gradient(to right, transparent 0px, rgba(0, 0, 0, 0.9) 68px, #000 132px);
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0px,
+    rgba(0, 0, 0, 0.9) 68px,
+    #000 132px
+  );
+}
+
+.glass {
+  position: absolute;
+  inset: 0;
+  composes: dissolveMask;
+}
+
+/* ── Content column ──────────────────────────────── */
+
+.column {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  padding: 18px 20px;
+  /* Match the dissolve mask's full-opacity line (132px) so opaque controls
+   * sit on solid glass, not the fade band. */
+  padding-left: 132px;
+}
+
+.close {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 11px;
+  background: var(--surface-glass-fill-ctrl);
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.close:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 14%, rgba(255, 255, 255, 0.6));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 32%, transparent);
+  transform: translateY(-1px);
+}
+
+.close:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+:global([data-theme='dark']) .close:hover {
+  background: color-mix(in srgb, var(--accent) 18%, rgba(240, 240, 242, 0.08));
+}
+
+.close svg {
+  width: 11px;
+  height: 11px;
+}
+
+/* ── Input row ───────────────────────────────────── */
+
+/* Rimmed via glass.rim in the TSX. */
+.inputRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 6px 6px 6px 14px;
+  border-radius: 14px;
+  background: var(--surface-glass-fill-ctrl);
+  transition: box-shadow 0.15s ease;
+}
+
+.inputRow:focus-within {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: none;
+  font-family: var(--sans);
+  font-size: var(--text-base);
+  color: var(--ink);
+}
+
+.input::placeholder {
+  color: var(--soft);
+}
+
+.sendBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 11px;
+  background: var(--ink);
+  color: var(--page-bg);
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 1px 2px rgba(18, 19, 23, 0.12);
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.sendBtn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 4px 10px rgba(18, 19, 23, 0.14);
+}
+
+.sendBtn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.sendBtn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.sendBtn:disabled {
+  background: var(--ghost);
+  color: var(--soft);
+  box-shadow: none;
+  cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .close:hover,
+  .sendBtn:not(:disabled):hover {
+    transform: none;
+  }
+}

@@ -1,0 +1,128 @@
+/*
+ * Overview-page chrome.
+ *
+ * Widget-content classes (data lists, metric bars, stat blocks, etc.) live
+ * in widgets/widget-shared.module.css. Per-widget viz lives next to its
+ * body in widgets/bodies/*.module.css. This file owns only the page
+ * surface itself: the root, header strip, project filter, customize side
+ * panel, and overview-specific notices. Grid alignment + control tray live
+ * in styles/dashboardChrome.module.css.
+ */
+
+.overview {
+  animation: viewFadeIn 0.3s var(--motion) both;
+}
+
+/* ── Header ──────────────────────────────────────── */
+
+/* No row gap: ViewHeader already reserves the space below its title
+ * (margin-bottom: --space-xl), and every other view leans on that one
+ * contract. A gap here would not collapse with that margin -- it adds to it,
+ * which is how Overview drifted to double the title-to-controls space that
+ * Compare and Replay show. Space below the title belongs to ViewHeader; the
+ * space below the control row belongs here. */
+.header {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 56px;
+}
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--soft);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+}
+
+.loadingTitle {
+  font-family: var(--display);
+  font-size: var(--display-page);
+  font-weight: 300;
+  line-height: var(--display-line);
+  letter-spacing: var(--display-spacing);
+}
+
+.summaryNotice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-md);
+}
+
+.summaryNoticeLabel {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  color: var(--danger);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+}
+
+.summaryNoticeText {
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+/*
+ * Static informational notice. Used for truncation and period-clamp
+ * messaging. Distinct from .summaryNotice (which uses --danger red for
+ * partial-data warnings); this variant stays in --muted because the
+ * information is factual, not an error or live-state signal. Per the
+ * design language: short, single-line, no boxes, no accent color.
+ */
+.infoNotice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-md);
+}
+
+.infoNoticeLabel {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+}
+
+.infoNoticeText {
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+/*
+ * Visually hidden but available to assistive tech. Used by the layout
+ * change live region.
+ */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Animations ──────────────────────────────────── */
+
+@keyframes viewFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Reduced motion ──────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .overview {
+    animation: none !important;
+  }
+}

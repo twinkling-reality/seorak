@@ -1,0 +1,43 @@
+/* On-demand caveat trigger at the end of an answer line. Subordinate by
+ * design: it must not compete with the <Metric> numbers in the sentence it
+ * trails. Sized in absolute units, not em, so it stays a legible 15px target
+ * against the 24px answer prose rather than scaling into a bullet. */
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  margin-left: 0.3em;
+  /* Ride the x-height of the surrounding prose, not the baseline. */
+  vertical-align: 0.18em;
+  padding: 0;
+  border: 1px solid var(--soft);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--soft);
+  cursor: help;
+  transition:
+    color 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.trigger:hover,
+.trigger:focus-visible {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.glyph {
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 600;
+  font-style: normal;
+  line-height: 1;
+}

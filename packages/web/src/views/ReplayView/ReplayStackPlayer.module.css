@@ -1,0 +1,191 @@
+/* The cockpit fills the viewport from its own top edge down, so the stage
+   never scrolls away from the transport that drives it. Panels scroll inside
+   themselves; the page does not scroll at all. */
+.cockpit {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cockpitPinned {
+  overflow: hidden;
+}
+
+.cockpitBody {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(248px, 23%, 340px);
+  gap: 20px;
+  flex: 1 1 auto;
+  min-height: clamp(320px, 42vh, 520px);
+  min-width: 0;
+}
+
+.stagePane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.stageBody {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+.stageBody > * {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.inspector {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding-left: 18px;
+  border-left: 1px solid var(--hairline);
+}
+
+/* One control height for the whole row. The stop picker and the segmented
+   control read it from here rather than being overridden from outside, so the
+   row cannot end up with three different button heights in it. */
+.transport {
+  --replay-control-h: 34px;
+  --segmented-min-h: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  flex: 0 0 auto;
+  min-height: var(--replay-control-h);
+  padding-top: 12px;
+  border-top: 1px solid var(--hairline);
+  margin: 0 0 0 var(--chart-margin-left, 36px);
+}
+
+.controlCluster {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.loadNoteInline {
+  color: var(--warn);
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+}
+
+.pillButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  height: var(--replay-control-h, 28px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-pill);
+  background: var(--ghost);
+  padding: 0 16px;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.pillButton:hover,
+.pillButton:focus-visible {
+  background: color-mix(in srgb, var(--accent) 10%, var(--ghost));
+}
+
+.pillButton:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.playButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-shrink: 0;
+  height: var(--replay-control-h, 28px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--page-bg);
+  padding: 0 20px;
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background var(--motion-fast) ease,
+    color var(--motion-fast) ease,
+    transform var(--motion-fast) ease;
+}
+
+.playButton:disabled {
+  background: var(--ghost);
+  color: var(--soft);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.playButton:not(:disabled):hover,
+.playButton:not(:disabled):focus-visible {
+  background: color-mix(in srgb, var(--ink) 86%, var(--page-bg));
+  color: var(--page-bg);
+  transform: translateY(-1px);
+}
+
+.playButton:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Below the cockpit threshold the layout returns to normal document flow:
+   the inspector drops under the stage and the page scrolls again. */
+@media (max-width: 1100px) {
+  .cockpitBody {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .inspector {
+    padding-left: 0;
+    border-left: none;
+    border-top: 1px solid var(--hairline);
+    padding-top: 14px;
+    max-height: 420px;
+  }
+}
+
+@media (max-width: 760px) {
+  .transport {
+    margin-left: 0;
+  }
+
+  .controlCluster {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .playButton,
+  .pillButton {
+    transition: none;
+  }
+}

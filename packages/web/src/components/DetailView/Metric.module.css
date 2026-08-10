@@ -1,0 +1,22 @@
+/* Semantic emphasis token. See Metric.tsx for the tone guide. */
+
+.metric {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.neutral {
+  color: var(--ink);
+}
+
+.positive {
+  color: var(--success);
+}
+
+.warning {
+  color: var(--warn);
+}
+
+.negative {
+  color: var(--danger);
+}

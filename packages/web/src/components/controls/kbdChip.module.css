@@ -1,0 +1,36 @@
+.kbdSm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background: var(--ghost);
+  border-radius: var(--radius-2xs);
+  font-family: var(--mono);
+  font-size: var(--text-3xs);
+  color: var(--soft);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.kbdMd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: var(--ghost);
+  border-radius: var(--radius-2xs);
+  font-family: var(--mono);
+  font-size: var(--text-3xs);
+  color: var(--soft);
+  line-height: 1;
+}
+
+.kbdGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}

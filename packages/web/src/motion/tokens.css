@@ -1,0 +1,10 @@
+:root {
+  --motion-route-enter: 220ms;
+  --motion-route-enter-long: 280ms;
+  --motion-route-enter-short: 180ms;
+  --motion-route-y: 6px;
+  --motion-route-y-small: 4px;
+  --motion-route-ease: cubic-bezier(0.2, 0, 0, 1);
+  --motion-pending-delay: 220ms;
+}
+

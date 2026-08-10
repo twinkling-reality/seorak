@@ -1,0 +1,36 @@
+/* Compact hero for Share faces. Sized so the strip stays the primary viz
+ * (mirrors the strip-widget vocabulary, not the stat-card hero scale). */
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.value {
+  font-family: var(--display);
+  font-size: clamp(1.6rem, 2.6vw, 2.1rem);
+  font-weight: 300;
+  /* Glyph-containing leading so overflow:hidden (for the ellipsis) doesn't clip
+   * the value's ink — see --display-line-value. */
+  line-height: var(--display-line-value);
+  letter-spacing: -0.05em;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* Trailing room so the negative letter-spacing + overflow:hidden don't
+   * clip the last glyph's right edge. */
+  padding-inline-end: 0.2em;
+}
+
+.caption {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  letter-spacing: var(--tracking-stat);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

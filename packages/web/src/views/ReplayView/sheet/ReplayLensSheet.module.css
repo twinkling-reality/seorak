@@ -1,0 +1,233 @@
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border: none;
+  padding: 0;
+  background: color-mix(in srgb, var(--page-bg) 58%, transparent);
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
+  cursor: default;
+  animation: replayScrimIn var(--motion-fast) var(--motion) both;
+}
+
+.sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: min(66%, 460px);
+  border-top: 1px solid var(--hairline);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  /* Near-solid, not glass: dense evidence has to stay legible. */
+  background: var(--page-bg);
+  box-shadow: 0 -14px 34px color-mix(in srgb, var(--ink) 8%, transparent);
+  outline: none;
+  animation: replaySheetIn var(--motion-base) var(--motion) both;
+}
+
+.sheet:focus-visible {
+  box-shadow:
+    0 -14px 34px color-mix(in srgb, var(--ink) 8%, transparent),
+    inset 0 0 0 2px var(--focus-ring);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex: 0 0 auto;
+  padding: 14px 18px 10px;
+  border-bottom: 1px solid var(--hairline);
+  min-width: 0;
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.name {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: var(--text-lg);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.description {
+  margin: 0;
+  max-width: 72ch;
+  color: var(--soft);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+}
+
+.close {
+  flex: 0 0 auto;
+  height: 26px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-pill);
+  background: var(--ghost);
+  padding: 0 12px;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.close:hover,
+.close:focus-visible {
+  background: color-mix(in srgb, var(--accent) 10%, var(--ghost));
+}
+
+.close:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.split {
+  display: grid;
+  grid-template-columns: 168px minmax(0, 1fr);
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 14px 10px 18px 14px;
+  border-right: 1px solid var(--hairline);
+}
+
+.railGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.railGroupLabel {
+  padding: 0 8px 4px;
+  color: var(--soft);
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+}
+
+.railItem {
+  min-width: 0;
+  border: none;
+  border-radius: var(--radius-xs);
+  background: none;
+  padding: 5px 8px;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    color var(--motion-fast) ease,
+    background var(--motion-fast) ease;
+}
+
+.railItem:hover,
+.railItem:focus-visible {
+  color: var(--ink);
+  background: var(--ghost);
+}
+
+.railItem:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.railItemActive {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 14px 18px 18px;
+}
+
+/* Too narrow for a rail: the catalog becomes one scrolling row above the
+   result, which still shows what else there is to read. */
+@media (max-width: 860px) {
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .rail {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-right: none;
+    border-bottom: 1px solid var(--hairline);
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .railGroup {
+    flex-direction: row;
+    align-items: center;
+    flex: 0 0 auto;
+  }
+
+  .railGroupLabel {
+    padding: 0 6px 0 0;
+    white-space: nowrap;
+  }
+
+  .railItem {
+    white-space: nowrap;
+  }
+}
+
+@keyframes replaySheetIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes replayScrimIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet,
+  .scrim {
+    animation: none;
+  }
+}

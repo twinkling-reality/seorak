@@ -1,0 +1,61 @@
+.shell {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+  box-sizing: border-box;
+  background: var(--page-bg);
+}
+
+.inner {
+  max-width: 26rem;
+  text-align: center;
+}
+
+.glyph {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-md);
+  color: var(--ink);
+}
+
+.title {
+  margin: 0 0 var(--space-sm);
+  font-family: var(--display);
+  font-size: var(--text-xl);
+  font-weight: 500;
+  letter-spacing: var(--display-spacing, -0.08em);
+  color: var(--ink);
+}
+
+.body {
+  margin: 0 0 var(--space-md);
+  font-family: var(--sans);
+  font-size: var(--text-md);
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.marketLink {
+  display: inline-block;
+  margin-top: var(--space-lg);
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--hairline);
+  padding-bottom: 2px;
+}
+
+.marketLink:hover,
+.marketLink:focus-visible {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.marketLink:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}

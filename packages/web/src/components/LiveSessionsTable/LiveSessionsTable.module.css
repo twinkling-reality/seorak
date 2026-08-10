@@ -1,0 +1,225 @@
+/*
+ * Shared live-sessions table: one row per session in the dashboard's standard
+ * table chrome (mono column headers + View/Replay pill). Used by the live-sessions
+ * widget face and the LiveNow drill-in so stale treatment, columns, and identity
+ * never drift.
+ */
+
+/* Widget variant: size container for column responsiveness — the widget's
+ * rendered width is its colSpan, not the viewport. */
+.container {
+  container-type: inline-size;
+  width: 100%;
+  min-height: 0;
+}
+
+/*
+ * Single grid container owns the column tracks. Header + rows are subgrids
+ * so their cells share the same x-coords — prevents the drift that happens
+ * when separate grids each compute `auto` tracks against their own content.
+ */
+.table {
+  display: grid;
+  /* Project | Tool | Status | Activity | Duration | View. */
+  grid-template-columns:
+    minmax(120px, 1.5fr)
+    minmax(100px, 1fr)
+    minmax(64px, 0.8fr)
+    minmax(84px, 1fr)
+    minmax(64px, 0.8fr)
+    88px;
+  column-gap: var(--space-md);
+  row-gap: 0;
+  align-content: start;
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+/* Detail drill-in: flex column wrapper, each row owns its grid tracks. */
+.tableDetail {
+  display: flex;
+  flex-direction: column;
+}
+
+.tableDetail .header,
+.tableDetail .row {
+  /* Same width basis as the row (rowBase sets width:100%): without this the
+   * stretched header <div> plus its negative margin resolves ~28px wider than
+   * the width:100% row <button>, desyncing the fr tracks and drifting labels. */
+  width: 100%;
+  grid-template-columns:
+    minmax(150px, 1.4fr)
+    minmax(130px, 1fr)
+    minmax(110px, 0.9fr)
+    minmax(84px, 1fr)
+    minmax(72px, 0.6fr)
+    /* Fixed, not auto: header + rows are independent grids here, so an `auto`
+     * action column resolves to 0 in the (empty) header but ~60px in each row
+     * (the Replay pill). That mismatch hands the header extra free space, which
+     * its fr tracks absorb and drift every label right of its data. A fixed
+     * track resolves identically in both, keeping columns aligned. */
+    72px;
+  gap: var(--space-md);
+}
+
+/* Below the six-column floor (widget), drop Activity and redistribute. */
+@container (max-width: 559px) {
+  .table:not(.tableDetail) {
+    grid-template-columns:
+      minmax(120px, 1.5fr)
+      minmax(100px, 1fr)
+      minmax(64px, 0.8fr)
+      minmax(56px, 0.8fr)
+      88px;
+  }
+
+  .table:not(.tableDetail) .activityCol {
+    display: none;
+  }
+}
+
+.header,
+.row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+  margin: 0 -14px;
+}
+
+.tableDetail .header,
+.tableDetail .row {
+  grid-column: unset;
+}
+
+.header {
+  composes: tableHead from '../../widgets/widget-shared.module.css';
+  padding: 0 14px 10px;
+}
+
+.body {
+  /* `display: contents` dissolves this wrapper so each row subgrids onto
+   * `.table` tracks. Detail variant keeps a normal block for flex layout. */
+  display: contents;
+}
+
+.footer {
+  grid-column: 1 / -1;
+}
+
+.tableDetail .body {
+  display: block;
+}
+
+.row {
+  composes: rowBase from '../../widgets/widget-shared.module.css';
+  padding: 12px 14px;
+}
+
+/* Stale row: no event in >STALE_AFTER_SECONDS. Fades the whole row so a glance
+ * separates the still-moving sessions from the parked ones. */
+.rowStale {
+  opacity: 0.55;
+}
+
+.cell {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cellTool {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cellTool > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toolIdentity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.toolIdentity > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.memberName {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--soft);
+}
+
+/* Status: the state word, one job — hover pill states the real threshold. */
+.status {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.statusWord {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activityCol {
+  /* Header + data cells share this hook for the widget container query. */
+}
+
+/* Activity cell with nothing truthful to report (idle / no tool call yet). */
+.cellEmpty {
+  color: var(--soft);
+}
+
+.cellNum {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.actionPill {
+  composes: viewPill from '../../widgets/widget-shared.module.css';
+  justify-self: end;
+}
+
+@media (max-width: 768px) {
+  .tableDetail .header,
+  .tableDetail .row {
+    /* Fixed trailing track (see the base rule) so the header stays aligned to
+     * its data after Tool + Activity drop. */
+    grid-template-columns: minmax(100px, 1.4fr) minmax(90px, 1fr) minmax(72px, 0.7fr) 72px;
+    gap: 16px;
+  }
+
+  /* Narrow detail view DROPS columns, never clips them. DOM order is Project,
+   * Tool, Status, Activity, Duration, Action; hide Tool (2nd) and Activity (4th)
+   * so Project / Status / Duration / Action remain (mirrors the old Cost column). */
+  .tableDetail .header > :nth-child(2),
+  .tableDetail .row > :nth-child(2),
+  .tableDetail .header > :nth-child(4),
+  .tableDetail .row > :nth-child(4) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row {
+    animation: none !important;
+  }
+}

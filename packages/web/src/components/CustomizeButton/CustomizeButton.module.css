@@ -1,0 +1,9 @@
+.count {
+  /* Anchor for active/hover tint below. */
+}
+
+.customizeBtnActive .count,
+.customizeBtn:hover .count,
+.customizeBtn:focus-visible .count {
+  color: color-mix(in srgb, var(--accent) 58%, var(--muted));
+}

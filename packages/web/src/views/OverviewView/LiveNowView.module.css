@@ -1,0 +1,184 @@
+/*
+ * LiveNowView-specific styles. Shell (detail wrapper, tab bar, panel,
+ * empty text) moved to components/DetailView/DetailView.module.css.
+ * Live sessions table styles live in components/LiveSessionsTable. What
+ * lives here is the cell atoms the Files tab feeds into DetailTable.
+ */
+
+.empty {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--soft);
+}
+
+/* ── 24h history + file retry matrix ── */
+
+.historyTable,
+.fileMatrixTable {
+  display: flex;
+  flex-direction: column;
+}
+
+.historyHeader,
+.historyRow {
+  display: grid;
+  grid-template-columns:
+    minmax(80px, 100px)
+    minmax(140px, 200px)
+    minmax(140px, 180px)
+    64px
+    80px
+    72px
+    minmax(0, 1fr);
+  gap: var(--space-md);
+  align-items: center;
+  margin: 0 -14px;
+}
+
+.fileMatrixHeader,
+.fileMatrixRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 80px 80px 80px minmax(120px, 160px);
+  gap: var(--space-md);
+  align-items: center;
+  margin: 0 -14px;
+}
+
+.historyHeader,
+.fileMatrixHeader {
+  padding: 0 14px 10px;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-table);
+  color: var(--soft);
+}
+
+.historyRow,
+.fileMatrixRow {
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  font-family: var(--sans);
+  animation: rowReveal 0.3s var(--motion) both;
+  animation-delay: calc(var(--row-index, 0) * 35ms);
+}
+
+.historyCell {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileMatrixName {
+  font-size: var(--text-sm);
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.outcomeChip {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-table);
+  justify-self: start;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.outcomeOk {
+  color: var(--success);
+  background: var(--success-bg);
+}
+
+.outcomeFail {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.outcomeLive {
+  color: var(--live);
+  background: var(--live-bg);
+}
+
+.outcomeMuted {
+  color: var(--soft);
+}
+
+/* ── Files tab (files being edited) ── */
+
+/* Cell atoms the Files tab feeds into the shared DetailTable primitive; the
+ * table owns the grid + row shape, these style the individual cell contents. */
+
+/* File identity: a file-TYPE mark (type icon, category-colored) + the filename.
+ * The icon shape names the type on its own (never color-alone), and its category
+ * color pairs with the Kind text column so the two identity marks read as
+ * siblings. */
+.filesFile {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.filesName {
+  font-size: var(--text-sm);
+  color: var(--ink);
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filesKind {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filesProject {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+.filesSwatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.filesProjectName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filesProjectMore {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--soft);
+  flex-shrink: 0;
+}
+
+/* Honest residue: the server caps the shipped list while distinctFiles is
+ * uncapped, so the tail is named rather than silently dropped. */
+.filesResidue {
+  padding: 10px 0 0;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--muted);
+  letter-spacing: var(--tracking-stat);
+}

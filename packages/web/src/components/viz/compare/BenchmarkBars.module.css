@@ -1,0 +1,100 @@
+/* Ranked bars against a shared benchmark line. Full-width tracks so every fill
+ * and the reference line share one scale; neutral ink unless the caller passes
+ * a per-row color. */
+
+.wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 18px; /* room for the reference label above the first row */
+}
+
+/* The benchmark: one dashed vertical line across every bar. Faded so the bars
+ * stay the figure and the line reads as ground. Its label sits full-strength
+ * just above the plot. */
+.refLine {
+  position: absolute;
+  top: 14px;
+  bottom: 3px;
+  width: 0;
+  /* Muted ink (not group opacity, which would fade the label too) so the line
+   * reads as ground while the bars stay the figure. */
+  border-left: 1px dashed var(--soft);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.refLabel {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  color: var(--soft);
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  animation: rowReveal 0.3s var(--motion) both;
+  animation-delay: calc(var(--row-index) * 0.04s);
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+/* Squircle + name read as one unit; min-width:0 lets the name still ellipsis. */
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.label {
+  font-size: var(--text-sm);
+  color: var(--ink);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.value {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-sm);
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.track {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--ghost);
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ink);
+  transition: width 0.4s var(--motion);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row {
+    animation: none;
+  }
+}

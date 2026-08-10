@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-08-04",
+  "decidedBy": "docs/adr/005-open-core-repository-and-free-ui-packaging.md",
+  "readBy": ["scripts/check-vendored-assets.mjs"],
+  "note": "THE PROVENANCE RECORD FOR EVERY THIRD-PARTY FILE UNDER `roots`, AND THE THING THAT MAKES IT CHECKABLE. `packages/web/THIRD_PARTY_NOTICES.md` recorded `Simple Icons v15.0.0, vendored 2026-07-06` from the day the icons landed, and nothing verified it: `simple-icons` is not a dependency in any manifest, the files were fetched by a script and committed, and a recorded version with no way to check it is a measurement that reads as current state forever. B7 found the same failure one directory up, where the thirteen vendored AI-tool marks were recorded as Simple Icons content and nine of thirteen were not. This file is the machine-readable half; `npm run vendored-assets:check` recomputes the digests, refuses a file nothing declares, and fails when the notices file and this one disagree. Adding a vendored file is an edit to this file alone.",
+  "roots": [
+    "packages/web/public/assets",
+    "packages/web/public/fonts"
+  ],
+  "outOfScope": [
+    {
+      "path": "apps/mobile/assets/agents",
+      "why": "Six Claude Code and Codex brand-mark PNGs with no attribution or notice anywhere. ADR 005 section 6 flags them for the same qualified legal review as the typeface, and precondition P2 addresses them to outside counsel. They are named here rather than omitted so a reader can see they are known and unresolved, not overlooked. They are outside `roots` and this gate does not judge them.",
+      "owner": "precondition P2, outside counsel"
+    }
+  ],
+  "collections": [
+    {
+      "id": "figtree-web",
+      "root": "packages/web/public/fonts",
+      "upstream": "https://github.com/erikdkennedy/figtree",
+      "version": "@fontsource/figtree 5.3.0",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://openfontlicense.org/",
+      "syncedOn": "2026-08-04",
+      "verifiedAgainstUpstreamOn": "2026-08-04",
+      "resync": "node packages/web/scripts/sync-fonts.mjs",
+      "notices": "packages/web/THIRD_PARTY_NOTICES.md",
+      "fileCount": 4,
+      "digest": "sha256:53e29328e78cefd53a89857684fd4bcccb929882acd5627bb7dd934a7bae6fa7",
+      "why": "The product sans and display face at 300/400/500/600, named by the `@font-face` block in `packages/web/src/app.css`. Vendored under stable names rather than imported through the bundler because `packages/control-plane` serves this `public/` directory as its `[assets]` root and writes its own `@font-face` block naming these URLs literally; a content-hashed name is not something a second package's hand-written stylesheet can follow.",
+      "verification": "Each file is byte-identical to the cut the pinned `@fontsource/figtree` ships, checked by `node packages/web/scripts/sync-fonts.mjs --check`. Identity against a pinned dependency rather than against a network fetch is what makes this verifiable offline, and it is the same relation `packages/dashboard/scripts/build-package.mjs` asserts before it will stage a font binary at all."
+    },
+    {
+      "id": "simple-icons-stack",
+      "root": "packages/web/public/assets/stack",
+      "upstream": "https://github.com/simple-icons/simple-icons",
+      "version": "15.0.0",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "syncedOn": "2026-07-06",
+      "verifiedAgainstUpstreamOn": "2026-08-04",
+      "resync": "node packages/web/scripts/sync-stack-icons.mjs",
+      "notices": "packages/web/THIRD_PARTY_NOTICES.md",
+      "fileCount": 72,
+      "digest": "sha256:b805a27ecd36e4f9fca6e57b3cb67bf99bb317b1937e376cf70a9df50de82479",
+      "why": "Stack and toolchain badges rendered in Compare and related views: descriptive identification of a detected value, not endorsement. The collection is CC0-1.0; individual logo trademarks remain with their respective owners, which the notices file states and which no digest can settle.",
+      "verification": "Every one of the 72 files was fetched from raw.githubusercontent.com at tag 15.0.0 using the slug map in the resync script and compared byte for byte, ignoring a trailing newline. All 72 were identical. That is what `verifiedAgainstUpstreamOn` records; the digest is what makes any later drift from those exact bytes fail offline."
+    }
+  ],
+  "original": [
+    {
+      "path": "packages/web/public/assets/dashboard-icon.svg",
+      "why": "Drawn in this repository as the static twin of NeutralMark in packages/web/src/brand/brand.tsx: the tab icon the public dashboard entry links, so that a public document does not link the private brand file. Not third-party content and not a second logo."
+    },
+    {
+      "path": "packages/web/public/assets/favicon.svg",
+      "why": "Seorak brand, drawn for this product. Not third-party content, and Apache-2.0 section 6 grants no rights in it."
+    },
+    {
+      "path": "packages/web/public/assets/logo-mark.svg",
+      "why": "Seorak brand, drawn for this product."
+    },
+    {
+      "path": "packages/web/public/assets/seorak-icon.svg",
+      "why": "Seorak brand, drawn for this product."
+    },
+    {
+      "path": "packages/web/public/assets/og-image.svg",
+      "why": "Seorak brand, drawn for this product."
+    },
+    {
+      "path": "packages/web/public/assets/og-image.png",
+      "why": "Seorak brand, rendered from og-image.svg."
+    }
+  ],
+  "removed": [
+    {
+      "what": "Thirteen AI-tool marks formerly at packages/web/public/assets/*.svg",
+      "on": "2026-08-04",
+      "by": "ADR 005 stage B7",
+      "why": "ADR 005 required them re-synced from a pinned simple-icons version or replaced by a text glyph. B7 measured every file against upstream and the re-sync is not achievable: simple-icons carries no `visualstudiocode`, `aider`, `amazonq`, `continue`, `zed`, or `codex` at v15.0.0 or at master, only five of the thirteen were simple-icons content at all, and two were third-party marks from a source nobody recorded. src/lib/toolMeta.ts now renders the letter fallback for every tool. The per-file measurement is in packages/web/THIRD_PARTY_NOTICES.md. This entry exists so the next reader finds the finding rather than an absence."
+    }
+  ]
+}

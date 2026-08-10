@@ -1,0 +1,247 @@
+name: CI
+
+# The public core's own workflow. It is not a filtered copy of the private
+# repository's CI: that one runs jobs against six workspaces this tree does not
+# contain, and every job it has that could run here would run for a different
+# reason. This one covers exactly what the public tree is: four workspaces, one
+# build, and the gate set that ships with them.
+#
+# The private repository's overlay-drift gate is intentionally absent. That
+# gate watches paired edits of <path> and open-core/<path>; after assembly this
+# tree has no open-core/ directory, so the check has nothing to mean here.
+# Inventing the script would also fail the gate-coverage guard below.
+#
+# Everything here is credential-free. No job needs a secret, and none is
+# configured, so a fork gets the same green or the same red on the same commit,
+# which is the only version of this workflow worth publishing.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: "22"
+          cache: npm
+      # `ci`, not `install`: the committed lockfile is the tree's own resolution
+      # and an install that rewrites it is a finding, not a fixup. The root
+      # postinstall builds @seorak/types, which every other workspace resolves
+      # against, so nothing below needs a separate build step for it.
+      - run: npm ci
+
+      # THE COVERAGE GUARD, and the reason it is the first thing that runs.
+      # Every gate below is also named in the root `test` script, and the steps
+      # here are a second list of the same names. Two lists drift, in both
+      # directions, and this stops both.
+      #
+      # Forwards: this repository has twice shipped a gate reachable only
+      # through a script CI did not run, and both times it stayed green while
+      # covering nothing. Backwards: the first draft of this file ran
+      # `coverage:check`, which the private root manifest has and this one does
+      # not, because the floors it measures name files that are not in this
+      # tree. That step failed with "Missing script" the first time anybody ran
+      # it, which is the whole argument for running a workflow before believing
+      # it, and this guard now catches that class in one second instead of
+      # fifteen minutes.
+      #
+      # This was an inline script until it was measured and found to carry two
+      # bugs, both of which only ever failed toward silence. Its name pattern
+      # `npm run ([a-z:-]+)` had no digits in its class, so `browser-e2e` read as
+      # `browser-e` and a whole job could not be compared; and it knew nothing of
+      # `--workspace`, so every workspace-scoped `gate:*` read as invented and it
+      # would have failed on correct input the moment this tree grew one.
+      #
+      # It is a file now, `scripts/check-gate-coverage.mjs`, with a suite of its
+      # own that fails against both bugs. It checks public files using a public
+      # manifest, which is the same reason `check-governance` and
+      # `check-vendored-assets` live in this repository, and both halves' CI now
+      # calls the one implementation instead of keeping two hand-written lists.
+      - name: Gate coverage
+        run: |
+          npm run gate-coverage:test
+          npm run gate-coverage:check
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # The public core's whole web build. `packages/web` is a mixed workspace
+      # and only its dashboard entry is here, so there is no site build to run
+      # and no discovery documents to emit. The output is what
+      # `packages/dashboard` stages and what the collector's plane serves.
+      - name: Build the dashboard
+        run: npm run build:dashboard
+
+      # Two gates over one ownership map. `boundaries` is the per-workspace
+      # dependency and import policy; `open-core` is the leak detector over the
+      # public file set, the CSS edges, and every asset binding. Both enforce by
+      # default. In this repository most of the map's rules place paths that are
+      # not here, which the gates report rather than fail on: the map is one
+      # file checked from both sides, and a rule matching nothing here is how a
+      # reader learns which side they are on. `file-set` guards the map itself.
+      - name: Package boundaries
+        run: |
+          npm run boundaries:test
+          npm run boundaries:check
+          npm run open-core:test
+          npm run open-core:check
+          npm run file-set:test
+
+      # CLAUDE.md rule 2, made executable. @seorak/types is published and
+      # depended on, so what may live in it is a property of this repository
+      # rather than a preference. No scoring, evaluation, or extraction
+      # implementation, classified by code shape so the rule names no symbol.
+      #
+      # Enforcing since 2026-08-07, with
+      # docs/reference/types-boundary-acceptance.json as the only escape hatch
+      # and no flag that turns it off. Before that it ran here in report mode:
+      # this step existed, it executed, and it exited zero on anything it found,
+      # so a new undeclared placement printed a line and CI stayed green. A step
+      # that runs a gate which cannot fail is worth exactly what a missing step
+      # is, and it is harder to notice.
+      - name: Types publish safety
+        run: |
+          npm run types-boundary:test
+          npm run types-boundary:check
+
+      # Every reader of a union must accept ALL of it. Both halves of that
+      # sentence are in this tree: the unions are declared in @seorak/types and
+      # the zod schemas that mirror them are in packages/types and packages/web,
+      # so the drift this catches is a public-core defect start to finish.
+      # `SessionEndReason` has six values, one enum listed four, and the Model
+      # pillar told a developer with 185,000 events to "run your first agent
+      # sessions" for weeks — invisible because the union is type-only, the
+      # schema is cast `as unknown as z.ZodType<T>`, and the demo fixture had
+      # been edited to match the broken enum.
+      #
+      # The gate names no union. It walks every zod value set it finds against
+      # the contract type at that value set's own position, so a union added
+      # tomorrow is covered without touching the gate. Enforcing, with
+      # docs/reference/shared-union-acceptance.json as the only escape hatch.
+      - name: Shared union parity
+        run: |
+          npm run union-parity:test
+          npm run union-parity:check
+
+      - name: Product copy contract
+        run: |
+          npm run copy:test
+          npm run copy:check
+
+      # Measured against this tree's own resolved graph. The public tree
+      # resolves a different dependency closure from the private one, so it
+      # carries its own baseline and its own posture document, and a finding
+      # with no dated, falsifiable acceptance fails here.
+      - name: Dependency advisory policy
+        run: |
+          npm run advisories:test
+          npm run advisories:check
+
+      # Git exports GIT_DIR into every hook, and GIT_DIR beats a child's cwd, so
+      # a suite that spawns git raw acts on whichever repository the hook belongs
+      # to. In 2026-08-07 that left core.hooksPath dangling and core.bare true in
+      # a developer's config, after which every push ran no hook and said
+      # nothing. This gate fails when anything under scripts/ names the binary
+      # instead of going through scripts/isolated-git.mjs.
+      - name: Git isolation policy
+        run: |
+          npm run git-isolation:test
+          npm run git-isolation:check
+
+      # No vitest suite may run on the implicit 5000ms default, which is a
+      # contention detector rather than a deadline and aborted a push on an
+      # unchanged commit. Two workspaces here run vitest. The measurements, the
+      # floor and ceiling, and what the gate deliberately does not cover are in
+      # scripts/check-test-timeouts.mjs; this comment does not repeat them,
+      # because the argument copied into four places is the same defect as a list
+      # copied into two.
+      - name: Test timeout policy
+        run: |
+          npm run test-timeouts:test
+          npm run test-timeouts:check
+
+      - name: Repository local-state policy
+        run: |
+          npm run local-artifacts:test
+          npm run local-artifacts:check
+
+      - name: Source byte policy
+        run: |
+          npm run bytes:test
+          npm run bytes:check
+
+      # The governance files state facts nothing else tests: one contact address
+      # across the set, a copyright line that matches every Apache grant, a
+      # security window a solo maintainer can hold, and the sign-off enforcement
+      # point declared in LICENSING-POLICY.md.
+      - name: Governance and DCO policy
+        run: |
+          npm run governance:test
+          npm run governance:check
+
+      # Recomputes the collection digest for every vendored third-party asset
+      # this tree ships, offline, and fails when the notices file and the
+      # provenance record disagree about a version or a date. It proves the
+      # bytes are the ones verified on that date, not that upstream still
+      # matches them.
+      - name: Vendored asset provenance
+        run: |
+          npm run vendored-assets:test
+          npm run vendored-assets:check
+
+      - name: Local integration activation
+        run: |
+          npm run local-integration-activation:test
+          npm run local-integration-activation:check
+
+      - name: Test
+        run: |
+          npm run test --workspace @seorak/types
+          npm run test --workspace @seorak/collector
+          npm run test --workspace @seorak/dashboard
+          npm run test --workspace @seorak/web
+
+      # The floor machinery, without the measurement. `coverage:check` names
+      # files in the worker, which is private, so the public root manifest
+      # declares only the test: it proves the shortfall reporting, the
+      # file-existence rule, and the audit-seam rule still hold. Measuring a
+      # floor here would need the workspace the floors are about.
+      - name: Coverage floor policy
+        run: npm run coverage:test
+
+  # Its own job, for two reasons the shared runner would hide. It deletes
+  # `packages/collector/dist` and then shells out to real `npm pack`,
+  # `npm publish --dry-run`, `npm install`, and `npm audit`, so it mutates the
+  # tree the build and typecheck steps depend on; and it is the only job here
+  # that talks to the registry, so a registry outage fails it alone rather than
+  # taking the boundary gates with it.
+  #
+  # It packs all three tarballs, installs them together, starts the installed
+  # collector, and asks it for the dashboard over HTTP: the document, the module
+  # the document loads, and a font the stylesheet names, checking status and
+  # content type on each. A manifest that promises an interface its tarball does
+  # not carry passes every static check, which is why this one is not static.
+  publication:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Publication package gate
+        run: |
+          npm run publication:test
+          npm run publication:check

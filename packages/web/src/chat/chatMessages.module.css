@@ -1,0 +1,137 @@
+/* Message region + conversation chrome (not panel shell or input). */
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  /* Horizontal inset so hover rims are not clipped by the scrollport edge. */
+  padding: 44px 4px 12px;
+}
+
+.msgUser {
+  align-self: flex-end;
+  max-width: 85%;
+  padding: 8px 12px;
+  border-radius: 14px 14px 4px 14px;
+  background: var(--ink);
+  color: var(--page-bg);
+  font-family: var(--sans);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  overflow-wrap: break-word;
+}
+
+/* ── Citation chips ──────────────────────────────── */
+
+.citation {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 24px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--surface-glass-fill-ctrl);
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  line-height: 1;
+  color: var(--ink);
+}
+
+.citationLink {
+  cursor: pointer;
+  transition: box-shadow 0.15s ease;
+}
+
+.citationLink:hover {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 42%, transparent);
+}
+
+.citationLabel {
+  color: var(--muted);
+}
+
+.citationValue {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.citationEmpty {
+  color: var(--soft);
+  font-weight: 400;
+}
+
+/* ── Empty state ─────────────────────────────────── */
+
+.empty {
+  margin: auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.emptyTitle {
+  font-family: var(--sans);
+  font-size: var(--text-lg);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.emptyHint {
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.suggestion {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  text-align: left;
+  padding: 9px 13px;
+  border: none;
+  border-radius: 13px;
+  background: var(--surface-glass-fill-ctrl);
+  font-family: var(--sans);
+  font-size: var(--text-base);
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.suggestionText {
+  min-width: 0;
+}
+
+.suggestionDevNote {
+  flex: none;
+  font-family: var(--mono);
+  font-size: var(--text-3xs);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  color: var(--soft);
+}
+
+.suggestion:hover {
+  background: color-mix(in srgb, var(--accent) 14%, rgba(255, 255, 255, 0.6));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 32%, transparent);
+}
+
+:global([data-theme='dark']) .suggestion:hover {
+  background: color-mix(in srgb, var(--accent) 18%, rgba(240, 240, 242, 0.08));
+}

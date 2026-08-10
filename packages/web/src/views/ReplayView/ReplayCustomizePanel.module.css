@@ -1,0 +1,217 @@
+.panel,
+.replayStrip,
+.replaySearchBar {
+  --replay-panel-right: 24px;
+  --replay-strip-bottom: 12px;
+  --replay-strip-height: 40px;
+  --replay-panel-gap: 12px;
+  --replay-panel-max-height: min(420px, calc(100vh - 140px));
+  --replay-panel-width: min(680px, calc(100vw - 48px));
+}
+
+.replayStrip {
+  bottom: var(--replay-strip-bottom);
+  right: var(--replay-panel-right);
+}
+
+.panel {
+  position: fixed;
+  bottom: calc(var(--replay-strip-bottom) + var(--replay-strip-height) + var(--replay-panel-gap));
+  right: var(--replay-panel-right);
+  width: var(--replay-panel-width);
+  max-height: var(--replay-panel-max-height);
+  border-radius: var(--control-radius-lg);
+  box-shadow: var(--shadow-lg), var(--shadow-xs);
+  z-index: 201;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: panelIn 0.2s ease both;
+  animation-delay: 0.05s;
+}
+
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.replaySearchBar {
+  right: var(--replay-panel-right);
+  width: var(--replay-panel-width);
+  bottom: calc(
+    var(--replay-strip-bottom) +
+    var(--replay-strip-height) +
+    var(--replay-panel-gap) +
+    var(--replay-panel-max-height) +
+    8px
+  );
+}
+
+.tableHead {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.4fr) minmax(100px, 1fr) minmax(80px, 0.9fr) repeat(4, minmax(56px, 0.7fr)) 32px;
+  gap: 8px;
+  padding: 10px 16px 8px;
+  font-family: var(--mono);
+  font-size: var(--text-3xs);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  color: var(--soft);
+  flex-shrink: 0;
+}
+
+/* Sits in the header's last cell, directly above the column of toggles it
+   commands. Bare — the toggle is the affordance; a button chrome around it
+   would make the header look like a row. */
+.headToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  border: none;
+  border-radius: var(--radius-2xs);
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.headToggle:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.headToggle:not(:disabled):hover {
+  opacity: 0.82;
+}
+
+.headToggle:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.list {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 8px 12px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.4fr) minmax(100px, 1fr) minmax(80px, 0.9fr) repeat(4, minmax(56px, 0.7fr)) 32px;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  border: none;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  padding: 10px 8px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--sans);
+  color: var(--muted);
+  transition:
+    background var(--motion-fast) ease,
+    color var(--motion-fast) ease;
+}
+
+.row:hover,
+.row:focus-visible {
+  background: var(--ghost);
+  color: var(--ink);
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -1px;
+}
+
+.rowSelected {
+  color: var(--ink);
+}
+
+.projectCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.projectName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.sessionName,
+.sessionTool,
+.numCell {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+}
+
+.sessionName {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.sessionTool,
+.numCell {
+  color: var(--muted);
+}
+
+.rowSelected .numCell {
+  color: var(--ink);
+}
+
+.empty {
+  display: block;
+  padding: 40px 16px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+}
+
+@media (max-width: 760px) {
+  .panel,
+  .replayStrip,
+  .replaySearchBar {
+    --replay-panel-right: 8px;
+    --replay-strip-bottom: 8px;
+    --replay-panel-max-height: min(340px, calc(100vh - 124px));
+    --replay-panel-width: calc(100vw - 16px);
+    right: var(--replay-panel-right);
+    left: 8px;
+    width: auto;
+  }
+
+  .panel {
+    bottom: calc(var(--replay-strip-bottom) + var(--replay-strip-height) + var(--replay-panel-gap));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: none;
+  }
+}

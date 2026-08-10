@@ -1,0 +1,20 @@
+/* Dot matrix: fixed 10×10 percentage grid, 9px dots with 5px gutter.
+ * Each dot = 1%; filled dots hit the condition, hollow rings (1px soft
+ * border) do not. Matrix weight sits next to a display-sized number so
+ * the proportion reads at a glance. */
+
+.matrix {
+  display: grid;
+  grid-auto-rows: 9px;
+  gap: 5px;
+  flex-shrink: 0;
+  align-content: start;
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  box-sizing: border-box;
+}

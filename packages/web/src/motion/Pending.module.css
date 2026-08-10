@@ -1,0 +1,78 @@
+.pending {
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 0;
+  color: var(--soft);
+  animation: pendingIn var(--motion-route-enter-short) var(--motion-route-ease) both;
+}
+
+.pendingInline {
+  min-height: auto;
+  justify-content: flex-start;
+  padding: 8px 0;
+}
+
+.pendingInner {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: min(220px, 100%);
+}
+
+.label {
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+  color: var(--soft);
+}
+
+.track {
+  position: relative;
+  width: 100%;
+  height: 1px;
+  overflow: hidden;
+  background: var(--ghost);
+}
+
+.fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 42%;
+  background: var(--ink);
+  opacity: 0.38;
+  animation: pendingSweep 1.2s var(--motion) infinite;
+}
+
+@keyframes pendingIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pendingSweep {
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(240%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pending {
+    animation: none;
+  }
+
+  .fill {
+    animation: none;
+    transform: none;
+  }
+}
+

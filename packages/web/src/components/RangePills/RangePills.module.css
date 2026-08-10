@@ -1,0 +1,78 @@
+.rangeSelector {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  isolation: isolate;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.48);
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.rangeSelector:hover {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.54);
+}
+
+.rangeButton {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.rangeButton:first-child {
+  border-radius: 5px 0 0 5px;
+}
+
+.rangeButton:last-child {
+  border-radius: 0 5px 5px 0;
+}
+
+.rangeButton:hover {
+  color: var(--ink);
+}
+
+.rangeButton:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.rangeActive {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-glass-fill-ctrl));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    0 6px 14px rgba(18, 19, 23, 0.05);
+}
+
+:global([data-theme='dark']) .rangeSelector {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+:global([data-theme='dark']) .rangeSelector:hover {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+:global([data-theme='dark']) .rangeActive {
+  background: color-mix(in srgb, var(--accent) 20%, var(--surface-glass-fill-ctrl));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 8px 18px rgba(0, 0, 0, 0.22);
+}

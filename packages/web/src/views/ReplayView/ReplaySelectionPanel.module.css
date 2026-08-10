@@ -1,0 +1,23 @@
+.panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  margin: 20px 0 18px;
+}
+
+.scopeNote {
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+}
+
+@media (max-width: 980px) {
+  .panel {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

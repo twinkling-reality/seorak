@@ -1,0 +1,293 @@
+/*
+ * Activity widgets (cockpit).
+ *
+ * These are overview-grade reads: each widget leads with the answer a
+ * user can understand in one glance; the full distribution lives in
+ * ActivityDetailView.
+ *
+ * This module is widget-grade (compact); the detail view's full
+ * peak-hour bar layout lives in the RateVolumeColumns primitive.
+ */
+
+.cadenceFrame {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-sm);
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.heatmapFrame {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: var(--space-lg);
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.heatmapHead {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding-right: var(--space-md);
+  border-right: 1px solid var(--ghost);
+  min-width: 120px;
+}
+
+.heatmapChart {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+.heatmapChart > * {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+}
+
+/* Ring + table row, hover state shared with the React component so a row
+ * mouseenter dims the other ring arcs and vice versa. */
+.workTypesMix {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-12);
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.workTypesRingBox {
+  width: 260px;
+  max-width: 260px;
+  max-height: 100%;
+  flex-shrink: 0;
+  align-self: flex-start;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.workTypesRingSvg {
+  width: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  height: auto;
+  overflow: visible;
+  display: block;
+}
+
+.workTypesTable {
+  display: grid;
+  grid-template-columns:
+    minmax(140px, 1.4fr)
+    80px
+    minmax(140px, 1.6fr)
+    72px;
+  column-gap: var(--space-md);
+  align-content: start;
+  flex: 1;
+  min-width: 0;
+}
+
+.workTypesHeadRow,
+.workTypesDataRow {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+}
+
+.workTypesHeadRow {
+  composes: tableHead from '../widget-shared.module.css';
+  padding: 0 14px 12px;
+  border-bottom: 1px solid var(--ghost);
+}
+
+.workTypesHeadNum {
+  text-align: right;
+}
+
+.workTypesDataRow {
+  composes: rowBase from '../widget-shared.module.css';
+  padding: 12px 14px;
+  cursor: pointer;
+  animation-delay: calc(var(--row-index, 0) * 45ms);
+  transition: opacity 0.2s ease;
+}
+
+.workTypesDataRow:hover {
+  background: transparent;
+}
+
+.workTypesDataRowDim {
+  opacity: 0.35;
+}
+
+.workTypesIdentity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.workTypesSwatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.workTypesLabel {
+  font-family: var(--sans);
+  font-size: var(--text-md);
+  font-weight: 400;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workTypesNum {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--ink);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.workTypesShareCell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.workTypesShareTrack {
+  composes: fillTrack from '../widget-shared.module.css';
+  flex: 1;
+  height: 6px;
+  min-width: 30px;
+}
+
+.workTypesShareFill {
+  composes: fillBar from '../widget-shared.module.css';
+}
+
+.workTypesShareValue {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 36px;
+  text-align: right;
+}
+
+.workTypesViewButton {
+  composes: viewPill from '../widget-shared.module.css';
+}
+
+.workTypesOverflow {
+  grid-column: 1 / -1;
+}
+
+/* ── Completion by hour: "diel" (24 filaments, height = done %, weight = volume) ─ */
+
+.diel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  gap: 8px;
+}
+
+.dielPillarStage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dielPillars {
+  display: grid;
+  grid-template-columns: repeat(24, minmax(0, 1fr));
+  align-items: end;
+  gap: 2px;
+  flex: 1;
+  min-height: 88px;
+  padding: 0 1px;
+}
+
+.dielCell {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  border-radius: var(--radius-xs);
+}
+
+.dielPillar {
+  position: relative;
+  z-index: 0;
+  width: 100%;
+  min-height: 2px;
+  border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+  align-self: flex-end;
+  transition:
+    opacity var(--motion-fast) ease,
+    height var(--motion-fast) var(--motion);
+}
+
+/* Ring the *bar* only. Highlighting the full cell left a tall empty frame above
+   short pillars (read as a broken “second bar”). */
+.dielPillarBest {
+  z-index: 1;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 50%, transparent);
+}
+
+.dielRim {
+  display: grid;
+  grid-template-columns: repeat(24, minmax(0, 1fr));
+  gap: 2px;
+  padding: 0 1px;
+  flex-shrink: 0;
+}
+
+.dielTick,
+.dielTickLabeled {
+  min-width: 0;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: var(--text-3xs);
+  color: var(--soft);
+  letter-spacing: var(--tracking-stat);
+  font-variant-numeric: tabular-nums;
+}
+
+.dielTick {
+  height: 0.4em;
+}
+
+.dielTickLabeled {
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}

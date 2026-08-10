@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#fbfaf7" />
+    <title>Seorak</title>
+    <!-- No canonical, no Open Graph, no Twitter card. This document is served
+         from whichever plane holds your history: a loopback port on your own
+         machine, or your own cell. None of them is a public page that should
+         claim a canonical url somewhere else, and nothing links to it. -->
+    <meta name="robots" content="noindex" />
+    <!-- The neutral mark, not Seorak's. This document is public and ships in
+         @seorak/dashboard; assets/favicon.svg is the brand and stays private,
+         and Apache-2.0 section 6 grants a fork no rights in it either way.
+         Seorak's website serves /dashboard from its own private entry document,
+         which links the mark. -->
+    <link rel="icon" href="/assets/dashboard-icon.svg" type="image/svg+xml" sizes="any" />
+  </head>
+  <body>
+    <script>
+      // Resolve theme before first paint to prevent flash. Everything this
+      // document serves is the dashboard, so unlike the site's copy there is no
+      // path to classify first.
+      (function () {
+        var p = null;
+        try {
+          p = localStorage.getItem('seorak:theme');
+        } catch (e) {}
+        // Default light (canonical Seorak look). Only dark when explicitly chosen,
+        // or when the user picked System and the OS prefers dark.
+        var dark = false;
+        if (p === 'dark') dark = true;
+        else if (p === 'system') dark = matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.content = dark ? '#0e0f11' : '#ffffff';
+      })();
+    </script>
+    <div id="root"></div>
+    <!-- Portal target for bottom-floating UI. Rendered statically so consumers
+         can look it up synchronously. Positioned via #bottom-floaters in app.css. -->
+    <div id="bottom-floaters"></div>
+    <script type="module" src="../src/main.tsx"></script>
+  </body>
+</html>

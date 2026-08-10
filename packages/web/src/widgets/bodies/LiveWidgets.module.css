@@ -1,0 +1,14 @@
+/* LiveWidgets-only viz: files-in-play strip. Live-sessions table styles live in
+ * components/LiveSessionsTable/LiveSessionsTable.module.css. */
+
+/* ── Files being edited ────────────────────────────── */
+
+/* The Share face (same family as tool-mix / model-mix): the shared
+ * StripFaceHead atom + the attention strip. The strip is the primary viz;
+ * the head is an anchor, one value + one plain unit, nothing else. */
+.fileTargets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  min-height: 0;
+}

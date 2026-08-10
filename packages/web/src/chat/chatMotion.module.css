@@ -1,0 +1,71 @@
+/* Shared motion primitives for the Ask surface.
+ *
+ * Import from ChatThinking, ChatAssistantMessage, and future streaming
+ * parts so loader + reveal language stays one system. Structural timing
+ * from motion/tokens.css.
+ */
+
+.thinkingShimmer {
+  --chat-thinking-duration: 1.85s;
+
+  display: inline-block;
+  background: linear-gradient(
+    90deg,
+    var(--soft) 0%,
+    var(--soft) 32%,
+    color-mix(in srgb, var(--ink) 88%, var(--soft)) 50%,
+    var(--soft) 68%,
+    var(--soft) 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: chatThinkingShimmer var(--chat-thinking-duration) linear infinite;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+@keyframes chatThinkingShimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.textReveal {
+  animation: chatTextReveal 440ms var(--motion-route-ease) both;
+}
+
+.textRevealDelayed {
+  animation: chatTextReveal 440ms var(--motion-route-ease) both;
+  animation-delay: 120ms;
+}
+
+@keyframes chatTextReveal {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thinkingShimmer {
+    animation: none;
+    background: none;
+    -webkit-text-fill-color: var(--soft);
+    color: var(--soft);
+  }
+
+  .textReveal,
+  .textRevealDelayed {
+    animation: none;
+  }
+}

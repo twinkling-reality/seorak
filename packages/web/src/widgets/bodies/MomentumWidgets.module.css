@@ -1,0 +1,186 @@
+/* Repo activity — the cross-repo "what moved this week" board.
+ *
+ * StripFaceHead breadth anchor on top; below it the dashboard's standard
+ * table chrome (same vocabulary as the live-sessions table): subgrid header +
+ * rows over one set of minmax(px, fr) tracks so columns spread edge to edge,
+ * ONE left-alignment rule for every column (a lone right-aligned column pools
+ * two columns' slack into one hole), identity squircle + View pill. Tokens
+ * only — never hardcode hex. No temperature dots, no status ornaments: the
+ * judgment lives in the explicit "vs prior week" numbers (ADR-1).
+ */
+
+.momentumFrame {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* Size container for the table's own column responsiveness: the widget's
+ * rendered width is its colSpan, not the viewport, so media queries can't
+ * see it. Below the six-column floor the Net-lines column drops (magnitude
+ * is the most secondary fact on the row; the drill has it) instead of
+ * letting the tail columns clip off the card edge. */
+.momentumContainer {
+  container-type: inline-size;
+  width: 100%;
+  min-height: 0;
+}
+
+/* Repo | Files touched | Net lines | Vs prior week | Quiet for | View.
+ * The px floors sum (with gaps + row padding) to just under the 12-col
+ * board width's half, so the container query below drops Net lines before
+ * anything can clip; the fr ratios do the spreading at full width. The View
+ * track is wider than its pill (pill justifies end) so the action stays
+ * anchored to the card edge. */
+.momentumTable {
+  display: grid;
+  grid-template-columns:
+    minmax(120px, 1.5fr)
+    minmax(96px, 0.9fr)
+    minmax(72px, 0.8fr)
+    minmax(104px, 1fr)
+    minmax(72px, 0.7fr)
+    88px;
+  column-gap: var(--space-md);
+  row-gap: 0;
+  align-content: start;
+  min-width: 0;
+}
+
+/* Below the six-column floor (a half-width card), drop Net lines, tighten
+ * the gap, and shrink the remaining floors so every header keeps one line
+ * and the View pill never clips off the card edge. Floors + gaps (446px,
+ * minus the rows' 28px edge extension) fit a half-width body at the gated
+ * desktop minimum. Placed AFTER the base rule: container queries add no
+ * specificity, so source order decides the winner. */
+@container (max-width: 659px) {
+  .momentumTable {
+    grid-template-columns:
+      minmax(96px, 1.4fr)
+      minmax(92px, 0.9fr)
+      minmax(92px, 1fr)
+      minmax(64px, 0.7fr)
+      76px;
+    column-gap: var(--space-sm);
+  }
+
+  .momentumNet {
+    display: none;
+  }
+}
+
+/* margin: 0 -14px + padding: 12px 14px aligns row content flush with the
+ * widget body edge while the hover pill keeps its 14px inset breathing
+ * room (same trick as the live-sessions table). */
+.momentumHeader,
+.momentumRow {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+  margin: 0 -14px;
+}
+
+.momentumHeader {
+  composes: tableHead from '../widget-shared.module.css';
+  padding: 0 14px 10px;
+}
+
+/* Two-word headers hold one line; the track floors below are sized to the
+ * measured one-line header widths so nothing wraps or clips at the floor. */
+.momentumHeader > span {
+  white-space: nowrap;
+}
+
+.momentumBody {
+  /* `display: contents` dissolves this wrapper so each row subgrids onto
+   * the table's tracks. Row count is capped by MOMENTUM_REPOS_CAP +
+   * SectionOverflow, so scrolling isn't needed. */
+  display: contents;
+}
+
+.momentumOverflow {
+  grid-column: 1 / -1;
+}
+
+.momentumRow {
+  composes: rowBase from '../widget-shared.module.css';
+  padding: 12px 14px;
+}
+
+/* ── Identity: repo squircle + name ──
+ * The squircle is the same project-identity vocabulary as the sidebar rail,
+ * the repo filter swatch, and the live-sessions table (projectGradient at
+ * chip scale). Identity, never status — the temperature dot is gone. */
+.momentumIdentity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.momentumSquircle {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.momentumRepoName {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Generic cell shell for tooltip-wrapped values. */
+.momentumCell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+/* Left-aligned like every other data column; mono + tabular-nums keep the
+ * digits instrument-grade. */
+.momentumCellNum {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* A true zero (0 files, 0 net) reads quieter than a moving number. */
+.momentumCellNumZero {
+  composes: momentumCellNum;
+  color: var(--muted);
+}
+
+/* Cell with nothing to report: "--" = history too thin to compare yet
+ * (accrual), "—" = the repo simply isn't quiet (real absence). */
+.momentumCellEmpty {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--soft);
+}
+
+/* The standard drill affordance, shared with every other listing. */
+.momentumViewButton {
+  composes: viewPill from '../widget-shared.module.css';
+  justify-self: end;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .momentumRow {
+    animation: none !important;
+  }
+}

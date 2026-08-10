@@ -1,0 +1,42 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Section titles read as chapter headings, not tracking-for-effect
+ * eyebrows. The old 11px mono uppercase treatment collapsed into the
+ * same visual texture as stat-tab labels and delta captions, leaving
+ * detail views with no mid-tier typography to carry hierarchy. Sans at
+ * 16px with sentence case gives sections presence without competing
+ * with the display-font heroes underneath. */
+.label {
+  font-family: inherit;
+  font-size: var(--text-lg);
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+}
+
+/* One-line plain-prose answer between the question and the viz. Body-lead
+ * size (larger than captions, smaller than the title) so a reader can
+ * scan Q→A across the panel for a 10-second read. Numbers inside use
+ * <strong> to bold key values without breaking the voice. Tighter gap
+ * below so answer and viz read as a bound pair, separate from the
+ * title above. */
+.answer {
+  margin: -4px 0 -2px;
+  font-family: inherit;
+  font-size: var(--text-md);
+  font-weight: 400;
+  color: var(--soft);
+  line-height: 1.45;
+  max-width: 62ch;
+}
+
+.answer strong {
+  color: var(--ink);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}

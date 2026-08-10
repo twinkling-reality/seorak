@@ -1,0 +1,169 @@
+/* EntityTable: the navigable entities × columns table. Mono header (sortable),
+ * clickable grid rows. Mirrors DetailTable's shape + row stagger; adds the row
+ * button + sort affordances. See EntityTable.tsx. */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.action {
+  display: flex;
+}
+
+.table {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  /* Overflow stays visible so the row-hover fill can bleed 14px into the gutter
+   * (see .header/.row below) — exactly like LiveSessionsTable's detail variant,
+   * which also runs no overflow-x. These tables column-drop at their breakpoints
+   * rather than needing a scroll, so no clipped columns (DASHBOARD-CLARITY). */
+}
+
+/* Header + rows use the widget-table bleed (MomentumWidgets / LiveSessionsTable):
+ * `margin: 0 -14px` + `padding: … 14px` keeps the CONTENT flush with the section
+ * edge (aligned with the answer prose squircle, the bars, the note) while the
+ * hover fill gains its 14px inset breathing room by bleeding into the gutter.
+ * box-sizing + width:auto (on the clickable row) let the negative margins WIDEN
+ * the box rather than shift it — EntityTable rows are independent grids with
+ * rowBase's width:100%, so without width:auto the margins would only slide the
+ * content off-axis instead of extending the hover. */
+.header {
+  box-sizing: border-box;
+  display: grid;
+  gap: 16px;
+  margin: 0 -14px;
+  padding: 0 14px 10px;
+}
+
+/* Column labels ARE the widget tables' header type — composed, not re-rolled,
+ * so the two never drift (widget-shared owns mono/size/soft/uppercase/tracking). */
+.headerCell {
+  composes: tableHead from '../../../widgets/widget-shared.module.css';
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Sort control: the header text IS the button, a caret trails it. Inherits the
+ * mono header type; brightens to ink when it is the active sort. The UA button
+ * chrome is reset (as .rowClickable does) so the header is text-only — a stray
+ * native border/background paints the header as a boxed chip and breaks the
+ * design language (glass is the only boxed control). */
+.sortBtn {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: color 0.15s var(--motion);
+}
+
+.sortBtn:hover {
+  color: var(--muted);
+}
+
+.sortBtnActive {
+  color: var(--ink);
+}
+
+.caret {
+  font-size: var(--text-2xs);
+  min-width: 6px;
+}
+
+.row {
+  box-sizing: border-box;
+  display: grid;
+  gap: 16px;
+  align-items: center;
+  /* Bleed: content flush with the section edge, hover fill inset 14px. See the
+   * .header note above for why margin + width:auto (not padding alone) is needed. */
+  margin: 0 -14px;
+  padding: 12px 14px;
+  animation: rowReveal 0.3s var(--motion) both;
+  animation-delay: calc(var(--row-index, 0) * 40ms);
+  text-align: left;
+}
+
+/* Clickable rows: the whole row is the target (it opens the entity), so no
+ * per-cell affordance. rowBase (the shared widget-table row primitive) owns the
+ * button reset, the --hover-bg row hover, the focus ring, and the reveal — the
+ * SAME interaction every widget-table row and LiveSessionsTable row inherits, so
+ * a clickable detail row and a widget row hover and link identically. .row keeps
+ * the grid layout + horizontal padding so the hover insets and tracks stay
+ * aligned with the header; box-sizing keeps the padded button exactly 100% wide. */
+.rowClickable {
+  composes: rowBase from '../../../widgets/widget-shared.module.css';
+  box-sizing: border-box;
+}
+
+/* rowBase sets width:100%, which (in the compiled cascade) outranks a plain
+ * `.rowClickable { width:auto }`, leaving the row a fixed T-wide box that the
+ * negative margins merely SHIFT left. The header (a plain div, width:auto)
+ * meanwhile WIDENS to T+28, so its grid tracks end up 28px wider than the row's
+ * and every right-aligned column drifts. This compound selector (0,2,0) beats
+ * rowBase (0,1,0) regardless of source order, so the row widens identically to
+ * the header and the two grids stay locked. */
+.row.rowClickable {
+  width: auto;
+}
+
+/* Trailing drill affordance — the same solid-ink pill as the widget tables'
+ * viewPill. It inverts to accent on ROW hover via widget-shared's
+ * `.rowBase:hover .viewPill`, which matches because rowClickable composes
+ * rowBase and this composes viewPill (both hashed names carry through). */
+.actionPill {
+  composes: viewPill from '../../../widgets/widget-shared.module.css';
+  justify-self: end;
+}
+
+.cell {
+  font-size: var(--text-sm);
+  color: var(--ink);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A prose column: wrap instead of clipping. Rows carrying one switch to top
+ * alignment so the short cells sit at the wrapped cell's first line. Mirrors
+ * DetailTable so a message column reads the same in both table primitives. */
+.wrap {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  line-height: 1.45;
+}
+
+.rowWrap {
+  align-items: start;
+}
+
+.end {
+  text-align: right;
+  justify-self: end;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row {
+    animation: none;
+  }
+  .sortBtn,
+  .rowClickable {
+    transition: none;
+  }
+}

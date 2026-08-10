@@ -1,0 +1,720 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   System screens (Detroit: Become Human-inspired diagnostic family).
+
+   A boot loader, a not-found ("PAGE LOST"), an error-boundary fallback
+   ("SYSTEM FAULT"), and an inline error ("CONNECTION LOST"), all built on one
+   segmented-ring engine with shared tokens, IBM Plex Mono, and reduced-motion
+   safety.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Full-screen scaffold ── */
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--page-bg);
+  color: var(--ink);
+  animation: screenIn 0.4s var(--motion, ease-out);
+}
+
+.center {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 32px;
+}
+
+.hud {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+  white-space: nowrap;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 640px) {
+  .center {
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+  .hud {
+    align-items: center;
+    margin-bottom: 0;
+  }
+}
+
+/* ── Bottom bar ── */
+.bottomBar {
+  position: absolute;
+  bottom: 32px;
+  left: 40px;
+  right: 40px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  font-family: var(--mono);
+}
+
+.bottomCode {
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--danger);
+  opacity: 0.6;
+}
+
+.brandTag {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--soft);
+}
+
+@media (max-width: 640px) {
+  .bottomBar {
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+  }
+}
+
+/* ── Segmented ring ── */
+.ring {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.ringLayer {
+  position: absolute;
+  inset: 0;
+  transform-origin: center;
+}
+
+.spinCW {
+  animation: ringRotate 14s linear infinite;
+}
+
+.spinCCW {
+  animation: ringCounter 18s linear infinite;
+}
+
+.spinArc {
+  animation: ringRotate 7s linear infinite;
+}
+
+.ringStroke {
+  stroke: var(--ink);
+  fill: none;
+  stroke-linecap: round;
+}
+
+.ringAccent {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.pulse {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.arcDeterminate {
+  transition: stroke-dasharray 0.5s ease-out;
+}
+
+.ringCenter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  opacity: 0.08;
+  line-height: 1;
+  user-select: none;
+}
+
+/* ── Shimmer word ── */
+.word {
+  font-family: var(--mono);
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  font-size: 34px;
+  background: linear-gradient(
+    90deg,
+    var(--muted) 0%,
+    var(--ink) 40%,
+    var(--muted) 60%,
+    var(--muted) 100%
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: shimmer 2.6s ease-in-out infinite;
+}
+
+/* Override ONLY the gradient image: the `background` shorthand would reset
+   background-clip back to border-box and break the text clip set on .word. */
+.wordError {
+  background-image: linear-gradient(
+    90deg,
+    var(--muted) 0%,
+    var(--danger) 42%,
+    var(--muted) 62%,
+    var(--muted) 100%
+  );
+}
+
+@media (max-width: 640px) {
+  .word {
+    font-size: 26px;
+  }
+}
+
+/* ── Geometric facet background ── */
+.geoBg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ── Drifting readouts ── */
+.readout {
+  position: absolute;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--ink);
+  user-select: none;
+  pointer-events: none;
+  opacity: 0;
+  animation-name: drift;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.readoutStatic {
+  position: absolute;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--ink);
+  opacity: 0.18;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* ── Status checklist (determinate loader only) ── */
+.statusList {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.statusItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  transition: opacity 0.3s, color 0.3s;
+}
+
+.statusLabel {
+  width: 110px;
+  text-align: left;
+}
+
+.statusTrack {
+  width: 48px;
+  height: 3px;
+  border-radius: 1.5px;
+  background: var(--hairline);
+  overflow: hidden;
+  position: relative;
+}
+
+.statusFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 1.5px;
+  transition: width 0.5s ease-out;
+}
+
+.statusMark {
+  width: 14px;
+  text-align: center;
+  font-size: 10px;
+}
+
+/* ── Activity list (indeterminate loader: honest, no completion / no number) ── */
+.activityList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.activityItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--soft);
+  opacity: 0.4;
+  transition: color 0.4s var(--motion, ease), opacity 0.4s var(--motion, ease);
+}
+
+.activityItemActive {
+  color: var(--ink);
+  opacity: 1;
+}
+
+.activityDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 0.4s var(--motion, ease);
+}
+
+.activityItemActive .activityDot {
+  opacity: 0.9;
+}
+
+.activityLabel {
+  width: 120px;
+  text-align: left;
+}
+
+.activityMark {
+  width: 12px;
+  text-align: center;
+  font-size: 10px;
+}
+
+/* ── Indeterminate sweep bar (no number; an honest "working" track) ── */
+.sweepTrack {
+  position: relative;
+  width: 200px;
+  height: 3px;
+  border-radius: 1.5px;
+  background: var(--hairline);
+  overflow: hidden;
+}
+
+.sweepFill {
+  position: absolute;
+  top: 0;
+  left: -40%;
+  height: 100%;
+  width: 40%;
+  border-radius: 1.5px;
+  background: var(--accent);
+  animation: sweep 1.5s var(--motion, ease-in-out) infinite;
+}
+
+.sweepStatic {
+  left: 30%;
+  animation: none;
+}
+
+/* ── Bottom progress bar (determinate loader only) ── */
+.progressRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.progressPct {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  width: 34px;
+  text-align: right;
+}
+
+.progressTrack {
+  width: 200px;
+  height: 3px;
+  border-radius: 1.5px;
+  background: var(--hairline);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 1.5px;
+  transition: width 0.3s ease-out;
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+/* ── Diagnostic panel (not-found / fault) ── */
+.diagPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.diagLine {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.diagLabel {
+  width: 96px;
+  text-align: left;
+  color: var(--soft);
+}
+
+.diagValue {
+  color: var(--muted);
+  opacity: 0.7;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.diagValueError {
+  color: var(--danger);
+  opacity: 0.9;
+}
+
+.faultDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Actions ── */
+.actionRow {
+  display: flex;
+  gap: 16px;
+}
+
+.action {
+  background: none;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--ink);
+  opacity: 0.7;
+  padding: 8px 0;
+  border: none;
+  border-bottom: 1px solid var(--hairline);
+  border-radius: 0;
+  text-decoration: none;
+  transition: opacity 0.2s var(--motion, ease);
+}
+
+.action:hover,
+.action:focus-visible {
+  opacity: 1;
+}
+
+/* The takeover action: RETURN HOME, RETRY, RELOAD. An outline pill with a
+   gradient stroke and no fill, so the ambient field shows through the center.
+   These screens used to borrow the marketing control for this and remap
+   --marketing-* onto the global tokens on .screen; ADR 005 sends marketing to the
+   private repository, so the family carries its own. The 38px/12px geometry, the
+   13px 400-weight label, and the 180ms curve are literal rather than
+   token-derived because they are what already rendered here: --radius-xs is 6px
+   and --motion-fast is 140ms, and either would change the composition. */
+.systemAction {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 16px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: 12px;
+  color: var(--muted);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color 180ms cubic-bezier(0.23, 1, 0.32, 1),
+    box-shadow 180ms cubic-bezier(0.23, 1, 0.32, 1),
+    transform 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.systemAction::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--ink) 25%, transparent) 0%,
+    color-mix(in srgb, var(--ink) 8%, transparent) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  transition:
+    background 180ms cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.systemActionLabel {
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+/* Hover: the pill lifts a hair, the stroke lights up in the ambient accent, and a
+   soft accent glow pools underneath. No fill, it just stops being inert. */
+.systemAction:hover {
+  color: var(--ink);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.systemAction:hover::before {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--accent) 62%, transparent) 0%,
+    color-mix(in srgb, var(--accent) 20%, transparent) 100%
+  );
+}
+
+.systemAction:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .systemAction,
+  .systemAction::before {
+    transition: none;
+  }
+
+  .systemAction:hover {
+    transform: none;
+  }
+}
+
+/* RELOAD on SYSTEM FAULT: the same outline control, held quieter than RETRY. */
+.faultSecondaryAction {
+  opacity: 0.6;
+}
+
+.faultSecondaryAction:hover,
+.faultSecondaryAction:focus-visible {
+  opacity: 1;
+}
+
+/* ── Dev-only stack trace ── */
+.devTrace {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  background: var(--ghost);
+  border: 1px solid var(--hairline);
+  padding: 12px 16px;
+  max-width: 420px;
+  max-height: 160px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  opacity: 0.8;
+  margin: 0;
+  border-radius: var(--radius-xs, 6px);
+}
+
+@media (max-width: 640px) {
+  .devTrace {
+    max-width: 80vw;
+  }
+}
+
+/* ── Mini loader (inline / centered fallback) ── */
+.mini {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  animation: screenIn 0.4s var(--motion, ease-out);
+}
+
+.miniCenter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  animation: screenIn 0.4s var(--motion, ease-out);
+}
+
+.miniLabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--soft);
+}
+
+/* ── Inline error (CONNECTION LOST) ── */
+.inline {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 0;
+  animation: screenIn 0.4s var(--motion, ease-out);
+}
+
+.inlineBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inlineTitle {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: var(--danger);
+  opacity: 0.9;
+}
+
+.inlineDiagnostics {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.inlineDiag {
+  display: flex;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.inlineDiagLabel {
+  color: var(--soft);
+  min-width: 70px;
+}
+
+.inlineDiagValue {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+.inlineMessage {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--soft);
+  max-width: 320px;
+  line-height: 1.4;
+}
+
+/* ── Keyframes ── */
+@keyframes screenIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ringRotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ringCounter {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.78;
+  }
+}
+
+@keyframes sweep {
+  from {
+    left: -40%;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+@keyframes drift {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  12% {
+    opacity: 0.42;
+  }
+  46% {
+    opacity: 0.34;
+    transform: translate(var(--dx), var(--dy));
+  }
+  54% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy));
+  }
+  100% {
+    opacity: 0;
+  }
+}

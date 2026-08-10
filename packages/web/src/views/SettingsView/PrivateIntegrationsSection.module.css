@@ -1,0 +1,99 @@
+.section {
+  display: grid;
+  gap: 20px;
+}
+
+.copy {
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin: 0;
+  max-width: 68ch;
+}
+
+.form,
+.scopeRow,
+.actions,
+.secretPanel,
+.credential {
+  display: flex;
+  gap: 12px;
+}
+
+.form,
+.secretPanel,
+.credential {
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.scopeRow,
+.actions,
+.restrictions {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.restrictions {
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  display: flex;
+  gap: 12px;
+  margin: 0;
+  padding: 12px;
+}
+
+.restrictions label {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+}
+
+.scope {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+}
+
+.select {
+  background: var(--surface-raised, transparent);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: inherit;
+  padding: 8px 10px;
+}
+
+.secretPanel {
+  background: color-mix(in srgb, var(--accent, #7c8cff) 8%, transparent);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.secret {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.list {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.credential {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 12px;
+}
+
+.meta,
+.status {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.error {
+  color: var(--danger, #d45151);
+}

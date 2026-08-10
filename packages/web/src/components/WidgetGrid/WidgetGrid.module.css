@@ -1,0 +1,469 @@
+/*
+ * Band-based dashboard surface.
+ *
+ * WidgetGrid.tsx partitions widgets, in saved order, into visual rows
+ * ("bands") of up to 12 columns and pins every cell to its band's grid row
+ * via `--cell-row` (inline). All rows are implicit and auto-sized: a band
+ * is as tall as its tallest member and every other member stretches to
+ * match (CSS Grid's default align-items: stretch). Widget tops AND bottoms
+ * therefore align by construction - mixed authored heights can never
+ * produce a staggered / masonry layout, and there is no
+ * `grid-auto-flow: dense` backfill to reorder widgets behind the user's
+ * back.
+ *
+ * The DOM is one flat grid: cells stay direct siblings with stable React
+ * keys, so band re-partitions (catalog-drag ghost moving around, widgets
+ * added/removed) only change inline style values. Cells must not remount
+ * mid-drag - dnd-kit re-registers remounted droppables and its measurement
+ * cycle livelocks (see assignBandRows in WidgetGrid.tsx).
+ *
+ * Heights:
+ *   - Fixed widgets floor their cell at the authored rowSpan height via
+ *     `--cell-min-h` (inline) and zero out their content's intrinsic
+ *     contribution via `contain: size` (.cellFixed), so overflowing
+ *     content clips at the authored height instead of inflating the band.
+ *   - fitContent widgets (and empty bodies) carry no min-height: their
+ *     natural content height is their band contribution, so a quiet live
+ *     board collapses. Sharing a band with a taller widget stretches them.
+ *
+ * Widgets declare their width via `--cell-col-span` (1-12), set inline.
+ * Custom properties rather than raw `grid-column`/`grid-row` let the
+ * responsive media queries below re-flow cells without needing
+ * `!important` to beat inline style specificity.
+ *
+ * Gutters live on cells, not as grid gap: cell padding creates the 24px
+ * visual spacing while band heights stay pure content/floor heights.
+ *
+ * Alignment contract (tokens.css + styles/dashboardChrome.module.css):
+ *   page text guide = content column left edge (ViewHeader, controlTray,
+ *   widget titles). Parent views wrap WidgetGrid in .gridBleed so
+ *   var(--dashboard-grid-bleed) pulls the grid outward; combined with
+ *   margin/padding below, var(--widget-shell-pad) on .widget lands titles
+ *   on the guide while tile borders sit one shell-pad left in the gutter.
+ */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-auto-flow: row;
+  margin: calc(-1 * var(--widget-cell-gutter-half));
+}
+
+.cell {
+  min-width: 0;
+  position: relative;
+  box-sizing: border-box;
+  padding: var(--widget-cell-gutter-half);
+  grid-column: span min(var(--cell-col-span, 4), 12);
+  grid-row: var(--cell-row, auto);
+  min-height: var(--cell-min-h, 0px);
+}
+
+/* Fixed-height cells: the authored min-height is the cell's only band
+ * contribution. `contain: size` makes the content's intrinsic size zero, so
+ * a table with more rows than fits clips at the authored height (matching
+ * the pre-band behavior of fixed row spans) rather than growing its band.
+ * The cell still stretches when a band-mate is taller. */
+.cellFixed {
+  contain: size;
+}
+
+/* Drop-target indicator for sortable reorder. The cell being hovered
+ * during a sortable drag picks up an accent outline + faint accent fill
+ * so the user can see exactly where the dragged widget will land. We
+ * deliberately don't preview the swap (sortable's no-shift strategy
+ * keeps siblings in place); this indicator + the dragged widget in the
+ * DragOverlay are the only signals during drag. The actual reorder and
+ * band reflow happen on drop. */
+.cellOver > .widget {
+  outline: 2px solid var(--soft);
+  outline-offset: -2px;
+  background: var(--hover-bg);
+}
+
+/*
+ * Fade dividers.
+ *
+ * Each cell draws a faint 1px line on its right and bottom edges, each
+ * with a transparent-to-solid-to-transparent gradient so the line fades
+ * before it reaches a corner. The divider sits in the middle of the 24px
+ * grid gap (offset -12px from the cell edge), so it reads as a boundary
+ * hint BETWEEN widgets rather than an outline AROUND them.
+ *
+ * Cells on the outer edge of the grid still draw their dividers, and the
+ * gradient's end-fades naturally prevent them from forming hard page
+ * corners, so we don't need JS to identify "which widget is on the edge".
+ * Because every cell in a band shares the band's height, the right-edge
+ * dividers of a band are all the same length - one more way the band
+ * layout reads as calm rows instead of masonry.
+ *
+ * Hidden during drag so the dashed drag-ghost and accent drop-target
+ * outlines read cleanly without a second divider layer.
+ */
+.cell::after,
+.cell::before {
+  /* Retired: tiles now carry a hairline border, so gutter dividers would double
+   * up. Kept as no-op pseudo-elements so the drag-state selectors below stay
+   * valid without a larger refactor. */
+  content: none;
+  position: absolute;
+  pointer-events: none;
+}
+
+.cell::after {
+  /* bottom divider */
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    color-mix(in srgb, var(--soft) 28%, transparent) 20%,
+    color-mix(in srgb, var(--soft) 28%, transparent) 80%,
+    transparent
+  );
+}
+
+.cell::before {
+  /* right divider */
+  top: 12px;
+  bottom: 12px;
+  right: 0;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in srgb, var(--soft) 28%, transparent) 20%,
+    color-mix(in srgb, var(--soft) 28%, transparent) 80%,
+    transparent
+  );
+}
+
+/* During a sortable drag, hide dividers on both the source cell (which
+ * shows a dashed ghost) and the hovered drop-target cell (which shows an
+ * accent outline) so the two cell-edge signals don't read as noise. */
+.cell:has(.widgetGhost)::after,
+.cell:has(.widgetGhost)::before,
+.cellOver::after,
+.cellOver::before {
+  display: none;
+}
+
+/* ── Drag-from-catalog affordance ────────────────
+ *
+ * A sized ghost placeholder rendered in the band flow at the exact cell
+ * the catalog drop will occupy, insert-before a hovered widget, or at
+ * the end of the grid when dropping into empty space. The grid container
+ * itself never lights up: the affordance is local to the drop location,
+ * sized to the dragged widget's colSpan × rowSpan, so the user sees
+ * both WHERE and HOW BIG the landing widget will be. Because the
+ * placeholder is a real band entry, neighbors re-partition automatically,
+ * with no manual shift math. Radius matches .widget so the ghost reads as
+ * a widget-shaped preview, not arbitrary chrome.
+ */
+.placeholder {
+  min-width: 0;
+  grid-column: span min(var(--cell-col-span, 4), 12);
+  grid-row: var(--cell-row, auto);
+  min-height: var(--cell-min-h, 0px);
+  pointer-events: none;
+  border: 1.5px dashed var(--soft);
+  background: var(--hover-bg);
+  border-radius: var(--radius-sm);
+  transition: opacity 80ms ease;
+  animation: placeholderIn 120ms ease both;
+}
+
+@keyframes placeholderIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .placeholder {
+    animation: none;
+  }
+}
+
+/*
+ * `.widget` is the visible inner box. It fills the cell and carries
+ * var(--widget-shell-pad) internal padding for chart breathing room.
+ *
+ * `height: 100%` is what equalizes a band: cells stretch to the band's
+ * row height and the widget fills its cell. For content-sized cells the
+ * widget's own content IS the cell height, so 100% is a no-op there.
+ */
+.widget {
+  height: 100%;
+  min-width: 0;
+  padding: var(--widget-shell-pad);
+  /* Soft-hairline containment (DASHBOARD-CLARITY): a calm 1px edge gives each
+   * tile definition without the perf/hierarchy cost of glass-per-widget. The
+   * fill matches the page so the border does the work, Linear/Vercel style. */
+  border-radius: var(--radius);
+  background: var(--page-bg);
+  border: 1px solid var(--hairline);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  transition:
+    border-color 0.15s ease,
+    opacity 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+/* Hover lift: the border warms toward lavender and a soft shadow raises the
+ * tile a hair. This is where the marketing glass CRAFT lands on the dashboard —
+ * on interaction, not always-on. Chromeless calm at rest, tactile on touch. */
+.widget:hover {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--hairline));
+  box-shadow: 0 6px 20px rgba(18, 19, 23, 0.05);
+}
+
+/* `data-widget-id` is set on `.cell` by WidgetGrid.tsx. Global selector
+ * (no module class) so it resolves wherever WidgetGrid renders. The
+ * scroll-margin keeps newly-added widgets clear of any sticky header
+ * when scrollIntoView fires. */
+[data-widget-id] {
+  scroll-margin-top: 80px;
+}
+
+/* Original-slot placeholder rendered while the widget is being dragged.
+ * The actual widget renders in the parent view's DragOverlay (sized to
+ * its measured cell dimensions, follows the cursor cleanly). This ghost
+ * fills the original cell so the band keeps its shape and sortable can
+ * shift it as siblings make room, so it visibly tracks the drop target.
+ * Dashed accent border is the "blue outline" the user remembered from
+ * the old RGL behavior. */
+.widgetGhost {
+  height: 100%;
+  border-radius: var(--radius-sm);
+  border: 1.5px dashed var(--soft);
+  background: var(--hover-bg);
+  pointer-events: none;
+}
+
+/* ── Hover controls ───────────────────────────
+ *
+ * Title-row pair of controls (WidgetRenderer `.widgetHead`) revealed on cell
+ * hover:
+ *   .gripButton   - drag handle; activator node for useSortable
+ *   .removeButton - click to remove (undoable via Cmd/Ctrl-Z)
+ *
+ * Hidden by default to keep widget chrome clean. Revealed on cell hover
+ * (pointer users) or focus-within (keyboard users). Hidden at the mobile
+ * breakpoint since touch drag-reorder needs its own UX pass.
+ */
+.controls {
+  flex-shrink: 0;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+}
+
+.cell:hover .controls,
+.controls:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.gripButton,
+.removeButton {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-2xs);
+  background: transparent;
+  color: var(--soft);
+  transition:
+    color 0.12s ease,
+    background 0.12s ease;
+}
+
+.gripButton {
+  cursor: grab;
+  touch-action: none;
+}
+
+.gripButton:active {
+  cursor: grabbing;
+}
+
+.gripButton:hover {
+  color: var(--ink);
+  background: var(--ghost);
+}
+
+.gripButton svg {
+  fill: currentColor;
+  display: block;
+}
+
+.removeButton {
+  cursor: pointer;
+}
+
+.removeButton:hover {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.removeButton svg {
+  display: block;
+}
+
+/* ── Just-added border sweep ──────────────────── */
+
+.borderSweep {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  animation: borderFade 1.4s ease-out forwards;
+}
+
+.borderSweep > span {
+  position: absolute;
+  background: var(--ink);
+  display: block;
+}
+
+.borderSide1 {
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 0;
+  animation: borderSide1 0.22s ease-out 0s forwards;
+}
+.borderSide2 {
+  top: 0;
+  right: 0;
+  width: 2px;
+  height: 0;
+  animation: borderSide2 0.22s ease-out 0.2s forwards;
+}
+.borderSide3 {
+  bottom: 0;
+  right: 0;
+  height: 2px;
+  width: 0;
+  animation: borderSide3 0.22s ease-out 0.4s forwards;
+}
+.borderSide4 {
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  height: 0;
+  animation: borderSide4 0.22s ease-out 0.6s forwards;
+}
+
+@keyframes borderSide1 {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+@keyframes borderSide2 {
+  from {
+    height: 0;
+  }
+  to {
+    height: 100%;
+  }
+}
+@keyframes borderSide3 {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+@keyframes borderSide4 {
+  from {
+    height: 0;
+  }
+  to {
+    height: 100%;
+  }
+}
+
+@keyframes borderFade {
+  0%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .borderSweep,
+  .borderSweep > span {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+/* ── Responsive collapse ─────────────────────── */
+
+/* Note: the app shell gates the dashboard behind ~1024px (DesktopShellGate),
+ * so these queries are safety nets, not primary surfaces. Both drop the
+ * explicit band-row pinning (`grid-row: auto`) - the 12-column band math
+ * doesn't hold at narrower column counts, and plain row flow (non-dense)
+ * still height-equalizes each implicit row, so no stagger either way. */
+
+/* Tablet: collapse to 6 columns. Any widget that wanted >6 cols clamps to
+ * 6 via `min()`; smaller widgets keep their declared col-span. */
+@media (max-width: 980px) {
+  .grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  .cell,
+  .placeholder {
+    grid-column: span min(var(--cell-col-span, 4), 6);
+    grid-row: auto;
+  }
+}
+
+/* Mobile: stack every widget full-width, one per row. The hover controls
+ * hide at this breakpoint because touch drag-reorder UX needs its own
+ * pass. Removal on mobile is available through the catalog's toggle. */
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+    margin: -8px;
+  }
+  .cell,
+  .placeholder {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+  .cell {
+    padding: 8px;
+  }
+  .controls {
+    display: none;
+  }
+}

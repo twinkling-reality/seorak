@@ -1,0 +1,73 @@
+/*
+ * UsageDetailView-specific styles. Shell (detail wrapper, tab bar,
+ * panel), DetailSection, BreakdownList, FileList, and the reusable
+ * viz primitives (HeroStatRow, DotMatrix, VelocityScatter, RateStrip,
+ * DivergingColumns, DivergingRows, SmallMultiples, Legend) all live
+ * in components/DetailView/ and its viz/ subfolder.
+ *
+ * What lives here is Session-tab specific and not yet extracted:
+ * the daily outcome strip (completed/abandoned/failed stack), the
+ * Tool share ring + its data table (has an "Open Tools tab" CTA
+ * that binds it to the app shell), and the duration-buckets strip.
+ * Plus view-level helpers (.empty, .topGrid, cache-efficiency legend).
+ *
+ * Sections (search for "── NAME ──" to jump):
+ *   Panel body helpers              | .empty, .trendFrame
+ *   Top grid                        | .topGrid, .sectionHero
+ *   Daily outcome strip             | .strip*
+ *   Tool share ring                 | .ringBlock, .ringMedia, .ringSvg, .ringPanel
+ *   Tool data table                 | .toolTable, .toolTh*, .toolRow, .toolCell*
+ *   CTA link                        | .toolsCta*
+ *   Outcome legend                  | .outcomeLegend, .outcomeItem, .outcomeValue,
+ *                                     .outcomeLabel
+ */
+
+/* ── Panel body helpers ── */
+
+/* Muted mono text used for panel-level empty states and the CostPerEdit
+ * "Note" paragraph. Mirrors the shell's .empty class so the two styles
+ * read identically even though they live in different modules. */
+.empty {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--soft);
+}
+
+/* Explicit A/B compare entry above the leaderboard rows. */
+.compareCta {
+  align-self: flex-start;
+  margin-bottom: 8px;
+  padding: 6px 0;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-table);
+  text-transform: uppercase;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color var(--motion-fast) ease;
+}
+
+.compareCta:hover {
+  color: var(--ink);
+}
+
+.trendFrame {
+  width: 100%;
+  height: 96px;
+}
+
+/* ── Daily outcome strip ── */
+
+/*
+ * Per-day stacked columns. Replaces both the outcome-split horizontal bar
+ * and the daily sparkline — one viz answers "what's the mix" and "how is
+ * it trending". Column height is normalized to the busiest day; empty days
+ * render as an invisible column to preserve the x-axis rhythm.
+ */
+.strip {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

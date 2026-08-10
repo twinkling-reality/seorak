@@ -1,0 +1,202 @@
+/* Focused detail layout. Sidebar on the left, single viz on the right.
+ * See FocusedDetailView.tsx for the rationale.
+ *
+ * Active state is typographic (ink color + medium weight), not a tinted
+ * rectangle with a left border. That chrome doesn't belong in a visual
+ * language that signals state through color and weight, not chrome boxes. */
+
+.root {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+}
+
+@media (min-width: 900px) {
+  .root {
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 56px;
+    align-items: start;
+  }
+}
+
+/* ── Sidebar ── */
+
+.sidebar {
+  /* Sticky so the question list stays visible as the main viz scrolls
+   * on tall screens. Top offset keeps the first item clear of the
+   * stat-tab row when the sidebar pins. */
+  position: sticky;
+  top: 24px;
+  min-width: 0;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  /* Generous row gap because items have no chrome. Vertical whitespace
+   * does the work a border or a bg would otherwise do. */
+  gap: 20px;
+}
+
+.listItem {
+  margin: 0;
+}
+
+/* No background, no border, no rounded box. Left edge of item text
+ * aligns with the stat-tab text above so the column reads as a single
+ * vertical rail. */
+.item {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: color var(--motion-fast) ease;
+  min-width: 0;
+}
+
+/* No focus outline: the active pill IS the focus indicator. Only the
+ * active item is tabbable (tabIndex=0 vs -1 on the others), so
+ * "focused" and "active" are the same state. Matches the stat tab
+ * pattern above, which also relies on the active pill for focus
+ * affordance without drawing a separate ring. */
+.item:focus-visible {
+  outline: none;
+}
+
+.item:focus {
+  outline: none;
+}
+
+/* Active question wears the same pill vocabulary as the active stat
+ * tab label above: --accent-bg pill around the text, --accent ink,
+ * rounded radius. Negative margin cancels the pill padding so the
+ * text's left edge still aligns with the column's left edge (same
+ * trick the stat tab label uses (see StatTabs.module.css)). */
+.itemQuestion {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: var(--space-xs) var(--space-sm);
+  margin-left: calc(-1 * var(--space-sm));
+  border-radius: var(--radius-xs);
+  font-family: inherit;
+  font-size: var(--text-lg);
+  font-weight: 400;
+  color: var(--soft);
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+  background: transparent;
+  transition:
+    color var(--motion-fast) ease,
+    background var(--motion-fast) ease,
+    font-weight var(--motion-fast) ease;
+}
+
+.item:hover .itemQuestion {
+  background: var(--hover-bg);
+  color: var(--ink);
+}
+
+.itemActive .itemQuestion {
+  background: var(--ghost);
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* Narrow-viewport variant: sidebar becomes a horizontal chip scroller
+ * pinned above the main area. Chips carry Q only. The answer would
+ * bloat the chip height and defeat the strip's scannability. */
+@media (max-width: 899px) {
+  .sidebar {
+    position: static;
+  }
+
+  .list {
+    flex-direction: row;
+    gap: 0;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+    border-bottom: 1px solid var(--divider);
+  }
+
+  .list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .item {
+    flex: 0 0 auto;
+    padding: 10px 16px 12px;
+    border-bottom: 2px solid transparent;
+    /* Chip-mode hit target: underline on active reads as a tab bar
+     * without importing pill-with-border chrome. */
+  }
+
+  .itemActive {
+    border-bottom-color: var(--ink);
+  }
+}
+
+/* ── Main area ── */
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-width: 0;
+  animation: focusReveal 0.2s var(--motion) both;
+}
+
+/* The lead. No separate title: the sidebar already tells the reader
+ * which question they're on. The answer IS the lead: large enough to
+ * carry the page, prose enough to read like a sentence, with key terms
+ * set off semantically via <Metric tone="..."> (ink / success / warn /
+ * danger). */
+.mainAnswer {
+  font-family: inherit;
+  font-size: var(--text-2xl);
+  font-weight: 400;
+  color: var(--soft);
+  line-height: 1.3;
+  letter-spacing: -0.012em;
+  max-width: 48ch;
+  margin: 0;
+}
+
+.mainAnswer strong {
+  color: var(--ink);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.viz {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+@keyframes focusReveal {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main {
+    animation: none;
+  }
+}

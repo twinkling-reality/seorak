@@ -1,0 +1,63 @@
+.toneAlert {
+  background: color-mix(in srgb, var(--warn) 9%, transparent);
+  border-color: color-mix(in srgb, var(--warn) 16%, transparent);
+}
+
+.tonePeak {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.toneCommit {
+  background: color-mix(in srgb, var(--success) 9%, transparent);
+  border-color: color-mix(in srgb, var(--success) 16%, transparent);
+}
+
+.itemNearPlayhead {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.itemNearPlayhead.toneAlert {
+  background: color-mix(in srgb, var(--warn) 11%, var(--accent) 6%);
+  border-color: color-mix(in srgb, var(--accent) 24%, var(--warn) 12%);
+}
+
+.itemNearPlayhead.tonePeak {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 32%, transparent);
+}
+
+.swatch {
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+}
+
+.swatch[data-kind='alert'] {
+  background: color-mix(in srgb, var(--warn) 42%, var(--page-bg));
+  border-color: color-mix(in srgb, var(--warn) 24%, transparent);
+}
+
+.swatch[data-kind='peak'] {
+  background: color-mix(in srgb, var(--accent) 44%, var(--page-bg));
+  border-color: color-mix(in srgb, var(--accent) 24%, transparent);
+}
+
+.swatch[data-kind='commit'] {
+  background: color-mix(in srgb, var(--success) 42%, var(--page-bg));
+  border-color: color-mix(in srgb, var(--success) 24%, transparent);
+}
+
+.swatch[data-kind='playhead'] {
+  background: color-mix(in srgb, var(--accent) 56%, var(--page-bg));
+  border-color: color-mix(in srgb, var(--accent) 36%, transparent);
+}
+
+.swatch[data-kind='lifecycle'] {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--page-bg) 34%, transparent);
+  border-style: dashed;
+}

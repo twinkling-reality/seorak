@@ -1,0 +1,36 @@
+/* Legend items: dot (or hatched swatch) + mono label. Placed beneath
+ * strips and diverging timelines to name each color band. */
+
+.item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: var(--text-sm);
+}
+
+.dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  align-self: center;
+}
+
+/* Diagonal hatch swatch: matches the "no outcome" strip segment so the
+ * legend reads as the same vocabulary as the chart. */
+.hatch {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--soft) 0,
+    var(--soft) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  border-radius: 1px;
+}
+
+.label {
+  color: var(--soft);
+  font-size: var(--text-xs);
+}

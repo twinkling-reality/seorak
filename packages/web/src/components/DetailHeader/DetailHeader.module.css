@@ -1,0 +1,44 @@
+/*
+ * Detail view header: one layout for every drilled-in surface.
+ * Title + subtitle on the left; optional actions (typically RangePills)
+ * right-aligned on the same row. Collapses to stacked on narrow viewports.
+ */
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-sm);
+}
+
+.title {
+  font-family: var(--display);
+  font-size: var(--display-page);
+  font-weight: 300;
+  line-height: var(--display-line);
+  letter-spacing: var(--display-spacing);
+  color: var(--ink);
+  margin: 0;
+}
+
+.scopeRow {
+  display: flex;
+  width: 100%;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.subtitle {
+  display: block;
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--soft);
+}
+
+.actions {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+}

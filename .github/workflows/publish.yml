@@ -1,15 +1,13 @@
-# Publishes the three public packages with npm provenance.
+# Publishes the three public packages with npm provenance over trusted
+# publishing. No secret: npm authenticates this workflow by OIDC, bound on
+# npmjs.com for all three packages to twinkling-reality/seorak and this
+# filename. Never add a token of any kind back.
 #
-# Provenance and registry auth are independent. Provenance needs GitHub Actions
-# plus id-token: write plus --access public; it never inspects how you
-# authenticated. So the first publish of a not-yet-existing package can carry
-# full provenance using a short-lived granular token in NPM_TOKEN.
-#
-# npm refuses to bind a trusted publisher to a package that does not exist, so
-# the order is: publish 0.1.0 with NPM_TOKEN -> bind trusted publishing on
-# npmjs.com -> revoke the token -> drop the NODE_AUTH_TOKEN line below. From
-# then on this workflow authenticates over OIDC with no secret at all.
-# Never add a classic automation token.
+# Provenance and registry auth stay independent either way. Provenance needs
+# GitHub Actions plus id-token: write plus --access public and never inspects
+# how you authenticated, which is why 0.1.0 could carry it on 2026-08-10 while
+# trusted publishing was still unbindable: npm refuses to bind a trusted
+# publisher to a package that does not yet exist.
 name: publish
 
 on:
@@ -84,7 +82,4 @@ jobs:
         # PKG goes through env, not direct ${{ }} interpolation into the shell.
         env:
           PKG: ${{ inputs.package }}
-          # Remove NODE_AUTH_TOKEN once trusted publishing is bound; OIDC then
-          # authenticates this step with no secret.
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --workspace "$PKG" --access public --provenance

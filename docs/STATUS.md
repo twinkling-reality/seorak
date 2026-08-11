@@ -51,7 +51,7 @@ terms.
 | Hosted owner cells | Product posture, control-plane binding, provision and account-cleanup jobs, session handoff, and collector/mobile pairing are code-complete; external deploy unverified |
 | Shared workspaces | Personal cells plus isolated workspace cells, 2–5 member invites, member-bound capture, responsible-person intervention routing, collector home selection, web home switcher, and one-at-a-time mobile Personal/Shared selection are code-complete; external deploy unverified |
 | Dashboard auth | Apple + GitHub + Google OAuth control plane; one-time cell handoff; no normal pasted-token UX |
-| Collector install | Global npm package path, `seorak login` device PKCE, packaged hooks, and clean-install smoke are code-complete; first npm publish awaits scope credentials |
+| Collector install | Global npm package path, `seorak login` device PKCE, packaged hooks, and clean-install smoke are code-complete; `@seorak/collector@0.1.0` published to npm with provenance on 2026-08-10, and a clean registry install in a temporary directory resolved its pins and ran `dist/seorak.mjs` |
 | Project identity repair | Root-commit ledger; historical merges explicit in web settings |
 | Account-free local plane | `seorak init` succeeds with no worker; the collector's loopback plane on 4317 serves the **primary** dashboard over the public route contract with no operator credential. Ten of twelve surfaces are served. The two that answer 501 are not owed derivations: `deliveryHealth` reports on a delivery path the collector does not have, and `publication` needs an operated directory to publish to ([ADR 003](./adr/003-one-primary-ui-over-a-modular-data-plane.md)). `integrations` atomically serves owner management, four HTTP reads, and static-bearer MCP; `sessionOutcome`, `developerModel`, and `interventions` are also derived from local history |
 | Self-hosted plane | The same collector plane also binds a routable interface behind a minted credential and TLS it terminates itself, reporting `remote` / `self-hosted` with no lifecycle window. Off unless four settings and a minted credential are all present, and a partial configuration refuses to bind ([hardening](./reference/self-hosted-plane-hardening.md)). Exercised over real TLS in `self-hosted-plane.test.ts`, including every surface the descriptor declares; not yet operated on a routable host |
@@ -105,20 +105,80 @@ terms.
   cohort usage, because no managed home exists yet.
 - **Open core** — [ADR 005](./adr/005-open-core-repository-and-free-ui-packaging.md)
   is **accepted, 2026-08-04**. Phases A, B, and C0–C1f are done in this
-  repository; nothing has been pushed to a public repo or published to npm yet.
+  repository, and as of 2026-08-10 the public repository holds the reviewed
+  initial commit and all three packages are on the registry.
   The decision remains the complete primary UI in the public core, two
   repositories with a one-way dependency, Apache-2.0, and **publication last**.
   The publication strategy is a single reviewed initial commit (no private
   history travels), so licensed-face history no longer gates publication; P2
   gates the App Store app alone. **C2 is done** (2026-08-10): private repo is
   `twinkling-reality/seorak-internal`, remotes retargeted, so the rename that
-  frees the public name has landed. **What is left is C3**: create public
-  `twinkling-reality/seorak`, push the reviewed initial commit, and publish to
-  npm. C3 is irreversible. Engineering gates for C3 are green on the post-C2 tip
-  (public lock refreshed; owner-run hardened for the rename redirect and LICENSE
-  placement). It still waits on the owner decision and `AUTHORIZE_C3_*` flags to
-  run `docs/handoff/open-core-c3-owner-run.sh` (ROADMAP Track 1). C4 prep gates
-  refuse reduction until one green publish/pin/deploy evidence file exists.
+  frees the public name has landed. **C3 create and initial push are done**
+  (2026-08-10): public `twinkling-reality/seorak` exists with the reviewed
+  initial commit `c51c17aa` (Apache-2.0 `LICENSE` at root; 1092 files). Private
+  remotes remain on `seorak-internal`. **C3 npm publish is done** (2026-08-10):
+  `@seorak/types@0.1.0`, then `@seorak/dashboard@0.1.0`, then
+  `@seorak/collector@0.1.0`, each carrying both an npm publish attestation and a
+  SLSA v1 provenance attestation naming the public repo's
+  `.github/workflows/publish.yml` at commit `91b7e9a6`.
+  Those three `0.1.0` versions ran on a short-lived granular access token, so
+  the registry records the maintainer's npm account as their publisher and not
+  GitHub Actions: npm refuses to bind a trusted publisher to a package that does
+  not exist, so the first publish of each name had to authenticate some other
+  way. Provenance never depended on it — GitHub Actions with `id-token: write`
+  and `--access public` is what emits it, and it does not inspect the auth
+  method.
+  **C3 is complete** (2026-08-10). Trusted publishing is now bound on all three
+  packages to organization `twinkling-reality`, repository `seorak`, workflow
+  filename `publish.yml`, with `npm publish` the only allowed action and, at
+  binding time, no GitHub environment set; each bind took its own interactive 2FA
+  security-key challenge. Then, in this order: the public workflow dropped its
+  `NODE_AUTH_TOKEN` line (public commit `2d8f8518`, no `secrets.` reference left
+  in the file), the repository's `NPM_TOKEN` Actions secret was deleted, and the
+  granular token was revoked. The order is load-bearing — deleting the secret
+  while the workflow still named it would leave an empty `_authToken` in the
+  runner's `.npmrc`, which fails authentication before OIDC is attempted. From
+  `0.1.1` onward that workflow authenticates over OIDC with no secret anywhere.
+  **The publish path was hardened later the same day, 2026-08-10**, which closes
+  the two owner settings decisions that were open at completion. An
+  `npm-publish` GitHub environment on the public repository admits exactly one
+  branch, `main`, and requires the maintainer's review; self-review is left
+  enabled, explicitly and not by default, because with one maintainer forbidding
+  it would deadlock publishing permanently. A real run parked at that gate and
+  went on after the owner approved. All three trusted publisher configurations
+  now additionally require that environment, edited in place rather than deleted
+  and recreated, which avoids npm's 409 and the window with no trusted publisher
+  at all. Public `main` refuses force pushes and deletions with `enforce_admins`
+  on, and deliberately carries no required-review rule: with a single maintainer
+  that either deadlocks or is bypassed by admins, so it would be decoration.
+  **The environment's branch policy, not the workflow's own guard, is what pins
+  the ref**, and earlier text implying otherwise is corrected rather than
+  nuanced. `workflow_dispatch` runs the copy of the workflow file that exists on
+  the dispatched branch, so a branch that deletes the guard still runs, and npm
+  matches on workflow filename rather than ref. GitHub issues the OIDC token
+  only after the environment's policy admits the run, so a run off `main` never
+  obtains the environment and its token carries no environment claim to match.
+  The guard stays as defence in depth.
+  **The workflow is now two jobs** (public commit `c60b377e`). `build` runs
+  `npm ci`, which executes lifecycle scripts from every transitive dependency,
+  plus `npm pack`, and holds `contents: read` with no `id-token`; `publish`
+  holds `id-token: write` and the environment, checks nothing out, installs
+  nothing, and uploads the tarball the other job produced. Before the split
+  those two sat in one job, so one compromised transitive dependency could have
+  minted an OIDC token and shipped a package under this scope with genuine
+  provenance, needing no account compromise. Publishing a tarball also executes
+  no lifecycle scripts at all, and provenance is unaffected by it: npm rebuilds
+  the spec from the manifest's own name and version.
+  Nothing has gone end to end through the split path to a new version yet, so
+  the first real use will be `0.1.1` and provenance under the split is read off
+  npm's source rather than observed. What is proven is that the split path
+  authenticates and packs, from three probe runs dispatched against the
+  already-registered `@seorak/types@0.1.0`: a successful OIDC handshake surfaces
+  as `EPUBLISHCONFLICT`, which npm reaches only after authenticating, where a
+  failure surfaces as `E404` or `ENEEDAUTH`, so the two are distinguishable
+  while burning no version number.
+  C4 prep gates refuse reduction until one green publish/pin/deploy evidence
+  file exists.
 - **90-day range** — least used, most expensive to build; product call whether it stays. Capacity may `413` before plan policy does.
 - **Activity-proportional scheduling** — rollups advance on ingest and the local
   and deployed dogfood release uses one Durable Object alarm per isolated cell

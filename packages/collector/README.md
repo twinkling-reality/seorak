@@ -1,33 +1,17 @@
 # @seorak/collector
 
-Local-first daemon plus Claude Code hook scripts and Codex capture. Hooks commit
-events to permanent SQLite before appending the compatibility JSONL mirror. The
-daemon then serves that history to the primary dashboard over a loopback data
-plane, so Free gets the same UI, reports, replay, and export with no account. An
-entitled connection sends compact projections and encrypted archive chunks to a
-compatible worker.
+Seorak is performance tracking for agentic development. This package is the
+part that does the tracking: a local-first daemon plus Claude Code hook scripts
+and Codex capture.
 
-Structured for extraction to a public `seorak-collector` repo (Apache 2.0).
-Production source imports publish-safe `@seorak/types` and the exact
-MIT-licensed `@modelcontextprotocol/server@2.0.0` runtime adapter, never worker
-or web internals. The adapter serves the collector's private MCP resource at
-the exact `/mcp/private` route; collector-owned authority and query services
-remain on either side of it. The publish
-artifact compiles collector-owned source to executable ESM and resolves shared
-runtime contracts through the pinned `@seorak/types` release. It is a command
-package, not a library API: the seven declared executables are the supported
-entry points.
+It records what your coding agents actually did on this machine and reads it
+back to you. Hooks commit events to permanent SQLite before appending the
+compatibility JSONL mirror, and the daemon then serves that history to the
+primary dashboard over a loopback data plane, so you get the same UI, reports,
+replay, and export with no account. Your code and your prompts are never read;
+what is derived from a session is counts, timings, and salted ids.
 
-The repository boundary gate checks `src` and `bin` against production
-dependencies, then `test`, `scripts`, and package-level source configs against
-the production-plus-development closure. Every manifest dependency section
-and dependency alias is checked against the closed-package denylist.
-Type-only imports and aliased or dynamic module loads do not bypass that
-policy; computed module names fail closed.
-
-## Free and managed setup
-
-The Free path installs capture without an account, a key, or a network call:
+## Install
 
 ```bash
 npm i -g @seorak/collector
@@ -35,12 +19,37 @@ seorak init
 # → dashboard: http://127.0.0.1:4317/dashboard
 ```
 
-`init` installs the hooks and the background daemon and succeeds with no worker
-at all. There is no worker prompt and no reachability check on that path: Free
-is complete from this machine's own record, so a worker is an explicit opt-in
-(`--worker-url`, `SEORAK_WORKER_URL`, or `seorak login`) and only then are its
-probes allowed to fail the command. `seorak status` draws the same line — a
-local-only install is a healthy install.
+`seorak init` installs the six Claude Code hooks and registers the background
+daemon. It asks for no account, no key, and no network call. Codex needs no
+extra step of its own: the daemon tails `~/.codex/sessions` when that directory
+exists, because Codex already writes its own session log.
+
+## What happens next
+
+Restart Claude Code (or start a new session) so the hooks load, then do some
+work. When there is something to read:
+
+```bash
+seorak                    # the live session, in your terminal
+seorak status             # ✓/✗ checklist: is it actually working?
+seorak local dashboard    # the primary dashboard, on loopback
+seorak local report       # the period read, in prose
+```
+
+A stat that has not been measured yet is left unsaid rather than zero-filled,
+so an early read is short rather than full of `0`s. Everything above runs from
+this machine's own record; a remote service is an explicit opt-in, and that is
+what the rest of this page is about.
+
+## Free and managed setup
+
+The Free path takes no account, no key, and no network call. There is no worker
+prompt and no reachability check on that path: Free is complete from this
+machine's own record, so a worker is an explicit opt-in (`--worker-url`,
+`SEORAK_WORKER_URL`, or `seorak login`) and only then are its probes allowed to
+fail the command. `seorak status` draws the same line — a local-only install is
+a healthy install. An entitled connection sends compact projections and
+encrypted archive chunks to a compatible worker.
 
 The daemon serves the loopback **data plane**: the same public route contract
 (`/live`, `/overview`, `/sessions`, `/sessions/:id/outcome`,
@@ -137,10 +146,8 @@ read/write chain. Browser logout does not stop the collector.
 This login path is the optional managed remote service. It is not required for
 the Free product and does not represent limited managed hosting for Free.
 
-The 0.1.0 tarball passes clean-install and runtime smoke checks, but the first
-registry publish is still awaiting npm scope credentials. Development from the
-monorepo can use `npm run link:cli` at the root or
-`node packages/collector/bin/seorak.mjs`.
+Development from the monorepo, rather than from the installed package, can use
+`npm run link:cli` at the root or `node packages/collector/bin/seorak.mjs`.
 
 Manual/self-operated configuration remains available:
 
@@ -537,7 +544,7 @@ State files in `~/.seorak/`:
 
 ## Git capture (privacy)
 
-Three git-derived signals, all COUNTS + salted ids only:
+Three git-derived stats, all COUNTS + salted ids only:
 - **`git.momentum`** (session-start hook + daemon sweep): files-touched + NET line
   change (`linesAdded - linesDeleted`) + commit count over a trailing window.
 - **`session.delta`** (session-end hook): did this session ship or thrash —
@@ -607,3 +614,27 @@ The active log generation and offset are the persistent send queue. A machine
 that stays offline accumulates unsent events and resumes from the same byte after
 recovery. Healthy, fully acknowledged generations are reclaimed; backlogs are
 never deleted merely to meet a disk target.
+
+## Repository boundaries
+
+Nothing below changes how the package is installed or used. These are the rules
+a contributor works under, and they are enforced by gates rather than by
+convention.
+
+Structured for extraction to a public `seorak-collector` repo (Apache 2.0).
+Production source imports publish-safe `@seorak/types` and the exact
+MIT-licensed `@modelcontextprotocol/server@2.0.0` runtime adapter, never worker
+or web internals. The adapter serves the collector's private MCP resource at
+the exact `/mcp/private` route; collector-owned authority and query services
+remain on either side of it. The publish
+artifact compiles collector-owned source to executable ESM and resolves shared
+runtime contracts through the pinned `@seorak/types` release. It is a command
+package, not a library API: the seven declared executables are the supported
+entry points.
+
+The repository boundary gate checks `src` and `bin` against production
+dependencies, then `test`, `scripts`, and package-level source configs against
+the production-plus-development closure. Every manifest dependency section
+and dependency alias is checked against the closed-package denylist.
+Type-only imports and aliased or dynamic module loads do not bypass that
+policy; computed module names fail closed.

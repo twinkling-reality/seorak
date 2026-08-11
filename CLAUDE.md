@@ -59,6 +59,9 @@ rules by number, so the numbers are stable even where a rule's wording is not.
 | `packages/web/` | The primary UI's source. A **mixed** workspace: the dashboard half is here, Seorak's website is not |
 | `scripts/` | The gates `npm run check` runs, including both boundary gates |
 
+`@seorak/types`, `@seorak/collector`, and `@seorak/dashboard` published to npm on
+2026-08-10 with provenance attesting to this repository.
+
 Detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), which describes the whole
 product including the parts kept private, and says which is which.
 

@@ -278,6 +278,60 @@ export function initVerificationPassed(checks: {
   );
 }
 
+/**
+ * Per-command flag contract. Unknown names are rejected before side effects so a
+ * typo cannot quietly do the wrong thing (`--worker-uri` must not look like a
+ * successful account-free init; `--dry-run` on init must not install).
+ *
+ * `boolean` flags are bare only (`--flag`). `value` flags require a string.
+ * `optionalValue` flags accept bare or a string (`--demo` / `--demo=scenario`).
+ */
+type CommandFlagSpec = {
+  boolean?: ReadonlySet<string>;
+  value?: ReadonlySet<string>;
+  optionalValue?: ReadonlySet<string>;
+};
+
+const INIT_FLAGS: CommandFlagSpec = {
+  boolean: new Set(["no-service"]),
+  value: new Set(["worker-url", "ingest-key", "read-key"]),
+};
+
+const START_FLAGS: CommandFlagSpec = {
+  boolean: new Set(["foreground"]),
+};
+
+/** `seorak stop` takes no flags; the empty allowlist is intentional. */
+const STOP_FLAGS: CommandFlagSpec = {};
+
+const SESSION_FLAGS: CommandFlagSpec = {
+  boolean: new Set(["once", "json", "no-color"]),
+  value: new Set(["days", "worker-url"]),
+  optionalValue: new Set(["demo"]),
+};
+
+function validateCommandFlags(
+  flags: Record<string, string | boolean>,
+  spec: CommandFlagSpec,
+  label: string,
+): string | null {
+  const allowed = new Set<string>([
+    ...(spec.boolean ?? []),
+    ...(spec.value ?? []),
+    ...(spec.optionalValue ?? []),
+  ]);
+  for (const [name, value] of Object.entries(flags)) {
+    if (!allowed.has(name)) return `unknown ${label} flag: --${name}`;
+    if (spec.boolean?.has(name) && value !== true) {
+      return `--${name} does not take a value`;
+    }
+    if (spec.value?.has(name) && typeof value !== "string") {
+      return `--${name} requires a value`;
+    }
+  }
+  return null;
+}
+
 /** Parse argv into the first POSITIONAL (the subcommand, "" when none — i.e. bare
  *  `seorak`) and the `--flag` map. Supports `--key value`, `--key=value`, and bare
  *  `--key`. A flag value is consumed (never re-read as the command), so
@@ -539,6 +593,11 @@ function localDashboardUrl(): string {
 }
 
 async function cmdInit(flags: Record<string, string | boolean>): Promise<number> {
+  const flagError = validateCommandFlags(flags, INIT_FLAGS, "init");
+  if (flagError) {
+    console.error(`✘ ${flagError}`);
+    return 1;
+  }
   let lifecyclePaths: CollectorLifecyclePaths;
   try {
     lifecyclePaths = resolveCollectorLifecyclePaths(collectorDir());
@@ -1009,12 +1068,22 @@ function watchedAgents(): string | null {
  * it from fixtures with no worker.
  */
 function cmdSession(flags: Record<string, string | boolean>): Promise<number> {
+  const flagError = validateCommandFlags(flags, SESSION_FLAGS, "session");
+  if (flagError) {
+    console.error(`✘ ${flagError}`);
+    return Promise.resolve(1);
+  }
   const options = resolveShellOptions(flags);
   if (flags["once"] === true) return runOnce({ ...options, json: flags["json"] === true });
   return runInteractive(options);
 }
 
 function cmdStart(flags: Record<string, string | boolean>): number {
+  const flagError = validateCommandFlags(flags, START_FLAGS, "start");
+  if (flagError) {
+    console.error(`✘ ${flagError}`);
+    return 1;
+  }
   if (collectorCaptureRevoked(collectorDir())) {
     console.error(
       "✘ collector capture is disabled after purge. Run `seorak init` to reactivate it.",
@@ -1045,7 +1114,12 @@ function cmdStart(flags: Record<string, string | boolean>): number {
   return 1;
 }
 
-function cmdStop(): number {
+function cmdStop(flags: Record<string, string | boolean>): number {
+  const flagError = validateCommandFlags(flags, STOP_FLAGS, "stop");
+  if (flagError) {
+    console.error(`✘ ${flagError}`);
+    return 1;
+  }
   if (!isMac()) {
     console.error("✘ no launchd on this platform.");
     return 1;
@@ -1066,12 +1140,11 @@ function cmdStop(): number {
 function validateUninstallFlags(
   flags: Record<string, string | boolean>,
 ): string | null {
-  const allowed = new Set(["hooks", "purge", "dry-run"]);
-  for (const [name, value] of Object.entries(flags)) {
-    if (!allowed.has(name)) return `unknown uninstall flag: --${name}`;
-    if (value !== true) return `--${name} does not take a value`;
-  }
-  return null;
+  return validateCommandFlags(
+    flags,
+    { boolean: new Set(["hooks", "purge", "dry-run"]) },
+    "uninstall",
+  );
 }
 
 function removeInstalledService(): boolean {
@@ -1329,12 +1402,39 @@ env:
   SEORAK_SETTINGS     hook-install target (default ~/.claude/settings.json)
 `;
 
+/**
+ * Did this invocation ask to READ about the CLI rather than to run it?
+ *
+ * `--help` counts with whatever value parseArgs attached to it, because there is
+ * no form of it that means anything else: `seorak --help init` parses the
+ * subcommand as the flag's value, and `--help=x` as a string.
+ *
+ * `-h` is matched against the RAW argv rather than the parse, because parseArgs
+ * only ever recognizes `--` forms. It lands in the positionals (`seorak init
+ * -h`) or, worse, is eaten as the preceding flag's value (`seorak init
+ * --no-service -h`), and in both shapes the parse no longer says "help" at all.
+ */
+function helpRequested(
+  argv: string[],
+  flags: Record<string, string | boolean>,
+): boolean {
+  if (flags["help"] !== undefined || flags["h"] !== undefined) return true;
+  return argv.includes("-h");
+}
+
 /** The CLI entrypoint. Returns the process exit code. */
 export async function run(argv: string[] = process.argv.slice(2)): Promise<number> {
   const { command, extraPositionals, flags } = parseArgs(argv);
-  // `--help` / `-h` win regardless of position, but only when no real subcommand
-  // was given (so `seorak init --help` could be added later without conflict).
-  if (command === "" && (flags["help"] === true || flags["h"] === true)) {
+  // `--help` / `-h` win regardless of position AND regardless of subcommand,
+  // answered here so no handler can run on the way to printing the text. This
+  // used to fire only for a bare `seorak`, on the theory that per-subcommand
+  // help could be added later — so in the meantime `seorak init --help` fell
+  // through the switch and installed hooks, a LaunchAgent, and a live
+  // background service on the machine of someone who was only reading. One
+  // usage text answers every form: HELP already documents each subcommand
+  // alongside the env vars they read, and slicing it per subcommand would buy a
+  // parser for the wrapped lines without making the answer more complete.
+  if (helpRequested(argv, flags)) {
     console.log(HELP);
     return 0;
   }
@@ -1359,7 +1459,7 @@ export async function run(argv: string[] = process.argv.slice(2)): Promise<numbe
     case "start":
       return cmdStart(flags);
     case "stop":
-      return cmdStop();
+      return cmdStop(flags);
     case "uninstall":
       if (extraPositionals.length > 0) {
         console.error(
@@ -1369,7 +1469,7 @@ export async function run(argv: string[] = process.argv.slice(2)): Promise<numbe
       }
       return cmdUninstall(flags);
     case "help":
-    case "-h":
+      // `-h` never reaches the switch any more; helpRequested answers it.
       console.log(HELP);
       return 0;
     default:

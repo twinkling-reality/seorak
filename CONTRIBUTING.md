@@ -43,13 +43,12 @@ website, which stays private. The split runs file by file and the map is
 which two gates read. That file is the answer to "is this file public", and
 there is deliberately only one copy of that answer.
 
-**Nothing is published yet, so there is no `npm i -g @seorak/collector` to
-run.** The dashboard bundle a published collector used to lack is now
-`@seorak/dashboard`, which the local plane resolves by name, but neither package
-has been published: that is the last phase of the open-core work and it has not
-run. **The complete product exists in a source checkout.**
-
-The practical consequence for you: build from this tree, not from npm.
+**`@seorak/types`, `@seorak/collector`, and `@seorak/dashboard` published to npm
+on 2026-08-10** with provenance attesting to `twinkling-reality/seorak`, so
+`npm i -g @seorak/collector && seorak init` installs the local product. The
+dashboard ships as `@seorak/dashboard`, which the local plane resolves by name.
+**Building from this tree remains the development path**; the rest of this page
+describes that checkout workflow.
 
 ---
 
@@ -214,5 +213,5 @@ them is its own pass.
 
 ---
 
-*Accurate as of 2026-08-05. The statement here most likely to age is that nothing
-has been published to a registry.*
+*Accurate as of 2026-08-10. The three public packages are on npm at 0.1.0; see
+[`docs/STATUS.md`](docs/STATUS.md) for ship state that ages faster than this page.*

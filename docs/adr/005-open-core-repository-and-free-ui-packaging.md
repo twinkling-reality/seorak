@@ -578,7 +578,17 @@ foreclosed here.
 
 - `@seorak/types` and `@seorak/dashboard` publish from the public repository
   under semver, via npm **trusted publishing** (OIDC), which removes long-lived
-  tokens from CI and emits Sigstore provenance automatically.
+  tokens from CI.
+- **Trusted publishing is the steady state from `0.1.1` onward, not the first
+  publish.** npm requires a package to exist before a trusted publisher can be
+  bound to it, so `0.1.0` necessarily authenticated with a short-lived token
+  instead, and the registry records a human publisher for those versions. This
+  is a property of the registry, not a shortcut taken here.
+- **Provenance is separate from how the publish authenticated.** It is emitted
+  by GitHub Actions holding `id-token: write` and publishing with
+  `--access public`; the registry does not inspect the auth method when
+  attaching it. Trusted publishing is therefore chosen for credential posture,
+  and provenance does not wait on it.
 - The private cloud pins **exact** versions. No range, no `*`.
 - A core change flows outward: publish a version, bump the pin in the private
   repository, run its suite, deploy. Nothing is backported because nothing is

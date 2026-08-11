@@ -11,6 +11,10 @@ person, and about what changed for THEM, not what changed in the code.
 Lines must fit the entry card: keep each under about 60 characters or it
 will be clipped with an ellipsis.
 
+## 0.1.1
+
+- Unknown flags on init, start, stop, and session now fail.
+
 ## 0.0.0
 
 - The board is a short paragraph now, not a grid of cells.

@@ -14,9 +14,14 @@ managed remote service, and that service is built in a private repository and is
 not here. What is where, and why:
 [`docs/adr/005`](docs/adr/005-open-core-repository-and-free-ui-packaging.md).
 
-**Nothing is published to a registry yet.** There is no `npm i -g
-@seorak/collector` to run: the packages pass their release gates and the first
-publish has not happened. Build from this tree.
+**Install it from npm**, published 2026-08-10 with provenance attesting to this
+repository:
+
+```bash
+npm i -g @seorak/collector && seorak init
+```
+
+Building from this tree still works, and the rest of this page describes it.
 
 ---
 

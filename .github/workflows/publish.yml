@@ -23,13 +23,14 @@ on:
         description: "Workspace to publish"
         required: true
         type: choice
-        # Dependency order. @seorak/collector depends on @seorak/dashboard at an
-        # exact 0.1.0 and on @seorak/types at ^0.1.0, so collector publishes last
-        # or a registry install of it resolves nothing.
+        # Dependency order. The collector CLI (published as the unscoped
+        # `seorak`, formerly `@seorak/collector`) depends on @seorak/dashboard at
+        # an exact 0.1.0 and on @seorak/types at ^0.1.0, so it publishes last or
+        # a registry install of it resolves nothing.
         options:
           - "@seorak/types"
           - "@seorak/dashboard"
-          - "@seorak/collector"
+          - "seorak"
 
 permissions:
   contents: read

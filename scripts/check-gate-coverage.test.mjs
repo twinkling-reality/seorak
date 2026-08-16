@@ -119,8 +119,25 @@ describe("coverage between the two sources", () => {
       workflow: WORKFLOW,
     });
     const { problems } = checkGateCoverage(root);
-    assert.equal(problems.length, 1);
-    assert.match(problems[0], /orphan:check/);
+    assert.ok(problems.some((problem) => /orphan:check/.test(problem)));
+  });
+
+  it("fails when a workflow gate is dropped from the root test script", () => {
+    const root = fixture({
+      test: "npm run alpha:test",
+      scripts: {
+        "alpha:test": "x",
+        "surface-jobs:test": "x",
+      },
+      workflow: WORKFLOW.replace(
+        "npm run costly:check",
+        "npm run surface-jobs:test",
+      ),
+    });
+    const { problems } = checkGateCoverage(root);
+    assert.ok(problems.some((problem) =>
+      problem.includes("surface-jobs:test") && problem.includes("no longer")
+    ));
   });
 
   it("holds this repository to it", () => {

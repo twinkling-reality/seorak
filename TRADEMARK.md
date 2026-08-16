@@ -75,7 +75,7 @@ only "do not" and gives a fork no way to comply is a policy that gets ignored.
   plugin", "imports Seorak data", "a fork of Seorak", "based on Seorak". Accurate
   reference to what a thing is or does is what section 6's own carve-out is for.
 - **Redistribute the published packages unmodified under their own names**
-  (`@seorak/collector`, `@seorak/types`). Packaging Seorak for a distribution is
+  (`seorak`, `@seorak/types`). Packaging Seorak for a distribution is
   a use the project wants.
 - **Write about it**, review it, criticise it, teach it, screenshot it.
 - **Run it yourself**, for yourself or inside your organisation, with no

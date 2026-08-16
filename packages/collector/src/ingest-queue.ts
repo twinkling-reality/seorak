@@ -18,10 +18,31 @@ export interface DrainEventQueueOptions {
   onAccepted?: () => Promise<void>;
 }
 
+/**
+ * Where a drain's acknowledged bytes actually went.
+ *
+ * `acceptedEvents: 0` cannot answer this on its own, and that ambiguity is what
+ * hid an eight-day delivery outage: a drain with nothing new to ship and a drain
+ * that shipped nothing because it had nowhere to ship BOTH return zero without
+ * erroring. Only the caller knows which, so it says so rather than leaving the
+ * status to infer health from the absence of a failure.
+ */
+export type DeliveryRoute =
+  /** Posted to the worker's `/events`. */
+  | "worker"
+  /** Handed to an activated managed compact-sync cell. */
+  | "managed"
+  /** Acknowledged against local history, which is the authority. Nothing left
+   *  this machine, so it is never a delivery and must not read as one. */
+  | "local";
+
 interface DrainEventQueueSummary {
   acceptedEvents: number;
   acceptedChunks: number;
   rejectedLocalRecords: number;
+  /** Absent on a result from before this field existed; readers treat that as
+   *  unknown rather than assuming a delivery happened. */
+  route?: DeliveryRoute;
 }
 
 export interface IngestProtocolFailure {
@@ -89,6 +110,7 @@ export async function drainEventQueue(
         acceptedEvents,
         acceptedChunks,
         rejectedLocalRecords,
+        route: "worker",
         blocked: false,
       };
     }
@@ -140,6 +162,7 @@ export async function drainEventQueue(
         acceptedEvents,
         acceptedChunks,
         rejectedLocalRecords,
+        route: "worker",
         blocked: true,
         ...(result.status !== undefined ? { status: result.status } : {}),
         retriable: result.retriable,

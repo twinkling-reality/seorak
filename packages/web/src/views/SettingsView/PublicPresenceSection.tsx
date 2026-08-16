@@ -8,19 +8,18 @@ import type {
   OwnerPublicationActivitySelection,
   OwnerPublicationManifest,
   OwnerPublicationProjectSelection,
+  OwnerPublicationTokenUsageSelection,
   PublicationActivityRangeDays,
   PublicationEvidenceRangeDays,
   PublicationSurface,
+  PublicationTokenUsageRangeDays,
   PublicActivityField,
-  PublicActivityPublicationGrants,
   PublicProfileField,
-  PublicProfilePublicationGrants,
-  PublicProfileSurfaceGrant,
   PublicProfileValues,
   PublicProjectEvidenceField,
-  PublicProjectPublicationGrants,
   PublicProjectSurfaceGrant,
   PublicProjectValues,
+  PublicTokenUsageField,
 } from '@seorak/types';
 import OutlineActionButton from '../../components/controls/OutlineActionButton.js';
 import {
@@ -28,316 +27,42 @@ import {
   type PublicPresenceApi,
   type PublicPresenceDocument,
   type PublicPresenceProjectOption,
-  type PublicPublicationStatus,
 } from '../../lib/publicationApi.js';
+import {
+  profileTokenUsageSvgUrl,
+  projectTokenUsageSvgUrl,
+  publicDirectoryOrigin,
+  tokenUsageHtmlSnippet,
+  tokenUsageReadmeSnippet,
+} from '../../lib/publicDirectoryOrigin.js';
+import {
+  ACTIVITY_FIELDS,
+  EVIDENCE_FIELDS,
+  EVIDENCE_LABELS,
+  SURFACES,
+  SURFACE_COPY,
+  TOKEN_USAGE_FIELD_LABELS,
+  TOKEN_USAGE_FIELDS,
+  activityGrants,
+  commandId,
+  contactEnabled,
+  defaultTokenUsageSelection,
+  disabledActivityGrant,
+  disabledTokenUsageGrant,
+  emptyManifest,
+  normalizeManifest,
+  presentProfileFields,
+  presentProjectFields,
+  profileGrant,
+  projectGrant,
+  publicPresenceStatusMessage,
+  selectedProject,
+  slugFor,
+  validateDraft,
+} from './publicPresenceDraft.js';
 import styles from './PublicPresenceSection.module.css';
 
-const SURFACES: readonly PublicationSurface[] = ['web', 'search', 'api', 'mcp'];
-const EVIDENCE_FIELDS: readonly PublicProjectEvidenceField[] = [
-  'sessionCount',
-  'toolCallCount',
-  'shippedChangeRate',
-  'lineSurvivalRate',
-];
-const ACTIVITY_FIELDS: readonly PublicActivityField[] = ['calendar', 'streak'];
-
-const SURFACE_COPY: Record<PublicationSurface, { label: string; detail: string }> = {
-  web: { label: 'Public web page', detail: 'Show this presence to signed-out visitors.' },
-  search: { label: 'Directory search', detail: 'Include public text in directory results.' },
-  api: { label: 'Public API', detail: 'Allow unauthenticated structured reads.' },
-  mcp: { label: 'Public MCP', detail: 'Allow public tool discovery of this projection.' },
-};
-
-const EVIDENCE_LABELS: Record<PublicProjectEvidenceField, string> = {
-  sessionCount: 'Distinct sessions',
-  toolCallCount: 'Tool calls',
-  shippedChangeRate: 'Shipped-change rate',
-  lineSurvivalRate: 'Line-survival rate',
-};
-
-function disabledProfileGrant(): PublicProfileSurfaceGrant {
-  return { enabled: false, fields: [] };
-}
-
-function disabledProjectGrant(): PublicProjectSurfaceGrant {
-  return { enabled: false, fields: [], evidence: [] };
-}
-
-function disabledActivityGrant() {
-  return { enabled: false, fields: [] } as const;
-}
-
-function commandId(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(16));
-  return `cmd_${Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')}`;
-}
-
-function emptyManifest(): OwnerPublicationManifest {
-  return {
-    apiVersion: 'v1',
-    commandId: commandId(),
-    expectedRevision: 0,
-    profileSlug: '',
-    profile: {},
-    grants: {
-      web: disabledProfileGrant(),
-      search: disabledProfileGrant(),
-      api: disabledProfileGrant(),
-      mcp: disabledProfileGrant(),
-    },
-    activity: null,
-    projects: [],
-  };
-}
-
-function presentProfileFields(profile: PublicProfileValues): PublicProfileField[] {
-  const fields: PublicProfileField[] = [];
-  for (const field of [
-    'displayName', 'headline', 'bio', 'location', 'avatarUrl', 'contactUrl',
-  ] as const) {
-    const value = profile[field];
-    if (typeof value === 'string' && value.trim() !== '') fields.push(field);
-  }
-  return fields;
-}
-
-function presentProjectFields(project: PublicProjectValues) {
-  const fields: Array<keyof PublicProjectValues> = [];
-  for (const field of [
-    'name', 'summary', 'role', 'startedOn', 'endedOn',
-    'projectUrl', 'sourceUrl', 'technologies',
-  ] as const) {
-    const value = project[field];
-    if (Array.isArray(value) ? value.length > 0 : value !== undefined && value !== null && value !== '') {
-      fields.push(field);
-    }
-  }
-  return fields;
-}
-
-function profileGrant(
-  enabled: boolean,
-  fields: readonly PublicProfileField[],
-): PublicProfileSurfaceGrant {
-  return enabled ? { enabled: true, fields: [...fields] } : disabledProfileGrant();
-}
-
-function projectGrant(
-  enabled: boolean,
-  fields: readonly (keyof PublicProjectValues)[],
-  evidence: readonly PublicProjectEvidenceField[],
-): PublicProjectSurfaceGrant {
-  return enabled
-    ? {
-        enabled: true,
-        fields: [...fields],
-        evidence: [...evidence],
-      }
-    : disabledProjectGrant();
-}
-
-function contactEnabled(
-  grants: PublicProfilePublicationGrants,
-  surface: Exclude<PublicationSurface, 'search'>,
-): boolean {
-  const grant = grants[surface];
-  return grant.enabled && grant.fields.includes('contactUrl');
-}
-
-function refreshProfileGrants(
-  profile: PublicProfileValues,
-  grants: PublicProfilePublicationGrants,
-): PublicProfilePublicationGrants {
-  const available = new Set(presentProfileFields(profile));
-  return Object.fromEntries(SURFACES.map((surface) => {
-    const current = grants[surface];
-    if (!current.enabled) return [surface, disabledProfileGrant()];
-    return [surface, profileGrant(true, current.fields.filter((field) =>
-      available.has(field) && (surface !== 'search' || field !== 'contactUrl')
-    ))];
-  })) as unknown as PublicProfilePublicationGrants;
-}
-
-function refreshProjectGrants(
-  selection: OwnerPublicationProjectSelection,
-): PublicProjectPublicationGrants {
-  const fields = new Set(presentProjectFields(selection.project));
-  const evidence = new Set(selection.evidence.fields);
-  return Object.fromEntries(SURFACES.map((surface) => {
-    const current = selection.grants[surface];
-    return [surface, projectGrant(
-      current.enabled,
-      current.fields.filter((field) => fields.has(field)),
-      current.evidence.filter((field) => evidence.has(field)),
-    )];
-  })) as unknown as PublicProjectPublicationGrants;
-}
-
-function activityGrants(
-  source: PublicActivityPublicationGrants | null,
-  surfaceEnabled: (surface: PublicationSurface) => boolean,
-  fields: readonly PublicActivityField[] = ACTIVITY_FIELDS,
-): PublicActivityPublicationGrants {
-  const currentFields = source
-    ? ACTIVITY_FIELDS.filter((field) =>
-        (['web', 'api', 'mcp'] as const).some((surface) => {
-          const grant = source[surface];
-          return grant.enabled && grant.fields.includes(field);
-        })
-      )
-    : [...fields];
-  const selected = currentFields.length > 0 ? currentFields : [...fields];
-  return {
-    web: surfaceEnabled('web')
-      ? { enabled: true, fields: selected }
-      : disabledActivityGrant(),
-    search: disabledActivityGrant(),
-    api: surfaceEnabled('api')
-      ? { enabled: true, fields: selected }
-      : disabledActivityGrant(),
-    mcp: surfaceEnabled('mcp')
-      ? { enabled: true, fields: selected }
-      : disabledActivityGrant(),
-  };
-}
-
-function normalizeManifest(manifest: OwnerPublicationManifest): OwnerPublicationManifest {
-  const grants = refreshProfileGrants(manifest.profile, manifest.grants);
-  return {
-    ...manifest,
-    grants,
-    activity: manifest.activity
-      ? {
-          ...manifest.activity,
-          grants: {
-            ...manifest.activity.grants,
-            search: disabledActivityGrant(),
-          },
-        }
-      : null,
-    projects: manifest.projects.map((selection) => ({
-      ...selection,
-      grants: refreshProjectGrants(selection),
-    })),
-  };
-}
-
-function slugFor(label: string): string {
-  const slug = label.toLowerCase().normalize('NFKD')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 63)
-    .replace(/-$/, '');
-  return slug || 'project';
-}
-
-function selectedProject(
-  option: PublicPresenceProjectOption,
-  manifest: OwnerPublicationManifest,
-): OwnerPublicationProjectSelection {
-  const existingSlugs = new Set(manifest.projects.map((project) => project.projectSlug));
-  const base = slugFor(option.label);
-  let projectSlug = base;
-  for (let suffix = 2; existingSlugs.has(projectSlug); suffix += 1) {
-    projectSlug = `${base.slice(0, Math.max(1, 62 - String(suffix).length))}-${suffix}`;
-  }
-  const evidence = {
-    fields: ['sessionCount'] as readonly PublicProjectEvidenceField[],
-    rangeDays: 30 as PublicationEvidenceRangeDays,
-    unavailable: 'publish-unavailable' as const,
-  };
-  const project = { name: option.label };
-  const provisional: OwnerPublicationProjectSelection = {
-    sourceProjectId: option.sourceProjectId,
-    projectSlug,
-    project,
-    grants: {
-      web: disabledProjectGrant(),
-      search: disabledProjectGrant(),
-      api: disabledProjectGrant(),
-      mcp: disabledProjectGrant(),
-    },
-    evidence,
-  };
-  return {
-    ...provisional,
-    grants: Object.fromEntries(SURFACES.map((surface) => [
-      surface,
-      projectGrant(
-        manifest.grants[surface].enabled,
-        presentProjectFields(project),
-        evidence.fields,
-      ),
-    ])) as unknown as PublicProjectPublicationGrants,
-  };
-}
-
-function validateDraft(manifest: OwnerPublicationManifest): string | null {
-  if (!/^(?=.{1,63}$)[a-z0-9]+(?:-[a-z0-9]+)*$/.test(manifest.profileSlug)) {
-    return 'Choose a lowercase public handle using letters, numbers, and hyphens.';
-  }
-  if (!SURFACES.some((surface) => manifest.grants[surface].enabled)) {
-    return 'Enable at least one public surface before saving.';
-  }
-  if (manifest.profile.contactUrl) {
-    try {
-      const contact = new URL(manifest.profile.contactUrl);
-      if (contact.protocol !== 'https:' || contact.username || contact.password) {
-        return 'The contact link must be a credential-free HTTPS URL.';
-      }
-    } catch {
-      return 'The contact link must be a credential-free HTTPS URL.';
-    }
-  }
-  const slugs = new Set<string>();
-  for (const project of manifest.projects) {
-    if (!/^(?=.{1,63}$)[a-z0-9]+(?:-[a-z0-9]+)*$/.test(project.projectSlug)) {
-      return 'Every selected project needs a lowercase public slug.';
-    }
-    if (slugs.has(project.projectSlug)) return 'Project public slugs must be unique.';
-    slugs.add(project.projectSlug);
-    if (project.evidence.fields.length === 0) {
-      return 'Every selected project needs at least one evidence field.';
-    }
-  }
-  if (manifest.activity) {
-    const activityFields = new Set(
-      (['web', 'api', 'mcp'] as const).flatMap((surface) => {
-        const grant = manifest.activity!.grants[surface];
-        return grant.enabled ? [...grant.fields] : [];
-      }),
-    );
-    if (activityFields.size === 0) return 'Choose calendar or streak for activity.';
-  }
-  return null;
-}
-
-export function publicPresenceStatusMessage(status: PublicPublicationStatus): string {
-  switch (status.state) {
-    case 'saved':
-      return 'Saved privately. Nothing changed publicly yet.';
-    case 'queued':
-      return status.operation === 'revoke'
-        ? 'Revocation queued. Your public presence may remain visible until it is applied.'
-        : 'Queued for publication. Your saved version is not public yet.';
-    case 'delivering':
-      return status.operation === 'revoke'
-        ? 'Delivering revocation to the public directory.'
-        : 'Delivering this frozen version to the public directory.';
-    case 'retrying':
-      return status.operation === 'revoke'
-        ? 'Revocation is retrying. Your public presence may still be visible.'
-        : 'Publication is retrying. The last applied public version remains unchanged.';
-    case 'applied':
-      return `Publicly applied as version ${status.appliedVersion}.`;
-    case 'failed':
-      return status.operation === 'revoke'
-        ? 'Revocation failed. Your public presence may still be visible; retry the blocking delivery.'
-        : 'Publication failed. Your last applied public version remains unchanged.';
-    case 'revoked':
-      return 'Revoked. No current public presence is available.';
-  }
-}
+export { publicPresenceStatusMessage } from './publicPresenceDraft.js';
 
 export interface PublicPresenceSectionProps {
   api?: PublicPresenceApi;
@@ -353,6 +78,7 @@ export default function PublicPresenceSection({
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState<'save' | 'publish' | 'revoke' | 'retry' | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [copyNote, setCopyNote] = useState<string | null>(null);
   const [unavailable, setUnavailable] = useState(false);
 
   useEffect(() => {
@@ -522,6 +248,153 @@ export default function PublicPresenceSection({
         },
       };
     });
+  }
+
+  function toggleTokenUsage(enabled: boolean): void {
+    mutate((current) => enabled
+      ? { ...current, tokenUsage: defaultTokenUsageSelection(current) }
+      : { ...current, tokenUsage: null }
+    );
+  }
+
+  function updateTokenUsage(
+    patch: Partial<Omit<OwnerPublicationTokenUsageSelection, 'grants'>>,
+  ): void {
+    mutate((current) => current.tokenUsage
+      ? { ...current, tokenUsage: { ...current.tokenUsage, ...patch } }
+      : current
+    );
+  }
+
+  function setTokenUsageSurface(
+    surface: Exclude<PublicationSurface, 'search'>,
+    enabled: boolean,
+  ): void {
+    mutate((current) => {
+      if (!current.tokenUsage) return current;
+      return {
+        ...current,
+        tokenUsage: {
+          ...current.tokenUsage,
+          grants: {
+            ...current.tokenUsage.grants,
+            [surface]: enabled
+              ? { enabled: true, fields: [...TOKEN_USAGE_FIELDS] }
+              : disabledTokenUsageGrant(),
+          },
+        },
+      };
+    });
+  }
+
+  function setTokenUsageField(
+    surface: Exclude<PublicationSurface, 'search'>,
+    field: PublicTokenUsageField,
+    enabled: boolean,
+  ): void {
+    mutate((current) => {
+      if (!current.tokenUsage || !current.tokenUsage.grants[surface].enabled) return current;
+      const fields = new Set(current.tokenUsage.grants[surface].fields);
+      if (enabled) fields.add(field);
+      else fields.delete(field);
+      return {
+        ...current,
+        tokenUsage: {
+          ...current.tokenUsage,
+          grants: {
+            ...current.tokenUsage.grants,
+            [surface]: { enabled: true, fields: [...fields] },
+          },
+        },
+      };
+    });
+  }
+
+  function toggleProjectTokenUsage(
+    sourceProjectId: string,
+    enabled: boolean,
+  ): void {
+    mutate((current) => ({
+      ...current,
+      projects: current.projects.map((selection) => {
+        if (selection.sourceProjectId !== sourceProjectId) return selection;
+        if (!enabled) return { ...selection, tokenUsage: null };
+        return {
+          ...selection,
+          tokenUsage: defaultTokenUsageSelection(
+            current,
+            current.tokenUsage?.rangeDays ?? 30,
+          ),
+        };
+      }),
+    }));
+  }
+
+  function updateProjectTokenUsage(
+    sourceProjectId: string,
+    patch: Partial<Omit<OwnerPublicationTokenUsageSelection, 'grants'>>,
+  ): void {
+    updateProject(sourceProjectId, (selection) => selection.tokenUsage
+      ? { ...selection, tokenUsage: { ...selection.tokenUsage, ...patch } }
+      : selection
+    );
+  }
+
+  function setProjectTokenUsageSurface(
+    sourceProjectId: string,
+    surface: Exclude<PublicationSurface, 'search'>,
+    enabled: boolean,
+  ): void {
+    updateProject(sourceProjectId, (selection) => {
+      if (!selection.tokenUsage) return selection;
+      return {
+        ...selection,
+        tokenUsage: {
+          ...selection.tokenUsage,
+          grants: {
+            ...selection.tokenUsage.grants,
+            [surface]: enabled
+              ? { enabled: true, fields: [...TOKEN_USAGE_FIELDS] }
+              : disabledTokenUsageGrant(),
+          },
+        },
+      };
+    });
+  }
+
+  function setProjectTokenUsageField(
+    sourceProjectId: string,
+    surface: Exclude<PublicationSurface, 'search'>,
+    field: PublicTokenUsageField,
+    enabled: boolean,
+  ): void {
+    updateProject(sourceProjectId, (selection) => {
+      if (!selection.tokenUsage || !selection.tokenUsage.grants[surface].enabled) {
+        return selection;
+      }
+      const fields = new Set(selection.tokenUsage.grants[surface].fields);
+      if (enabled) fields.add(field);
+      else fields.delete(field);
+      return {
+        ...selection,
+        tokenUsage: {
+          ...selection.tokenUsage,
+          grants: {
+            ...selection.tokenUsage.grants,
+            [surface]: { enabled: true, fields: [...fields] },
+          },
+        },
+      };
+    });
+  }
+
+  async function copyText(label: string, value: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopyNote(`${label} copied.`);
+    } catch {
+      setCopyNote(`Clipboard access was unavailable. Select and copy the ${label.toLowerCase()} manually.`);
+    }
   }
 
   function toggleProject(option: PublicPresenceProjectOption, enabled: boolean): void {
@@ -744,6 +617,11 @@ export default function PublicPresenceSection({
 
   const statusState = document.status.state;
   const contactAvailable = Boolean(draft.profile.contactUrl);
+  const appliedPublicly = document.status.appliedVersion > 0 && statusState !== 'revoked';
+  const directoryOrigin = publicDirectoryOrigin();
+  const profileEmbedUrl = draft.tokenUsage?.grants.web.enabled
+    ? profileTokenUsageSvgUrl(draft.profileSlug, { days: draft.tokenUsage.rangeDays })
+    : null;
   return (
     <section className={styles.section} aria-labelledby="public-presence-title">
       <div className={styles.heading}>
@@ -752,7 +630,7 @@ export default function PublicPresenceSection({
           <h2 id="public-presence-title">Public presence</h2>
           <p className={styles.intro}>
             Private by default. You choose authored text, projects, measured evidence,
-            activity, and each public channel independently.
+            activity, token usage, and each public channel independently.
           </p>
         </div>
         <output
@@ -1008,6 +886,126 @@ export default function PublicPresenceSection({
       </fieldset>
 
       <fieldset className={styles.card}>
+        <legend>Token usage</legend>
+        <label className={styles.choice}>
+          <input
+            name="token-usage-enabled"
+            type="checkbox"
+            checked={draft.tokenUsage !== null}
+            onChange={(event) => toggleTokenUsage(event.target.checked)}
+          />
+          <span>
+            <strong>Publish token usage</strong>
+            <small>
+              Frozen input and output tokens for a chosen window. Portable for README embeds.
+              Never a productivity score.
+            </small>
+          </span>
+        </label>
+        {draft.tokenUsage ? (
+          <div className={styles.subpanel}>
+            <div className={styles.gridTwo}>
+              <label>
+                <span>Usage window</span>
+                <select
+                  name="token-usage-range"
+                  value={draft.tokenUsage.rangeDays}
+                  onChange={(event: ChangeEvent<HTMLSelectElement>) => updateTokenUsage({
+                    rangeDays: Number(event.target.value) as PublicationTokenUsageRangeDays,
+                  })}
+                >
+                  <option value={30}>30 days</option>
+                  <option value={90}>90 days</option>
+                </select>
+              </label>
+              <label>
+                <span>Incomplete coverage</span>
+                <select
+                  name="token-usage-unavailable"
+                  value={draft.tokenUsage.unavailable}
+                  onChange={(event) => updateTokenUsage({
+                    unavailable: event.target.value as OwnerPublicationTokenUsageSelection['unavailable'],
+                  })}
+                >
+                  <option value="publish-unavailable">Show it as unavailable</option>
+                  <option value="refuse">Stop publication</option>
+                </select>
+              </label>
+            </div>
+            <div className={styles.choiceList}>
+              {(['web', 'api', 'mcp'] as const).map((surface) => {
+                const grant = draft.tokenUsage!.grants[surface];
+                return (
+                  <div className={styles.subpanel} key={surface}>
+                    <label className={styles.choice}>
+                      <input
+                        type="checkbox"
+                        checked={grant.enabled}
+                        disabled={!draft.grants[surface].enabled}
+                        onChange={(event) => setTokenUsageSurface(surface, event.target.checked)}
+                      />
+                      <span><strong>{SURFACE_COPY[surface].label}</strong></span>
+                    </label>
+                    {grant.enabled ? (
+                      <div className={styles.inlineChoices}>
+                        {TOKEN_USAGE_FIELDS.map((field) => (
+                          <label key={field}>
+                            <input
+                              type="checkbox"
+                              checked={grant.fields.includes(field)}
+                              onChange={(event) => setTokenUsageField(
+                                surface,
+                                field,
+                                event.target.checked,
+                              )}
+                            />
+                            {TOKEN_USAGE_FIELD_LABELS[field]}
+                          </label>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+            {appliedPublicly && profileEmbedUrl ? (
+              <div className={styles.embedPanel}>
+                <p className={styles.help}>
+                  Profile embed URL after the applied public version.
+                </p>
+                <code className={styles.embedUrl}>{profileEmbedUrl}</code>
+                <div className={styles.embedActions}>
+                  <OutlineActionButton
+                    size="sm"
+                    onClick={() => void copyText('README snippet', tokenUsageReadmeSnippet(profileEmbedUrl))}
+                  >
+                    Copy README snippet
+                  </OutlineActionButton>
+                  <OutlineActionButton
+                    size="sm"
+                    onClick={() => void copyText('HTML snippet', tokenUsageHtmlSnippet(profileEmbedUrl))}
+                  >
+                    Copy HTML
+                  </OutlineActionButton>
+                </div>
+                <img
+                  className={styles.embedPreview}
+                  src={profileEmbedUrl}
+                  alt="Seorak token usage"
+                />
+              </div>
+            ) : draft.tokenUsage.grants.web.enabled ? (
+              <p className={styles.help}>
+                {directoryOrigin
+                  ? 'Preview and embed URLs appear after this version is publicly applied.'
+                  : 'Preview and embed URLs need a configured public directory origin after publish.'}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </fieldset>
+
+      <fieldset className={styles.card}>
         <legend>Projects and evidence</legend>
         <p className={styles.help}>
           Internal project IDs stay private. Visitors see only the public slug and fields below.
@@ -1242,6 +1240,153 @@ export default function PublicPresenceSection({
                   );
                 })}
               </div>
+              <div className={styles.subpanel}>
+                <label className={styles.choice}>
+                  <input
+                    name={`project-token-usage-${slugFor(projectLabels.get(selection.sourceProjectId) ?? 'selected')}`}
+                    type="checkbox"
+                    checked={selection.tokenUsage !== null}
+                    onChange={(event) => toggleProjectTokenUsage(
+                      selection.sourceProjectId,
+                      event.target.checked,
+                    )}
+                  />
+                  <span>
+                    <strong>Publish this project&apos;s token usage</strong>
+                    <small>
+                      Uses its own window. Search stays off. Enable web for README embeds.
+                    </small>
+                  </span>
+                </label>
+                {selection.tokenUsage ? (
+                  <>
+                    <div className={styles.gridTwo}>
+                      <label>
+                        <span>Usage window</span>
+                        <select
+                          name={`project-token-usage-range-${slugFor(selection.projectSlug)}`}
+                          value={selection.tokenUsage.rangeDays}
+                          onChange={(event: ChangeEvent<HTMLSelectElement>) =>
+                            updateProjectTokenUsage(selection.sourceProjectId, {
+                              rangeDays: Number(event.target.value) as PublicationTokenUsageRangeDays,
+                            })
+                          }
+                        >
+                          <option value={30}>30 days</option>
+                          <option value={90}>90 days</option>
+                        </select>
+                      </label>
+                      <label>
+                        <span>Incomplete coverage</span>
+                        <select
+                          value={selection.tokenUsage.unavailable}
+                          onChange={(event) => updateProjectTokenUsage(
+                            selection.sourceProjectId,
+                            {
+                              unavailable: event.target.value as
+                                OwnerPublicationTokenUsageSelection['unavailable'],
+                            },
+                          )}
+                        >
+                          <option value="publish-unavailable">Show it as unavailable</option>
+                          <option value="refuse">Stop publication</option>
+                        </select>
+                      </label>
+                    </div>
+                    <div className={styles.choiceList}>
+                      {(['web', 'api', 'mcp'] as const).map((surface) => {
+                        const grant = selection.tokenUsage!.grants[surface];
+                        return (
+                          <div className={styles.subpanel} key={surface}>
+                            <label className={styles.choice}>
+                              <input
+                                type="checkbox"
+                                checked={grant.enabled}
+                                disabled={!draft.grants[surface].enabled}
+                                onChange={(event) => setProjectTokenUsageSurface(
+                                  selection.sourceProjectId,
+                                  surface,
+                                  event.target.checked,
+                                )}
+                              />
+                              <span><strong>{SURFACE_COPY[surface].label}</strong></span>
+                            </label>
+                            {grant.enabled ? (
+                              <div className={styles.inlineChoices}>
+                                {TOKEN_USAGE_FIELDS.map((field) => (
+                                  <label key={field}>
+                                    <input
+                                      type="checkbox"
+                                      checked={grant.fields.includes(field)}
+                                      onChange={(event) => setProjectTokenUsageField(
+                                        selection.sourceProjectId,
+                                        surface,
+                                        field,
+                                        event.target.checked,
+                                      )}
+                                    />
+                                    {TOKEN_USAGE_FIELD_LABELS[field]}
+                                  </label>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {(() => {
+                      const projectEmbedUrl = selection.tokenUsage.grants.web.enabled
+                        ? projectTokenUsageSvgUrl(
+                          draft.profileSlug,
+                          selection.projectSlug,
+                          { days: selection.tokenUsage.rangeDays },
+                        )
+                        : null;
+                      if (appliedPublicly && projectEmbedUrl) {
+                        return (
+                          <div className={styles.embedPanel}>
+                            <p className={styles.help}>Project embed URL after the applied public version.</p>
+                            <code className={styles.embedUrl}>{projectEmbedUrl}</code>
+                            <div className={styles.embedActions}>
+                              <OutlineActionButton
+                                size="sm"
+                                onClick={() => void copyText(
+                                  'README snippet',
+                                  tokenUsageReadmeSnippet(projectEmbedUrl),
+                                )}
+                              >
+                                Copy README snippet
+                              </OutlineActionButton>
+                              <OutlineActionButton
+                                size="sm"
+                                onClick={() => void copyText(
+                                  'HTML snippet',
+                                  tokenUsageHtmlSnippet(projectEmbedUrl),
+                                )}
+                              >
+                                Copy HTML
+                              </OutlineActionButton>
+                            </div>
+                            <img
+                              className={styles.embedPreview}
+                              src={projectEmbedUrl}
+                              alt="Seorak token usage"
+                            />
+                          </div>
+                        );
+                      }
+                      if (selection.tokenUsage.grants.web.enabled) {
+                        return (
+                          <p className={styles.help}>
+                            Preview and embed URLs appear after this version is publicly applied.
+                          </p>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </>
+                ) : null}
+              </div>
             </fieldset>
           ))}
         </div>
@@ -1282,6 +1427,7 @@ export default function PublicPresenceSection({
       </div>
       {dirty ? <p className={styles.unsaved}>Unsaved private changes.</p> : null}
       {feedback ? <p className={styles.feedback} role="status">{feedback}</p> : null}
+      {copyNote ? <p className={styles.feedback} role="status">{copyNote}</p> : null}
     </section>
   );
 }

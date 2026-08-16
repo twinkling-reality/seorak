@@ -27,29 +27,46 @@ Seorak watches Claude Code and Codex on this machine, keeps the complete history
 in a database in your home directory, and answers questions about it. No account
 is created, and nothing is uploaded.
 
-## 1. Install
+## 1. Set up capture
 
-**There is no registry publish yet.** `@seorak/types`, `@seorak/collector`, and
-`@seorak/dashboard` pass their release and clean-install gates, and none of them
-has been published, so install from this checkout:
+```bash
+npx seorak setup
+```
+
+This is one temporary package run, not a global install. Setup keeps the files
+needed by hooks and background capture in Seorak's local state, then verifies
+the result. Re-running it is safe and repairs stale hook paths.
+
+The CLI's npm package is the unscoped `seorak`, renamed from `@seorak/collector`
+so the command you type names the product rather than one of its internal parts.
+The directory in this tree stays `packages/collector`.
+
+If you installed the old package globally, remove it before installing the new
+one globally. Both provide a `seorak` binary, so npm refuses the second install
+with `EEXIST` rather than overwriting the first:
+
+```bash
+npm uninstall -g @seorak/collector
+```
+
+The `npx` command above needs none of that: it runs from npm's own cache and
+links nothing onto your PATH. Your captured history is untouched either way —
+it lives in `~/.seorak`, not in the package.
+
+`seorak@0.2.0` is not published on npm pending approval, so the `npx` form above
+does not resolve yet. `@seorak/collector@0.1.1` is the last release under the old
+name. Until the new release is approved, use this checkout:
 
 ```bash
 npm install                                         # once, at the repo root
 npm run build:dashboard                             # the primary UI
-npm run link:cli                                    # symlinks `seorak` globally
+npm run link:cli                                    # symlinks `seorak` for development
 node packages/collector/bin/seorak.mjs <subcommand> # or call the source entry
 ```
 
-Every `seorak ...` command below works from either entry point. When the packages
-do publish, `npm i -g @seorak/collector` replaces all four lines: the collector
-depends on `@seorak/dashboard` at an exact version and resolves it by name, so an
-install carries the interface with it.
-
-## 2. Turn on capture
-
-```bash
-seorak init
-```
+Every `seorak ...` command below works from either checkout entry point. After
+an approved `0.2.0` release, keep the same `npx seorak` prefix for later
+commands. It creates no global install.
 
 This installs the six Claude Code hooks, registers the background collector, and
 starts recording. On macOS it writes and loads a LaunchAgent
@@ -64,22 +81,24 @@ Restart Claude Code, or start a new session, so the hooks load.
 Every captured event is committed to `~/.seorak/history.sqlite` before anything
 else happens. That database is the authority, and it is yours.
 
-`seorak init` closes with `✅ capturing` and a zero exit. A local install is
-complete with no account, no key, and no network: hooks bound and capture running
-is the whole product on this machine. A remote data service is an explicit
-opt-in, and only then can its checks fail the command, because only then did you
-ask for a connection and not get one.
+`setup` closes with `✅ capturing` and a zero exit. A local install is complete
+with no account, no key, and no Seorak service connection: hooks bound and
+capture running is the whole product on this machine. npm still downloads the
+package and prepares its durable local runtime. A remote data service is an
+explicit opt-in, and only then can its checks fail the command, because only then
+did you ask for a connection and not get one. `seorak init` remains a supported
+compatibility alias.
 
-## 3. Do some work, then read it
+## 2. Do some work, then read it
 
 Use Claude Code or Codex in any git repo. Then:
 
 ```bash
-seorak                                 # the live board in your terminal
-seorak local report                    # the period read, in prose
-seorak local sessions                  # every session, as JSON for a script to read
-seorak local replay <session-id>       # the keyframes worth reviewing
-seorak local export --output /absolute/path/seorak-export.json
+npx seorak                                 # the live board in your terminal
+npx seorak local report                    # the period read, in prose
+npx seorak local sessions                  # every session, as JSON
+npx seorak local replay <session-id>       # keyframes worth reviewing
+npx seorak local export --output /absolute/path/seorak-export.json
 ```
 
 `seorak local export` writes a new mode-0600 file containing the complete raw
@@ -88,9 +107,10 @@ existing path. Copying a stopped `~/.seorak` is a byte-for-byte backup.
 
 Most stats are honest-empty until you have accumulated sessions, commits, and
 days. That is the product being truthful, not a bug. If nothing appears at all,
-run `seorak status`: every line is a check, and every failure prints its remedy.
+run `npx seorak status`: every line is a check, and every failure
+prints its remedy.
 
-## 4. The dashboard in a browser
+## 3. The dashboard in a browser
 
 The background collector already serves it. The primary dashboard, with the
 customizable widget layout, Compare, and the project views, reads your local
@@ -102,8 +122,8 @@ a simplified second interface. That is the decision in
 To open it, or to run it on another port without the daemon:
 
 ```bash
-seorak local dashboard                 # loopback only
-seorak local dashboard --port 4400
+npx seorak local dashboard                 # loopback only
+npx seorak local dashboard --port 4400
 ```
 
 `SEORAK_LOCAL_PLANE=0` turns the daemon's plane off, and
@@ -134,30 +154,30 @@ Open **`/dashboard`**. The root path redirects there.
 
 ```bash
 node packages/collector/scripts/install-hooks.mjs   # merges the six hooks into ~/.claude/settings.json (idempotent, backs up)
-npm run dev --workspace @seorak/collector
+npm run dev --workspace seorak
 ```
 </details>
 
-## 5. Turning it off, and deleting data
+## 4. Turning it off, and deleting data
 
 ```bash
-seorak uninstall            # stops and removes the background service; keeps hooks and all data
-seorak uninstall --hooks    # also unbinds the Claude Code hooks; still keeps data
+npx seorak uninstall          # removes the service; keeps hooks and all data
+npx seorak uninstall --hooks  # also unbinds hooks; still keeps data
 ```
 
 Neither removes your history. To delete the collector state directory
 irreversibly, inspect first:
 
 ```bash
-seorak uninstall --purge --dry-run
-seorak uninstall --purge
+npx seorak uninstall --purge --dry-run
+npx seorak uninstall --purge
 ```
 
 The purge is resumable and leaves only a content-free external revocation
 receipt, so a cached hook command cannot recreate state. It does not touch data
 already sent to a service you connected.
 
-## 6. Useful knobs
+## 5. Useful knobs
 
 `SEORAK_CODEX=0` turns off the Codex tailer. `SEORAK_MOMENTUM=0` turns off all
 git capture. `SEORAK_DIR` moves the state directory. The table is the
@@ -176,7 +196,7 @@ service: identical route contract, identical dashboard, no separate server and n
 account. It is off by default, and turning it on is deliberately not one setting.
 
 ```bash
-seorak remote credential          # minted here, printed once, mode 0600, --rotate replaces it
+npx seorak remote credential  # minted here, printed once; --rotate replaces it
 ```
 
 Then give the daemon all four, together:
@@ -217,22 +237,22 @@ The route contract is versioned and public, so a collector can ship to any
 service that answers it, including one you deployed yourself.
 
 ```bash
-seorak init --worker-url https://your-service.example
-seorak init --worker-url https://your-service.example --ingest-key <write> --read-key <read>
+npx seorak setup --worker-url https://your-service.example
+npx seorak setup --worker-url https://your-service.example --ingest-key <write> --read-key <read>
 ```
 
-`init` verifies the read path with the read credential and proves the write
+`setup` verifies the read path with the read credential and proves the write
 credential reaches the ingest parser with a deliberately invalid, non-writing
 request. Read authority falls back to the ingest credential when no read
 credential is given; setting both to the same value provides no separation. On
-macOS the LaunchAgent resolves both once at startup, so re-run `seorak init`
+macOS the LaunchAgent resolves both once at startup, so re-run `seorak setup`
 after a rotation.
 
 To run the daemon by hand instead:
 
 ```bash
 SEORAK_WORKER_URL=https://your-service.example \
-  npm run start --workspace @seorak/collector
+  npm run start --workspace seorak
 ```
 
 **What the wire contract is.** `DATA_PLANE_PROTOCOL_VERSION` and the
@@ -257,9 +277,9 @@ purchase.
 The collector carries the client half of it, deliberately and visibly:
 
 ```bash
-seorak login
-seorak init
-seorak status
+npx seorak login
+npx seorak setup
+npx seorak status
 ```
 
 `seorak login` runs an OAuth device flow with PKCE against a control plane. The
@@ -295,7 +315,7 @@ document.
 | `SEORAK_MOMENTUM_IGNORE` | collector | unset | globs excluded from git capture |
 | `SEORAK_MOMENTUM_SWEEP_MS` | collector daemon | `3600000` | git capture sweep cadence |
 | `SEORAK_SURVIVAL_AGE_DAYS` | collector | `3` | maturation window before re-checking commit survival |
-| `SEORAK_SETTINGS` | every hook-aware command | `~/.claude/settings.json` | the Claude Code settings file the hooks are written into. `init`, `status` and `uninstall` all read the same override, so moving it moves what they inspect too |
+| `SEORAK_SETTINGS` | every hook-aware command | `~/.claude/settings.json` | the Claude Code settings file the hooks are written into. `setup`, `status` and `uninstall` all read the same override, so moving it moves what they inspect too |
 | `SEORAK_BATCH_DELAY_MS` | collector daemon | `250` | how long the shipper batches before sending |
 | `SEORAK_LOCAL_PLANE` | collector daemon | on | set `0` to stop serving the loopback data plane |
 | `SEORAK_LOCAL_PLANE_PORT` | collector daemon | `4317` | loopback data-plane port |
@@ -306,7 +326,7 @@ document.
 | `SEORAK_SELF_HOSTED_TLS_CERT` | collector daemon | unset | absolute path to the PEM certificate chain |
 | `SEORAK_SELF_HOSTED_TLS_KEY` | collector daemon | unset | absolute path to the PEM private key |
 | `SEORAK_WORKER_URL` | collector daemon | `http://localhost:8787` | data service base URL; unset in practice until you connect one |
-| `SEORAK_INGEST_KEY` | collector daemon and `seorak init` | unset | write credential for a connected data service, and the default read credential |
+| `SEORAK_INGEST_KEY` | collector daemon and `seorak setup` | unset | write credential for a connected data service, and the default read credential |
 | `SEORAK_READ_KEY` | terminal and daemon settings sync | falls back to `SEORAK_INGEST_KEY` | distinct read credential; set it to an empty string and the client sends no read header rather than falling back |
 | `SEORAK_COMPACT_SYNC_MS` | collector daemon | `300000` | compact-sync cadence to a connected service; below 10 seconds is rejected |
 | `SEORAK_SETTINGS_SYNC_MS` | collector daemon | `300000` | how often settings are reconciled with a connected service |

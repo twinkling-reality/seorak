@@ -1,5 +1,5 @@
 {
-  "name": "seorak",
+  "name": "seorak-monorepo",
   "version": "0.0.0",
   "author": "Twinkling Reality",
   "private": true,
@@ -45,9 +45,9 @@
     "typecheck": "npm run build:publish --workspace @seorak/types && npm run typecheck --workspaces --if-present",
     "check": "npm run typecheck && npm run test",
     "build:dashboard": "npm --workspace @seorak/web run build:dashboard",
-    "link:cli": "npm link --workspace @seorak/collector",
+    "link:cli": "npm link --workspace seorak",
     "dev:web": "npm --workspace @seorak/web run dev",
-    "dev:collector": "npm --workspace @seorak/collector run dev"
+    "dev:collector": "npm --workspace seorak run dev"
   },
   "devDependencies": {
     "typescript": "5.9.3"

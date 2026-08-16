@@ -113,7 +113,7 @@ describe('removed web contracts', () => {
 
   it('keeps version-skew defaults and section-zero catches out of current API readers', () => {
     const overviewSchema = readFileSync(
-      new URL('./lib/schemas/common.ts', import.meta.url),
+      new URL('./lib/schemas/overview/agents.ts', import.meta.url),
       'utf8',
     );
     const replaySchema = readFileSync(
@@ -176,7 +176,10 @@ describe('removed web contracts', () => {
   it('keeps API response validation strict and fallback-free', () => {
     const validator = readFileSync(new URL('./lib/schemas/index.ts', import.meta.url), 'utf8');
     const polling = readFileSync(new URL('./lib/stores/polling.ts', import.meta.url), 'utf8');
-    const schemas = readFileSync(new URL('./lib/schemas/common.ts', import.meta.url), 'utf8');
+    const schemas = readFileSync(
+      new URL('./lib/schemas/overview/interventions.ts', import.meta.url),
+      'utf8',
+    );
 
     expect(validator).not.toContain('ValidateOptions');
     expect(validator).not.toContain('throwOnError');

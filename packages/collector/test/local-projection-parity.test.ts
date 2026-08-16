@@ -612,6 +612,19 @@ describe("local overview — what it MEASURES", () => {
     expect(agents["codex"]!.firstSeenAt).toBe("2026-08-01T14:00:00.000Z");
   });
 
+  it("puts per-agent day tokens on agentDaily from BOTH carriers", () => {
+    const codexDay = snapshot.tools.agentDaily.find((p) => p.agent === "codex");
+    expect(codexDay).toBeDefined();
+    // Cumulative session.tokens: 10k/2k then 15k/3k → window billable 18k.
+    // Codex tool.call rows carry schema zeros and must not invent a different total.
+    expect(codexDay!.tokensTotal).toBe(18_000);
+    const claudeDays = snapshot.tools.agentDaily.filter((p) => p.agent === "claude-code");
+    expect(claudeDays.some((p) => (p.tokensTotal ?? 0) > 0)).toBe(true);
+    for (const point of snapshot.tools.agentDaily) {
+      expect(point.tokensTotal === null || Number.isFinite(point.tokensTotal)).toBe(true);
+    }
+  });
+
   it("bins the activity grids only where activity happened", () => {
     for (const bucket of snapshot.activity.hourlyDistribution) {
       expect(bucket.sessions).toBeGreaterThan(0);

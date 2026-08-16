@@ -22,6 +22,7 @@
 import { execFileSync } from "node:child_process";
 import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { request as httpsRequest } from "node:https";
+import { createServer as createNetServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
@@ -116,17 +117,35 @@ function seeded(): string {
   return dir;
 }
 
-/** A port the OS is very unlikely to have in use, chosen per binding so parallel
- *  test files do not collide. The origin's port IS the listen port by design. */
-let nextPort = 44_310;
+/** Ask the kernel for a currently free loopback port. Fixed ports are unsafe in
+ *  the full suite because its many real HTTP clients also consume ephemeral
+ *  ports; Linux assigned three of the old fixed test ports to outgoing sockets
+ *  before this file tried to listen on them. The origin's selected port is
+ *  still the listen port by design. */
+async function availablePort(): Promise<number> {
+  const probe = createNetServer();
+  await new Promise<void>((resolve, reject) => {
+    probe.once("error", reject);
+    probe.listen(0, "127.0.0.1", resolve);
+  });
+  const address = probe.address();
+  if (typeof address !== "object" || address === null) {
+    probe.close();
+    throw new Error("expected the loopback port probe to have a TCP address");
+  }
+  await new Promise<void>((resolve, reject) => {
+    probe.close((error) => error === undefined ? resolve() : reject(error));
+  });
+  return address.port;
+}
 
-function bindingFor(
+async function bindingFor(
   stateDirectory: string,
   overrides: Partial<Record<string, string>> = {},
-): { binding: SelfHostedBinding; credential: string; origin: string } {
+): Promise<{ binding: SelfHostedBinding; credential: string; origin: string }> {
   const credentialPath = join(stateDirectory, "self-hosted-credential");
   const credential = mintSelfHostedCredential(credentialPath);
-  const port = nextPort++;
+  const port = await availablePort();
   const origin = `https://${HOSTNAME}:${port}`;
   const binding = resolveSelfHostedBinding(
     {
@@ -147,7 +166,7 @@ async function serve(stateDirectory: string, now?: () => Date): Promise<{
   credential: string;
   origin: string;
 }> {
-  const resolved = bindingFor(stateDirectory);
+  const resolved = await bindingFor(stateDirectory);
   planes.push(
     await startSelfHostedPlane(resolved.binding, {
       directory: stateDirectory,

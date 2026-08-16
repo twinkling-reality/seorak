@@ -149,9 +149,9 @@ const HOURLY: AgentHourPoint[] = [
 ];
 
 const DAILY: AgentDailyPoint[] = [
-  { agent: 'claude-code', day: '2026-07-09', sessions: 3, lines: { added: 40, removed: 5 } },
-  { agent: 'claude-code', day: '2026-07-11', sessions: 2, lines: null },
-  { agent: 'codex', day: '2026-07-12', sessions: 1, lines: { added: 9, removed: 1 } },
+  { agent: 'claude-code', day: '2026-07-09', sessions: 3, lines: { added: 40, removed: 5 }, tokensTotal: null },
+  { agent: 'claude-code', day: '2026-07-11', sessions: 2, lines: null, tokensTotal: null },
+  { agent: 'codex', day: '2026-07-12', sessions: 1, lines: { added: 9, removed: 1 }, tokensTotal: null },
 ];
 
 const NOW = Date.parse('2026-07-13T12:00:00.000Z');

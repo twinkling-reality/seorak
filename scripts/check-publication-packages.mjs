@@ -577,7 +577,7 @@ try {
   );
   for (const [name, manifest] of [
     ["@seorak/types", typesManifest],
-    ["@seorak/collector", collectorManifest],
+    ["seorak", collectorManifest],
     ["@seorak/dashboard", dashboardManifest],
   ]) {
     if (manifest.private === true) fail(`${name} is still private`);
@@ -784,7 +784,7 @@ try {
   // cannot be declared and left unbuilt.
   assertDeclaredTargetsShipped("@seorak/types", typesManifest, typesReport);
   assertDeclaredTargetsShipped(
-    "@seorak/collector",
+    "seorak",
     collectorManifest,
     collectorReport,
   );
@@ -842,7 +842,7 @@ try {
       stdio: ["ignore", "pipe", "pipe"],
     },
   );
-  assertProductionAudit(collectorInstall, "@seorak/collector");
+  assertProductionAudit(collectorInstall, "seorak");
   const tree = JSON.parse(
     execFileSync("npm", ["ls", "--omit=dev", "--all", "--json"], {
       cwd: collectorInstall,
@@ -851,12 +851,12 @@ try {
     }),
   );
   const dependencies = dependencyNames(tree);
+  // First-party is no longer "starts with @seorak/": the CLI publishes as the
+  // unscoped `seorak`, so a prefix test counted the package under audit as one
+  // of its own third-party dependencies.
+  const firstParty = (name) => name.startsWith("@seorak/") || name === "seorak";
   const externalDependencies = [...dependencies]
-    .filter(
-      (name) =>
-        !name.startsWith("@seorak/") &&
-        installedPackage(collectorInstall, name),
-    )
+    .filter((name) => !firstParty(name) && installedPackage(collectorInstall, name))
     .sort();
   if (
     JSON.stringify(externalDependencies) !==
@@ -930,7 +930,7 @@ try {
     },
   );
   if (!help.includes("usage:")) {
-    fail("installed collector CLI did not render its help contract");
+    fail("installed collector npx entry did not render its help contract");
   }
   const settingsPath = join(temporary, "installed-settings.json");
   const init = spawnSync(
@@ -971,7 +971,7 @@ try {
   ]) {
     const expectedPath = join(
       collectorInstall,
-      "node_modules/@seorak/collector/dist",
+      "node_modules/seorak/dist",
       hook,
     );
     const groups = installedSettings.hooks?.[event];

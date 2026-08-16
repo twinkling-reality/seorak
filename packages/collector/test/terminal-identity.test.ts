@@ -33,7 +33,7 @@ describe("identityBlock", () => {
 
   it("nothing installed → an honest fallback naming the fix", () => {
     const text = identityBlock({ ...FACTS, watching: null }, 7, false, 100).join("\n");
-    expect(text).toContain("nothing yet (run seorak init)");
+    expect(text).toContain("nothing yet (run seorak setup)");
   });
 
   it("color off emits zero ANSI escapes", () => {

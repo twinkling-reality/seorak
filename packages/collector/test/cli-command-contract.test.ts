@@ -1,5 +1,6 @@
 import {
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
@@ -8,19 +9,153 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { run } from "../src/cli.ts";
+import { run, runForegroundDaemon } from "../src/cli.ts";
 import {
   claimCollectorState,
   resolveCollectorLifecyclePaths,
 } from "../src/collector-lifecycle.ts";
 
+const runtime = vi.hoisted(() => ({ ensure: vi.fn() }));
+
+vi.mock("../src/runtime-install.ts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../src/runtime-install.ts")>()),
+  ensureCollectorRuntime: runtime.ensure,
+}));
+
+beforeEach(() => {
+  runtime.ensure.mockImplementation((stateDir: string) => ({
+    version: "0.1.2",
+    prefix: stateDir,
+    packageRoot: new URL("..", import.meta.url).pathname,
+    binDir: new URL("../bin", import.meta.url).pathname,
+    installed: false,
+    sourceCheckout: true,
+  }));
+});
+
 afterEach(() => {
   vi.restoreAllMocks();
+  runtime.ensure.mockReset();
 });
 
 describe("CLI command contract", () => {
+  it("runs the foreground daemon rather than stopping after module load", async () => {
+    let calls = 0;
+    await expect(
+      runForegroundDaemon(async () => ({
+        async runDaemon() {
+          calls += 1;
+        },
+      })),
+    ).resolves.toBe(0);
+    expect(calls).toBe(1);
+  });
+
+  it("reports a foreground daemon startup failure", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(
+      runForegroundDaemon(async () => ({
+        async runDaemon() {
+          throw new Error("port unavailable");
+        },
+      })),
+    ).resolves.toBe(1);
+    expect(error).toHaveBeenCalledWith(
+      "✘ foreground collector stopped: port unavailable",
+    );
+  });
+
+  it("sets up idempotently and keeps init as the same supported path", async () => {
+    const sandbox = mkdtempSync(join(tmpdir(), "seorak-setup-command-"));
+    const state = join(sandbox, "state");
+    const control = join(sandbox, "control");
+    const settings = join(sandbox, "settings.json");
+    const previous = {
+      home: process.env.HOME,
+      dir: process.env.SEORAK_DIR,
+      control: process.env.SEORAK_CONTROL_DIR,
+      settings: process.env.SEORAK_SETTINGS,
+    };
+    process.env.HOME = sandbox;
+    process.env.SEORAK_DIR = state;
+    process.env.SEORAK_CONTROL_DIR = control;
+    process.env.SEORAK_SETTINGS = settings;
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    try {
+      await expect(run(["setup", "--no-service"])).resolves.toBe(0);
+      const firstSettings = readFileSync(settings, "utf8");
+      expect(log.mock.calls.flat().join("\n")).toContain("seorak setup");
+      expect(log.mock.calls.flat().join("\n")).toContain("✅ capturing");
+
+      log.mockClear();
+      await expect(run(["setup", "--no-service"])).resolves.toBe(0);
+      expect(readFileSync(settings, "utf8")).toBe(firstSettings);
+      expect(log.mock.calls.flat().join("\n")).toContain("hooks already registered");
+
+      log.mockClear();
+      await expect(run(["init", "--no-service"])).resolves.toBe(0);
+      expect(readFileSync(settings, "utf8")).toBe(firstSettings);
+      expect(log.mock.calls.flat().join("\n")).toContain("seorak setup");
+    } finally {
+      if (previous.home === undefined) delete process.env.HOME;
+      else process.env.HOME = previous.home;
+      if (previous.dir === undefined) delete process.env.SEORAK_DIR;
+      else process.env.SEORAK_DIR = previous.dir;
+      if (previous.control === undefined) delete process.env.SEORAK_CONTROL_DIR;
+      else process.env.SEORAK_CONTROL_DIR = previous.control;
+      if (previous.settings === undefined) delete process.env.SEORAK_SETTINGS;
+      else process.env.SEORAK_SETTINGS = previous.settings;
+      rmSync(sandbox, { recursive: true, force: true });
+    }
+  });
+
+  it("claims a custom state directory before staging the npx runtime", async () => {
+    const sandbox = mkdtempSync(join(tmpdir(), "seorak-setup-runtime-order-"));
+    const state = join(sandbox, "custom-state");
+    const control = join(sandbox, "control");
+    const settings = join(sandbox, "settings.json");
+    mkdirSync(state);
+    const previous = {
+      home: process.env.HOME,
+      dir: process.env.SEORAK_DIR,
+      control: process.env.SEORAK_CONTROL_DIR,
+      settings: process.env.SEORAK_SETTINGS,
+    };
+    process.env.HOME = sandbox;
+    process.env.SEORAK_DIR = state;
+    process.env.SEORAK_CONTROL_DIR = control;
+    process.env.SEORAK_SETTINGS = settings;
+    runtime.ensure.mockImplementation(() => {
+      expect(existsSync(join(state, ".seorak-state.json"))).toBe(true);
+      return {
+        version: "0.1.2",
+        prefix: state,
+        packageRoot: join(state, "package"),
+        binDir: new URL("../bin", import.meta.url).pathname,
+        installed: false,
+        sourceCheckout: true,
+      };
+    });
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    try {
+      await expect(run(["setup", "--no-service"])).resolves.toBe(0);
+      expect(runtime.ensure).toHaveBeenCalledTimes(1);
+      expect(runtime.ensure.mock.calls[0]?.[0]).toMatch(/\/custom-state$/);
+    } finally {
+      if (previous.home === undefined) delete process.env.HOME;
+      else process.env.HOME = previous.home;
+      if (previous.dir === undefined) delete process.env.SEORAK_DIR;
+      else process.env.SEORAK_DIR = previous.dir;
+      if (previous.control === undefined) delete process.env.SEORAK_CONTROL_DIR;
+      else process.env.SEORAK_CONTROL_DIR = previous.control;
+      if (previous.settings === undefined) delete process.env.SEORAK_SETTINGS;
+      else process.env.SEORAK_SETTINGS = previous.settings;
+      rmSync(sandbox, { recursive: true, force: true });
+    }
+  });
+
   it("rejects the retired stats subcommand instead of preserving an alias", async () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     const log = vi.spyOn(console, "log").mockImplementation(() => {});

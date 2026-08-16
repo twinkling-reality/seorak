@@ -380,6 +380,8 @@ interface AgentDailyAcc {
   linesAdded: number;
   linesRemoved: number;
   linesMeasured: boolean;
+  /** Input+output tokens measured that day. Absent means unmeasured, not zero. */
+  tokens: number | null;
 }
 
 interface AgentAcc {
@@ -744,6 +746,7 @@ function agentDailyBucket(
       linesAdded: 0,
       linesRemoved: 0,
       linesMeasured: false,
+      tokens: null,
     };
     aggregate.agentDaily.set(key, bucket);
   }
@@ -1191,6 +1194,10 @@ export function buildLocalOverviewOn(
             addTokens(target.tokens, priced.tokens);
             addTokens(agent.tokens, priced.tokens);
             addTokens(daily(target, day).tokens, priced.tokens);
+            addAgentDailyTokens(
+              agentDailyBucket(target, session.agent, day),
+              billable(priced.tokens),
+            );
             for (const [model, usage] of priced.byModel) {
               mergeModel(target.byModel, model, usage);
               mergeAgentModel(target.agentModels, session.agent, model, usage);
@@ -1242,6 +1249,7 @@ export function buildLocalOverviewOn(
         for (const target of targets) {
           const agent = agentBucket(target, session, event.at);
           const bucket = daily(target, day);
+          const agentDay = agentDailyBucket(target, session.agent, day);
           for (const { model, tokens } of deltas) {
             const price = priceModelUsage(model, {
               inputTokens: tokens.input,
@@ -1252,6 +1260,7 @@ export function buildLocalOverviewOn(
             addTokens(target.tokens, tokens);
             addTokens(agent.tokens, tokens);
             addTokens(bucket.tokens, tokens);
+            addAgentDailyTokens(agentDay, billable(tokens));
             // A carrier snapshot is NOT a call, so it contributes tokens and
             // never a count. `ModelRollup.calls` is a MODEL-ITEM count (a
             // tool.call spanning two models counts toward both), and a
@@ -1929,8 +1938,13 @@ function agentDailyPoints(aggregate: Aggregate): AgentDailyPoint[] {
       lines: value.linesMeasured
         ? { added: value.linesAdded, removed: value.linesRemoved }
         : null,
+      tokensTotal: value.tokens,
     }))
     .sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : a.agent < b.agent ? -1 : 1));
+}
+
+function addAgentDailyTokens(bucket: AgentDailyAcc, tokens: number): void {
+  bucket.tokens = (bucket.tokens ?? 0) + tokens;
 }
 
 function agentHourly(aggregate: Aggregate): AgentHourPoint[] {

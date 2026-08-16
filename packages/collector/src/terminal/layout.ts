@@ -136,7 +136,7 @@ function writeAtVersion(layout: TerminalLayout): void {
  * TODAY because the install set of record is exactly one machine:
  * `packages/collector/package.json` is `private: true` and unpublished, and
  * SETUP.md's "Open questions" still lists distribution as undecided, so the only
- * supported install is a repo clone plus `seorak init`. RE-OPEN this condition if
+ * supported install is a repo clone plus `seorak setup`. RE-OPEN this condition if
  * the collector is ever published while writers of v1/v2 are still in the wild:
  * the install set is then no longer one home directory, and the condition has to
  * be restated against a released version floor instead of a local read.

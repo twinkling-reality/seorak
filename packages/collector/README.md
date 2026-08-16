@@ -1,4 +1,4 @@
-# @seorak/collector
+# seorak
 
 Seorak is performance tracking for agentic development. This package is the
 part that does the tracking: a local-first daemon plus Claude Code hook scripts
@@ -14,15 +14,25 @@ what is derived from a session is counts, timings, and salted ids.
 ## Install
 
 ```bash
-npm i -g @seorak/collector
-seorak init
+npx seorak setup
 # → dashboard: http://127.0.0.1:4317/dashboard
 ```
 
-`seorak init` installs the six Claude Code hooks and registers the background
-daemon. It asks for no account, no key, and no network call. Codex needs no
-extra step of its own: the daemon tails `~/.codex/sessions` when that directory
-exists, because Codex already writes its own session log.
+`setup` installs the six Claude Code hooks and registers the background daemon.
+It asks for no account or key, contacts no Seorak service, and uploads no product
+data. npm still downloads the package and prepares its durable local runtime.
+Codex needs no extra step of its own: the daemon tails `~/.codex/sessions` when
+that directory exists, because Codex already writes its own session log.
+
+The command uses no global npm install. It keeps the files needed by hooks and
+background capture in Seorak's local state so they do not depend on npm's
+temporary execution cache.
+
+This package was renamed from `@seorak/collector` to the unscoped `seorak`, so
+that `npx seorak` resolves on the package name and the command you type names
+the product. The `npx` form above needs `seorak@0.2.0`, which is not published on
+npm pending approval; `@seorak/collector@0.1.1` is the last release under the old
+name. Until then, run it from a checkout with `npm run link:cli`.
 
 ## What happens next
 
@@ -30,10 +40,10 @@ Restart Claude Code (or start a new session) so the hooks load, then do some
 work. When there is something to read:
 
 ```bash
-seorak                    # the live session, in your terminal
-seorak status             # ✓/✗ checklist: is it actually working?
-seorak local dashboard    # the primary dashboard, on loopback
-seorak local report       # the period read, in prose
+npx seorak                    # the live session, in your terminal
+npx seorak status             # ✓/✗ checklist: is it actually working?
+npx seorak local dashboard    # the primary dashboard, on loopback
+npx seorak local report       # the period read, in prose
 ```
 
 A stat that has not been measured yet is left unsaid rather than zero-filled,
@@ -41,11 +51,15 @@ so an early read is short rather than full of `0`s. Everything above runs from
 this machine's own record; a remote service is an explicit opt-in, and that is
 what the rest of this page is about.
 
+Keep the same `npx seorak` prefix for later commands. It uses no
+global install; the background runtime prepared by setup remains in Seorak's
+local state.
+
 ## Free and managed setup
 
-The Free path takes no account, no key, and no network call. There is no worker
-prompt and no reachability check on that path: Free is complete from this
-machine's own record, so a worker is an explicit opt-in (`--worker-url`,
+The Free path takes no account, no key, and no Seorak service connection. There
+is no worker prompt and no reachability check on that path: Free is complete
+from this machine's own record, so a worker is an explicit opt-in (`--worker-url`,
 `SEORAK_WORKER_URL`, or `seorak login`) and only then are its probes allowed to
 fail the command. `seorak status` draws the same line — a local-only install is
 a healthy install. An entitled connection sends compact projections and
@@ -131,15 +145,15 @@ foreign `Origin`, and same-origin keeps that refusal absolute.
 The managed beta adds browser authentication before capture setup:
 
 ```bash
-seorak login
-seorak init
-seorak status
+npx seorak login
+npx seorak setup
+npx seorak status
 ```
 
 `seorak login` uses an OAuth device flow with PKCE. The browser sees only a
 short user code and approval screen; separate cell-scoped ingest and terminal
 read credentials return to the CLI and are saved mode 0600 under
-`~/.seorak/connection.json`. `init` claims that state directory, installs the
+`~/.seorak/connection.json`. `setup` claims that state directory, installs the
 six Claude Code hooks, registers a background daemon, and verifies the full
 read/write chain. Browser logout does not stop the collector.
 
@@ -153,16 +167,16 @@ Manual/self-operated configuration remains available:
 
 ```bash
 seorak login [--control-plane https://seorak.app] [--no-browser]
-seorak init                                   # uses the paired cell when present
-seorak init --worker-url https://my.worker    # non-interactive
-seorak init --worker-url https://my.worker --ingest-key <write> --read-key <read>
-seorak init --no-service                      # install hooks only; run the daemon yourself
+seorak setup                                   # uses the paired cell when present
+seorak setup --worker-url https://my.worker    # non-interactive
+seorak setup --worker-url https://my.worker --ingest-key <write> --read-key <read>
+seorak setup --no-service                      # install hooks only; run the daemon yourself
 ```
 
-On macOS, `init` writes a launchd LaunchAgent to
+On macOS, `setup` writes a launchd LaunchAgent to
 `~/Library/LaunchAgents/app.seorak.collector.plist` (RunAtLoad + KeepAlive, with
 `SEORAK_WORKER_URL` plus configured write/read authority baked in, logging to
-`~/.seorak/daemon.log`) and loads it via `launchctl`. Re-running `init` preserves
+`~/.seorak/daemon.log`) and loads it via `launchctl`. Re-running `setup` preserves
 those values unless a flag or environment variable replaces them. The daemon
 copy-truncates that exact log inode above 8 MiB at startup and on its 30-second
 heartbeat, retaining one bounded `daemon.log.1`; this keeps launchd's already-open
@@ -214,9 +228,9 @@ the filter lives in the read path.
 content-free record outside `SEORAK_DIR`, proves the daemon stopped, removes
 hooks, drains hook invocations that already started, and deletes only the exact
 state-directory device/inode recorded before teardown. Interrupted deletion
-resumes from the retained journal; `seorak init` refuses until it completes.
+resumes from the retained journal; `seorak setup` refuses until it completes.
 The external revocation receipt remains so cached hook commands cannot recreate
-state. A later `seorak init` explicitly reactivates capture.
+state. A later `seorak setup` explicitly reactivates capture.
 
 Plain `uninstall` intentionally retains state. Because it also retains hook
 bindings, use `--hooks` when the goal is to stop local capture without deleting
@@ -225,13 +239,16 @@ history. None of these commands delete data already sent to a hosted worker.
 `status` exits nonzero when anything critical is missing, so it doubles as a
 CI/health check. What counts as critical depends on what was asked for: hooks and
 the service always, and the worker legs only on an install that opted into a
-connection. After `init`, restart Claude Code (or start a new session) so the
+connection. After `setup`, restart Claude Code (or start a new session) so the
 hooks load.
 
-## The session (`seorak`) vs setup (`seorak init`)
+## The session (`seorak`) vs setup (`seorak setup`)
 
-`seorak init` is one-time plumbing: it installs hooks and the background daemon
+`seorak setup` is the one-time step: it installs hooks and the background daemon
 and verifies the chain. You run it once (and `seorak status` to check it).
+
+`seorak init` remains a supported compatibility alias for existing scripts and
+global installations. New instructions use `setup`.
 
 `seorak` with **no subcommand** is the product: an interactive session that reads
 your work back to you as a short paragraph, and hands off to the dashboard for
@@ -338,8 +355,8 @@ It needs only Node built-ins (raw ANSI + readline), no TUI dependency.
 
 ## Install hooks in Claude Code
 
-`seorak init` idempotently merges all six bindings and backs up the existing
-settings file. Use `seorak init --no-service` when only hook installation is
+`seorak setup` idempotently merges all six bindings and backs up the existing
+settings file. Use `seorak setup --no-service` when only hook installation is
 wanted. `seorak status` is the source of truth for the exact installed set;
 hand-written absolute hook commands are not supported.
 
@@ -367,7 +384,7 @@ The session-start hook does one extra thing: it shells out to `git` to capture a
 ## Run the daemon
 
 ```bash
-SEORAK_WORKER_URL=http://localhost:8787 npm run dev --workspace @seorak/collector
+SEORAK_WORKER_URL=http://localhost:8787 npm run dev --workspace seorak
 ```
 
 Env vars:
@@ -412,7 +429,7 @@ Env vars:
   `capture.json` itself, written by the plane's `PUT /settings`.
 
 The daemon resolves the worker URL and both auth tokens once when it starts.
-After changing any of them, re-run `seorak init` so launchd rewrites and reloads
+After changing any of them, re-run `seorak setup` so launchd rewrites and reloads
 the service, or run `seorak stop && seorak start` after editing an existing
 LaunchAgent deliberately.
 

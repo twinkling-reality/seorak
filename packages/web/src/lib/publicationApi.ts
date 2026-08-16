@@ -95,6 +95,8 @@ function parseManifest(value: unknown): OwnerPublicationManifest | null | undefi
       typeof input.profileSlug !== 'string' || !record(input.profile) ||
       !record(input.grants) ||
       (input.activity !== null && !record(input.activity)) ||
+      (input.tokenUsage !== null && input.tokenUsage !== undefined &&
+        !record(input.tokenUsage)) ||
       !Array.isArray(input.projects)) return undefined;
   return value as OwnerPublicationManifest;
 }

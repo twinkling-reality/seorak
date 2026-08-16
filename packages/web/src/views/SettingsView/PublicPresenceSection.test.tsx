@@ -53,6 +53,7 @@ function manifest(): OwnerPublicationManifest {
       mcp: { enabled: false, fields: [] },
     },
     activity: null,
+    tokenUsage: null,
     projects: [],
   };
 }
@@ -161,10 +162,11 @@ describe('PublicPresenceSection', () => {
     expect(view.host.textContent).toContain('Public surfaces');
     expect(view.host.textContent).toContain('Contact');
     expect(view.host.textContent).toContain('Activity calendar');
+    expect(view.host.textContent).toContain('Token usage');
     expect(view.host.textContent).toContain('Projects and evidence');
     expect(view.host.textContent).toContain('Private by default');
     expect(view.host.innerHTML).not.toContain(SOURCE_PROJECT_ID);
-    expect(view.host.querySelector('[name*="credential"], [name*="token"], [name*="secret"]'))
+    expect(view.host.querySelector('[name*="credential"], [name*="secret"]'))
       .toBeNull();
 
     await change(named(view.host, 'profileSlug'), 'grace-hopper');
@@ -201,6 +203,7 @@ describe('PublicPresenceSection', () => {
       enabled: true,
       fields: ['calendar', 'streak'],
     });
+    expect(saved?.tokenUsage).toBeNull();
     expect(saved?.projects).toHaveLength(1);
     expect(saved?.projects[0]).toMatchObject({
       sourceProjectId: SOURCE_PROJECT_ID,
@@ -211,11 +214,65 @@ describe('PublicPresenceSection', () => {
         rangeDays: 30,
         unavailable: 'publish-unavailable',
       },
+      tokenUsage: null,
     });
     expect(saved?.projects[0]?.grants.web).toMatchObject({ enabled: true });
     expect(JSON.stringify(saved)).not.toMatch(
       /"(?:value|sampleSize|coverage|freshness|sessionIds|generatedVersion|appliedVersion)"/,
     );
+
+    view.unmount();
+  });
+
+  it('includes profile tokenUsage in the saved manifest and copies an usage.svg snippet after apply', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+
+    const initial = document(status('applied', {
+      savedRevision: 3,
+      generatedVersion: 2,
+      appliedVersion: 2,
+    }));
+    const api = apiFor(initial);
+    const view = await render(api);
+
+    await click(named(view.host, 'token-usage-enabled'));
+    await change(named(view.host, 'token-usage-range'), '90');
+    await click(button(view.host, 'Save privately'));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const saved = vi.mocked(api.save).mock.calls[0]?.[0];
+    expect(saved?.tokenUsage).toMatchObject({
+      rangeDays: 90,
+      unavailable: 'publish-unavailable',
+      grants: {
+        web: { enabled: true, fields: ['series', 'totals'] },
+        search: { enabled: false, fields: [] },
+      },
+    });
+    expect(view.host.textContent).toContain('usage.svg');
+    expect(view.host.querySelector('img[alt="Seorak token usage"]')).not.toBeNull();
+
+    await click(button(view.host, 'Copy README snippet'));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(writeText).toHaveBeenCalled();
+    expect(String(writeText.mock.calls[0]?.[0])).toContain('usage.svg');
+    expect(String(writeText.mock.calls[0]?.[0])).toMatch(/^!\[Seorak token usage\]\(/);
+
+    await click(button(view.host, 'Copy HTML'));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(String(writeText.mock.calls[1]?.[0])).toContain('<img src=');
+    expect(String(writeText.mock.calls[1]?.[0])).toContain('alt="Seorak token usage"');
 
     view.unmount();
   });

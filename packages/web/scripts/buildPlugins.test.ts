@@ -107,6 +107,33 @@ describe.each(Object.entries(ENTRIES))('%s entry', (_name, html) => {
   });
 });
 
+// The enumerable HTML addresses carry `noindex` in a prerendered head. These
+// cannot: `/@/<slug>` is unbounded, and openapi.json / llms*.txt / the generated
+// .md reads are not HTML, so a meta tag in the body is just bytes. The header is
+// the only channel a crawler reads for those responses.
+describe('retired Directory headers', () => {
+  const headers = headersFile(["'sha256-x'"]);
+
+  it.each([
+    '/@/*',
+    '/openapi.json',
+    '/llms.txt',
+    '/llms-full.txt',
+    '/docs/*',
+    '/developers',
+    '/blog/private-record-public-identity',
+  ])('asks a crawler to drop %s', (path) => {
+    const rule = headers.slice(headers.indexOf(`\n${path}\n`));
+    expect(rule, path).toContain('X-Robots-Tag: noindex');
+  });
+
+  it('leaves the live site indexable', () => {
+    // The catch-all must never carry noindex: that would deindex the whole site.
+    const catchAll = headers.slice(headers.indexOf('/*'), headers.indexOf('# The public Directory'));
+    expect(catchAll).not.toContain('X-Robots-Tag');
+  });
+});
+
 describe('inlineScripts', () => {
   it('skips scripts a browser fetches rather than inlines', () => {
     expect(inlineScripts('<script src="/assets/app.js">ignored</script>')).toEqual([]);

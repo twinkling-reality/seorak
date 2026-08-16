@@ -110,6 +110,9 @@ function assertNoMutatingEffects(): void {
 
 describe("unknown flags never reach side effects", () => {
   it.each([
+    ["setup", ["setup", "--dry-run"]],
+    ["setup", ["setup", "--worker-uri", "https://seorak.invalid"]],
+    ["setup", ["setup", "--no-service", "--unknown"]],
     ["init", ["init", "--dry-run"]],
     ["init", ["init", "--worker-uri", "https://seorak.invalid"]],
     ["init", ["init", "--no-service", "--unknown"]],
@@ -153,6 +156,14 @@ describe("unknown flags never reach side effects", () => {
     assertNoMutatingEffects();
   });
 
+  it("rejects extra setup arguments before install", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await expect(run(["setup", "later"])).resolves.toBe(1);
+    assertNoMutatingEffects();
+  });
+
   it("rejects --no-service with a value before install", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     vi.spyOn(console, "log").mockImplementation(() => {});
@@ -173,7 +184,9 @@ describe("unknown flags never reach side effects", () => {
 });
 
 describe("known flags still reach their handlers", () => {
-  it("runs init with --no-service (installHooks fires; launchctl does not)", async () => {
+  it.each(["setup", "init"])(
+    "runs %s with --no-service (installHooks fires; launchctl does not)",
+    async (command) => {
     const state = mkdtempSync(join(tmpdir(), "seorak-cli-unknown-flags-state-"));
     const previous = process.env.SEORAK_DIR;
     process.env.SEORAK_DIR = state;
@@ -183,7 +196,7 @@ describe("known flags still reach their handlers", () => {
       // Exit code depends on hook verification against a mocked installer; the
       // contract here is that a known flag still reaches installHooks and never
       // launchctl under --no-service.
-      await run(["init", "--no-service"]);
+      await run([command, "--no-service"]);
       expect(effects.installHooks).toHaveBeenCalledTimes(1);
       expect(effects.spawnSync).not.toHaveBeenCalled();
       expect(effects.stopLaunchdService).not.toHaveBeenCalled();
@@ -192,7 +205,8 @@ describe("known flags still reach their handlers", () => {
       else process.env.SEORAK_DIR = previous;
       rmSync(state, { recursive: true, force: true });
     }
-  });
+    },
+  );
 
   it("opens the interactive session with no flags", async () => {
     vi.spyOn(console, "log").mockImplementation(() => {});

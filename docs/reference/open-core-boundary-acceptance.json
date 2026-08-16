@@ -11,22 +11,6 @@
   "entries": [
     {
       "check": "open-core-boundaries",
-      "key": "asset-crosses-workspace::packages/control-plane/wrangler.toml::assets.directory",
-      "acceptedOn": "2026-08-04",
-      "owner": "ADR 005 stage B4",
-      "why": "The private control plane binds ../web/public, reaching whole into another workspace's asset directory. ADR 005 decision 8 names this as the live example import gates cannot see, and says the control plane gets its own small font directory rather than reaching across the boundary. That is a deploy change, not a gate change, so B1a records it and B4 makes it.",
-      "falsifiedWhen": "the control plane's [assets] directory resolves inside packages/control-plane."
-    },
-    {
-      "check": "open-core-boundaries",
-      "key": "asset-mixed-visibility::packages/control-plane/wrangler.toml::assets.directory",
-      "acceptedOn": "2026-08-04",
-      "owner": "ADR 005 stage B4",
-      "why": "The same binding deploys 81 tracked files the ownership map splits three ways: 72 public icons, 5 private brand assets, and the 4 excluded TypeType binaries. The excluded four are the sharp end. They are served today from the control plane's own worker origin, and after the split this directory exists whole in neither repository, so the binding cannot survive as written. The count was 95 across four visibilities when B1a recorded it; B7 deleted the 13 vendored AI-tool marks and B4 deleted the committed public/_headers, which the build now writes per entry. Neither changed the finding, which is that ONE binding deploys files of more than one visibility.",
-      "falsifiedWhen": "the control plane's asset directory holds files of exactly one visibility, which the B4 font directory produces. It is NOT falsified by B5 alone: substituting the face removes the excluded files but leaves public and private assets mixed in one binding."
-    },
-    {
-      "check": "open-core-boundaries",
       "key": "asset-crosses-workspace::packages/worker/wrangler.toml::assets.directory",
       "acceptedOn": "2026-08-04",
       "owner": "ADR 005 stage B4",

@@ -116,6 +116,8 @@ describe("--help never runs a subcommand", () => {
   it.each([
     [["init", "--help"]],
     [["init", "-h"]],
+    [["setup", "--help"]],
+    [["setup", "-h"]],
     [["init", "--worker-url", "https://seorak.invalid", "--help"]],
     [["init", "--no-service", "-h"]],
     [["start", "--help"]],
@@ -132,7 +134,10 @@ describe("--help never runs a subcommand", () => {
 
     await expect(run(argv)).resolves.toBe(0);
 
-    expect(log.mock.calls.flat().join("\n")).toContain("seorak init [--no-service]");
+    const output = log.mock.calls.flat().join("\n");
+    expect(output).toContain("npx seorak setup");
+    expect(output).toContain("seorak setup [--no-service]");
+    expect(output).toContain("seorak init [options]");
     expect(error).not.toHaveBeenCalled();
     assertNothingRan();
   });

@@ -106,7 +106,7 @@ Re-measure, and re-triage rather than accept, if any of these becomes true:
   imported again instead of owned, and the parity suite retired with it.
   Nothing breaks if this is never done; it would just trade a checked duplicate
   for an import, which is the better shape when it costs nothing.
-- A published package gains a production dependency. `@seorak/collector`
+- A published package gains a production dependency. The collector CLI (`seorak`)
   declares `@seorak/types` and `@seorak/dashboard`; `@seorak/types` declares
   `zod` plus optional mobile token peers a core consumer does not install.
   Install closure, not import reachability, governs what a published artifact

@@ -11,6 +11,11 @@ person, and about what changed for THEM, not what changed in the code.
 Lines must fit the entry card: keep each under about 60 characters or it
 will be clipped with an ellipsis.
 
+## 0.2.0
+
+- One setup command now starts local capture.
+- Hooks now follow the version you upgraded to.
+
 ## 0.1.1
 
 - Unknown flags on init, start, stop, and session now fail.

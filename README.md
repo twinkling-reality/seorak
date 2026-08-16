@@ -5,7 +5,7 @@ Performance tracking for agentic development.
 Seorak watches Claude Code and Codex on your machine, commits every event to
 SQLite in your home directory, and answers questions about it: what a session
 cost, what it produced, and what your own record says about how you work. No
-account, no key, and no network call.
+account, no key, no Seorak service connection, and no product-data upload.
 
 This repository is the **public core**, Apache-2.0. It is the whole local
 product: capture, the permanent local history, the primary dashboard, the
@@ -14,12 +14,21 @@ managed remote service, and that service is built in a private repository and is
 not here. What is where, and why:
 [`docs/adr/005`](docs/adr/005-open-core-repository-and-free-ui-packaging.md).
 
-**Install it from npm**, published 2026-08-10 with provenance attesting to this
-repository:
+**Set it up from npm** with one temporary package run and no global install:
 
 ```bash
-npm i -g @seorak/collector && seorak init
+npx seorak setup
 ```
+
+The CLI's npm package is the unscoped `seorak`, renamed from
+`@seorak/collector` so the command you type names the product rather than one of
+its internal parts. The directory in this tree stays `packages/collector`.
+
+`seorak@0.2.0` is not published on npm pending approval, so the command above
+does not resolve yet. `@seorak/collector@0.1.1` is the last release under the
+old name.
+Setup keeps the background runtime under Seorak's own state so hooks and capture
+do not depend on npm's temporary execution cache.
 
 Building from this tree still works, and the rest of this page describes it.
 
@@ -47,14 +56,15 @@ the dashboard appear.
 
 ```bash
 npm run link:cli
-seorak init
+seorak setup
 ```
 
-`seorak init` installs the Claude Code hooks, registers the background collector,
-and starts recording. Codex capture needs no extra step: the daemon tails
-`~/.codex/sessions` if that directory exists. It asks for no account and probes
-no network, and a local-only install is a healthy install. Restart Claude Code so
-the hooks load.
+`seorak setup` installs the Claude Code hooks, registers the background
+collector, and starts recording. `seorak init` remains a supported compatibility
+alias. Codex capture needs no extra step: the daemon tails `~/.codex/sessions`
+if that directory exists. It asks for no account, connects to no Seorak service,
+and a local-only install is a healthy install. Restart Claude Code so the hooks
+load.
 
 Then do some work, and read it:
 

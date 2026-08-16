@@ -56,8 +56,20 @@ describe("seorakHookPaths", () => {
 });
 
 describe("mergeHooks — scriptExists repair leg", () => {
-  it("without scriptExists, a stale binding still reads as present (old behavior)", () => {
+  it("re-points a binding from another dir even without scriptExists", () => {
+    // The dir comparison is pure, so it does not need a disk probe to fire.
     const { added, skipped, repaired } = mergeHooks(boundSettings(OLD_DIR), REAL_BIN_DIR);
+    expect(added).toEqual([]);
+    expect(skipped).toEqual([]);
+    expect(repaired).toHaveLength(SEORAK_EVENTS.length);
+  });
+
+  it("is idempotent — re-merging the SAME bin dir changes nothing", () => {
+    const { added, skipped, repaired } = mergeHooks(
+      boundSettings(REAL_BIN_DIR),
+      REAL_BIN_DIR,
+      () => true,
+    );
     expect(added).toEqual([]);
     expect(repaired).toEqual([]);
     expect(skipped).toHaveLength(SEORAK_EVENTS.length);
@@ -77,14 +89,24 @@ describe("mergeHooks — scriptExists repair leg", () => {
     }
   });
 
-  it("leaves a binding alone when its script still exists", () => {
-    const { skipped, repaired } = mergeHooks(
-      boundSettings(OLD_DIR),
-      REAL_BIN_DIR,
-      () => true,
+  // The upgrade case, and the reason "the script exists" stopped being enough:
+  // nothing prunes ~/.seorak/runtime/<old version>/, so after an upgrade the
+  // previous build's hook scripts are all still on disk. Presence alone skipped
+  // every event, leaving hooks on the old build while the LaunchAgent — rewritten
+  // unconditionally — ran the new one. `seorak status` still said 6/6 bound.
+  it("re-points a binding whose script exists but belongs to another install", () => {
+    const previousRuntime = "/Users/dev/.seorak/runtime/0.1.2/node_modules/seorak/dist";
+    const currentRuntime = "/Users/dev/.seorak/runtime/0.1.3/node_modules/seorak/dist";
+    const { skipped, repaired, settings } = mergeHooks(
+      boundSettings(previousRuntime),
+      currentRuntime,
+      () => true, // every path still on disk
     );
-    expect(repaired).toEqual([]);
-    expect(skipped).toHaveLength(SEORAK_EVENTS.length);
+    expect(skipped).toEqual([]);
+    expect(repaired).toHaveLength(SEORAK_EVENTS.length);
+    for (const { path } of seorakHookPaths(settings)) {
+      expect(path.startsWith(currentRuntime)).toBe(true);
+    }
   });
 
   it("preserves non-Seorak hooks on a repaired event", () => {

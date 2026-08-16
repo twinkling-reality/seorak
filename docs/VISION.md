@@ -81,6 +81,11 @@ Surface jobs: [specs/surfaces.md](./specs/surfaces.md). Ship state: [STATUS.md](
    web, API, and MCP discoverability; and may enable a contact path so potential
    collaborators or recruiters can reach out.
 
+   **Current availability:** hidden. The implementation and publication
+   foundations remain in the repository, but navigation, public routes,
+   publication controls, public reads, metadata, and discovery documents are
+   default-off until a separate launch review approves restoring them.
+
 One use of the gallery is a project-scoped build record. A developer can attach
 selected, bounded evidence to public work so a hackathon judge, collaborator,
 maintainer, client, or other reviewer can understand more than a short demo or

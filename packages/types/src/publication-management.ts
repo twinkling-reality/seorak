@@ -30,8 +30,24 @@ export const PUBLICATION_ACTIVITY_RANGE_DAYS = [30, 90, 365] as const;
 export type PublicationActivityRangeDays =
   (typeof PUBLICATION_ACTIVITY_RANGE_DAYS)[number];
 
+/** Portable token-usage card window. Not used as calendar intensity. */
+export const PUBLICATION_TOKEN_USAGE_RANGE_DAYS = [30, 90] as const;
+export type PublicationTokenUsageRangeDays =
+  (typeof PUBLICATION_TOKEN_USAGE_RANGE_DAYS)[number];
+
 export const PUBLIC_ACTIVITY_FIELDS = ["calendar", "streak"] as const;
 export type PublicActivityField = (typeof PUBLIC_ACTIVITY_FIELDS)[number];
+
+/**
+ * Grantable token-usage projection fields. `series` is the daily chart;
+ * `totals` is the period sum. Search never receives either.
+ */
+export const PUBLIC_TOKEN_USAGE_FIELDS = ["series", "totals"] as const;
+export type PublicTokenUsageField = (typeof PUBLIC_TOKEN_USAGE_FIELDS)[number];
+
+/** Agents the public token-usage card may split into lines. */
+export const PUBLIC_TOKEN_USAGE_AGENTS = ["claude-code", "codex"] as const;
+export type PublicTokenUsageAgent = (typeof PUBLIC_TOKEN_USAGE_AGENTS)[number];
 
 export type PublicationUnavailablePolicy = "refuse" | "publish-unavailable";
 
@@ -45,6 +61,24 @@ export interface PublicActivityPublicationGrants {
   search: { enabled: false; fields: readonly [] };
   api: PublicActivitySurfaceGrant;
   mcp: PublicActivitySurfaceGrant;
+}
+
+export type PublicTokenUsageSurfaceGrant =
+  | { enabled: false; fields: readonly [] }
+  | { enabled: true; fields: readonly PublicTokenUsageField[] };
+
+/** Search never indexes or ranks token usage. */
+export interface PublicTokenUsagePublicationGrants {
+  web: PublicTokenUsageSurfaceGrant;
+  search: { enabled: false; fields: readonly [] };
+  api: PublicTokenUsageSurfaceGrant;
+  mcp: PublicTokenUsageSurfaceGrant;
+}
+
+export interface OwnerPublicationTokenUsageSelection {
+  rangeDays: PublicationTokenUsageRangeDays;
+  grants: PublicTokenUsagePublicationGrants;
+  unavailable: PublicationUnavailablePolicy;
 }
 
 /**
@@ -61,6 +95,8 @@ export interface OwnerPublicationProjectSelection {
     rangeDays: PublicationEvidenceRangeDays;
     unavailable: PublicationUnavailablePolicy;
   };
+  /** Opt-in frozen token-usage series for this project. Null omits the embed. */
+  tokenUsage: OwnerPublicationTokenUsageSelection | null;
 }
 
 export interface OwnerPublicationActivitySelection {
@@ -85,6 +121,8 @@ export interface OwnerPublicationManifest {
   profile: PublicProfileValues;
   grants: PublicProfilePublicationGrants;
   activity: OwnerPublicationActivitySelection | null;
+  /** Opt-in profile-wide frozen token-usage series. Null omits the embed. */
+  tokenUsage: OwnerPublicationTokenUsageSelection | null;
   projects: readonly OwnerPublicationProjectSelection[];
 }
 
@@ -154,14 +192,79 @@ export interface PublicActivityProjectionDto extends PublicPublicationStamp {
   };
 }
 
+/**
+ * One calendar day of published token usage. Counts are input+output tokens.
+ * Null totals mean the day cannot be claimed; never treat unavailable as zero.
+ */
+export interface PublicTokenUsageDay {
+  date: IntegrationDate;
+  byAgent: Partial<Record<PublicTokenUsageAgent, number>>;
+  /** Sum of byAgent for that day, or null when coverage cannot support a total. */
+  total: number | null;
+  coverage: PublicActivityCoverageState;
+  availability: IntegrationAvailability;
+}
+
+export interface PublicTokenUsageTotals {
+  total: number | null;
+  byAgent: Partial<Record<PublicTokenUsageAgent, number>>;
+  availability: IntegrationAvailability;
+  sampleSize: number;
+  coverage: {
+    period: IntegrationDateRange;
+    complete: boolean;
+  };
+}
+
+/**
+ * Frozen token-usage series for the portable embed. Readers never recompute it
+ * from private history. Distinct from activity calendar intensity.
+ */
+export interface PublicTokenUsagePublicationDto extends PublicPublicationStamp {
+  profileSlug: string;
+  /** Null means profile-wide; set for a project-scoped embed. */
+  projectSlug: string | null;
+  rangeDays: PublicationTokenUsageRangeDays;
+  period: IntegrationDateRange;
+  grants: PublicTokenUsagePublicationGrants;
+  days: readonly PublicTokenUsageDay[];
+  totals: PublicTokenUsageTotals;
+  generatedAt: string;
+  freshness: IntegrationFreshness;
+}
+
+/** Grant-filtered token-usage read; publication grants never leave the directory. */
+export interface PublicTokenUsageProjectionDto extends PublicPublicationStamp {
+  surface: "web" | "api" | "mcp";
+  profileSlug: string;
+  projectSlug: string | null;
+  rangeDays: PublicationTokenUsageRangeDays;
+  period: IntegrationDateRange;
+  fields: {
+    series?: {
+      days: readonly PublicTokenUsageDay[];
+      generatedAt: string;
+      freshness: IntegrationFreshness;
+    };
+    totals?: PublicTokenUsageTotals;
+  };
+}
+
+/** Project freeze plus optional project-scoped token-usage embed. */
+export type PublicProjectPublicationBundleDto = PublicProjectPublicationDto & {
+  tokenUsage: PublicTokenUsagePublicationDto | null;
+};
+
 /** One complete desired public generation, suitable for one atomic D1 apply. */
 export interface PublicPublicationBundle {
   apiVersion: PublicationManagementVersion;
   generation: number;
   profile: PublicProfilePublicationDto;
   activity: PublicActivityPublicationDto | null;
+  /** Profile-wide token-usage freeze; null omits the profile embed. */
+  tokenUsage: PublicTokenUsagePublicationDto | null;
   /** Complete desired project set; omission removes a previously current project. */
-  projects: readonly PublicProjectPublicationDto[];
+  projects: readonly PublicProjectPublicationBundleDto[];
 }
 
 export interface PublicPublicationApplyDelivery {

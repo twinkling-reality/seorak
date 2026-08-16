@@ -193,11 +193,11 @@ describe('aggregateAgentSeries — model / daily / hourly grouping', () => {
   it('sums agentDaily by (agent, day) and agentHourly by (agent, hour)', () => {
     const projects = [
       proj({
-        agentDaily: [{ agent: 'codex', day: '2026-07-01', sessions: 2, lines: { added: 10, removed: 1 } }],
+        agentDaily: [{ agent: 'codex', day: '2026-07-01', sessions: 2, lines: { added: 10, removed: 1 }, tokensTotal: null }],
         agentHourly: [{ agent: 'codex', hour: 14, calls: 5 }],
       }),
       proj({
-        agentDaily: [{ agent: 'codex', day: '2026-07-01', sessions: 1, lines: { added: 4, removed: 0 } }],
+        agentDaily: [{ agent: 'codex', day: '2026-07-01', sessions: 1, lines: { added: 4, removed: 0 }, tokensTotal: null }],
         agentHourly: [{ agent: 'codex', hour: 14, calls: 3 }],
       }),
     ];

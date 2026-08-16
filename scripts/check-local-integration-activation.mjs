@@ -89,8 +89,7 @@ export function runLocalIntegrationActivationSuite() {
     "npm",
     [
       "--workspace",
-      "@seorak/collector",
-      "exec",
+      "seorak",      "exec",
       "vitest",
       "run",
       "test/local-plane-routes.test.ts",

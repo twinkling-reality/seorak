@@ -293,14 +293,29 @@ function aggregateAgentModels(perRepo: AgentModelRollup[][]): AgentModelRollup[]
 // ── agentDaily / agentHourly (activity spines) ───────────────────────────────
 
 function aggregateAgentDaily(perRepo: AgentDailyPoint[][]): AgentDailyPoint[] {
-  const acc = new Map<string, { agent: string; day: string; sessions: number; lines: Lines }>();
+  const acc = new Map<string, {
+    agent: string;
+    day: string;
+    sessions: number;
+    lines: Lines;
+    tokensTotal: number | null;
+  }>();
   for (const list of perRepo) {
     for (const d of list) {
       const key = `${d.agent}\0${d.day}`;
       // Sessions belong to one repo, so per-repo per-day counts are disjoint.
-      const e = acc.get(key) ?? { agent: d.agent, day: d.day, sessions: 0, lines: null };
+      const e = acc.get(key) ?? {
+        agent: d.agent,
+        day: d.day,
+        sessions: 0,
+        lines: null,
+        tokensTotal: null,
+      };
       e.sessions += d.sessions;
       e.lines = addLines(e.lines, d.lines);
+      if (d.tokensTotal !== null) {
+        e.tokensTotal = (e.tokensTotal ?? 0) + d.tokensTotal;
+      }
       acc.set(key, e);
     }
   }
@@ -309,6 +324,7 @@ function aggregateAgentDaily(perRepo: AgentDailyPoint[][]): AgentDailyPoint[] {
     day: e.day,
     sessions: e.sessions,
     lines: e.lines,
+    tokensTotal: e.tokensTotal,
   }));
 }
 

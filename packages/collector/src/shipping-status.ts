@@ -6,6 +6,7 @@ import {
   isEventIngestErrorCode,
   type EventIngestErrorCode,
 } from "@seorak/types";
+import type { DeliveryRoute } from "./ingest-queue.ts";
 import { shippingStatusPath } from "./paths.ts";
 
 export const SHIPPING_STATUS_SCHEMA_VERSION = 2 as const;
@@ -23,6 +24,13 @@ export type ShippingStatusSnapshot =
       state: "caught-up";
       updatedAt: string;
       consecutiveFailures: 0;
+      /**
+       * Where the acknowledged bytes went. OPTIONAL on purpose: a status file
+       * written before this field existed stays readable, and an absent route
+       * renders as the old wording rather than inventing a claim about a drain
+       * nobody recorded. "caught-up" alone never meant delivered.
+       */
+      route?: DeliveryRoute;
     }
   | {
       schemaVersion: typeof SHIPPING_STATUS_SCHEMA_VERSION;
@@ -47,6 +55,12 @@ export type ShippingStatusRead =
   | { kind: "missing" }
   | { kind: "invalid" }
   | { kind: "current"; snapshot: ShippingStatusSnapshot };
+
+const DELIVERY_ROUTES: readonly DeliveryRoute[] = ["worker", "managed", "local"];
+
+function isDeliveryRoute(value: unknown): value is DeliveryRoute {
+  return DELIVERY_ROUTES.includes(value as DeliveryRoute);
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -143,13 +157,16 @@ export function parseShippingStatus(value: unknown): ShippingStatusSnapshot | nu
 
   if (value.state === "caught-up") {
     if (
-      !hasOnlyKeys(value, [
-        "schemaVersion",
-        "state",
-        "updatedAt",
-        "consecutiveFailures",
-      ]) ||
-      value.consecutiveFailures !== 0
+      !hasOnlyKeys(
+        value,
+        ["schemaVersion", "state", "updatedAt", "consecutiveFailures"],
+        ["route"],
+      ) ||
+      value.consecutiveFailures !== 0 ||
+      // Absent is valid and means unknown. A PRESENT route has to be one this
+      // build understands: an unrecognised one would otherwise fall through the
+      // renderer's cases and print the reassuring wording by default.
+      (value.route !== undefined && !isDeliveryRoute(value.route))
     ) {
       return null;
     }

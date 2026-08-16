@@ -5,7 +5,9 @@
  * informational), remedy-on-every-✘, and the exit verdict.
  */
 import { describe, expect, it } from "vitest";
+import { servicedDaemonProgram } from "../src/launchd.ts";
 import {
+  evaluateRuntime,
   buildStatusReport,
   evaluateCodex,
   evaluateEventsLog,
@@ -56,6 +58,125 @@ function healthy(): StatusReportInput {
   };
 }
 
+describe("evaluateRuntime and the plist it reads", () => {
+  const PLIST = `<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0"><dict>
+  <key>Label</key><string>app.seorak.collector</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/bin/node</string>
+    <string>/opt/homebrew/lib/node_modules/seorak/dist/daemon.mjs</string>
+  </array>
+</dict></plist>`;
+
+  it("reads the daemon entry by what it is, not by its position", () => {
+    expect(servicedDaemonProgram("/p.plist", () => PLIST)).toBe(
+      "/opt/homebrew/lib/node_modules/seorak/dist/daemon.mjs",
+    );
+  });
+
+  it("says nothing rather than guessing when the plist cannot be read", () => {
+    expect(
+      servicedDaemonProgram("/p.plist", () => {
+        throw new Error("gone");
+      }),
+    ).toBeNull();
+  });
+
+  it("flags a daemon installed under a directory the OS may reclaim", () => {
+    // The real one: an install test in a session scratchpad became the service.
+    const check = evaluateRuntime({
+      daemonPath:
+        "/private/tmp/claude-501/abc/scratchpad/installtest/node_modules/seorak/dist/daemon.mjs",
+      daemonVersion: "0.1.0",
+      cliVersion: "0.1.1",
+    });
+    expect(check.ephemeral).toBe(true);
+  });
+
+  it("does not flag a durable install, even one pinned to another version", () => {
+    const check = evaluateRuntime({
+      daemonPath: "/opt/homebrew/lib/node_modules/seorak/dist/daemon.mjs",
+      daemonVersion: "0.1.0",
+      cliVersion: "0.1.1",
+    });
+    expect(check.ephemeral).toBe(false);
+  });
+
+  it("fails the run and names the path when the daemon is ephemeral", () => {
+    const report = buildStatusReport({
+      ...healthy(),
+      runtime: evaluateRuntime({
+        daemonPath: "/private/tmp/x/dist/daemon.mjs",
+        daemonVersion: "0.1.0",
+        cliVersion: "0.1.1",
+      }),
+    });
+    expect(report.ok).toBe(false);
+    expect(report.lines.join("\n")).toContain(
+      "✘ runtime — daemon 0.1.0 runs from a temporary directory",
+    );
+  });
+
+  it("notes a version split without failing, since a pin can be deliberate", () => {
+    const report = buildStatusReport({
+      ...healthy(),
+      runtime: evaluateRuntime({
+        daemonPath: "/opt/homebrew/lib/node_modules/seorak/dist/daemon.mjs",
+        daemonVersion: "0.1.0",
+        cliVersion: "0.1.1",
+      }),
+    });
+    expect(report.ok).toBe(true);
+    expect(report.lines.join("\n")).toContain(
+      "• runtime — daemon 0.1.0 differs from this CLI 0.1.1",
+    );
+  });
+});
+
+describe("buildStatusReport — a caught-up cursor is not a delivery", () => {
+  // The eight-day outage this pins: the managed plane acknowledged the local
+  // mirror, the cursor reached the end of the log, and every drain returned
+  // without error. `caught-up` was true about the CURSOR and said nothing about
+  // whether anything reached the worker, so the check stayed green throughout.
+  function withRoute(route: "worker" | "managed" | "local") {
+    const input = healthy();
+    return buildStatusReport({
+      ...input,
+      shipping: {
+        kind: "current",
+        snapshot: {
+          schemaVersion: SHIPPING_STATUS_SCHEMA_VERSION,
+          state: "caught-up",
+          updatedAt: new Date(Date.parse("2026-08-12T00:00:00.000Z")).toISOString(),
+          consecutiveFailures: 0,
+          route,
+        },
+      },
+    });
+  }
+
+  it("refuses the delivered wording when nothing left the machine", () => {
+    const text = withRoute("local").lines.join("\n");
+    expect(text).toContain(
+      "• shipping — nothing delivered; complete history stays on this machine",
+    );
+    expect(text).not.toContain("event backlog caught up");
+  });
+
+  it("names managed sync rather than implying a POST that never happens", () => {
+    const text = withRoute("managed").lines.join("\n");
+    expect(text).toContain("✓ shipping — managed sync current");
+    expect(text).not.toContain("event backlog caught up");
+  });
+
+  it("keeps the delivered wording for the route that actually posts", () => {
+    expect(withRoute("worker").lines.join("\n")).toContain(
+      "✓ shipping — event backlog caught up",
+    );
+  });
+});
+
 describe("buildStatusReport — healthy", () => {
   const report = buildStatusReport(healthy());
   it("passes and says so", () => {
@@ -90,7 +211,7 @@ describe("buildStatusReport — hooks leg", () => {
     const line = report.lines.find((l) => l.startsWith("✘ hooks"))!;
     expect(line).toContain(`${N - 1}/${N} bound`);
     expect(line).toContain(`missing ${SEORAK_EVENTS[0]}`);
-    expect(line).toContain("seorak init");
+    expect(line).toContain("seorak setup");
   });
   it("stale script paths fail even at 6/6 bound (moved checkout)", () => {
     const input = healthy();
@@ -108,6 +229,34 @@ describe("buildStatusReport — hooks leg", () => {
     expect(report.ok).toBe(false);
     expect(report.lines.find((l) => l.startsWith("✘ hooks"))).toContain(input.settingsPath);
   });
+  // Version-scoped runtime dirs made "the script exists" stop meaning "the
+  // script is current": nothing prunes the old one, so an upgrade could leave
+  // hooks on the previous build while the service ran the new one. Existence
+  // alone reported a healthy 6/6 the whole time.
+  it("hooks that exist but belong to another install fail at 6/6 bound", () => {
+    const input = healthy();
+    input.skewedHookPaths = [
+      {
+        event: "SessionStart",
+        path: "/home/u/.seorak/runtime/0.1.2/node_modules/seorak/dist/hook-session-start.mjs",
+      },
+    ];
+    const report = buildStatusReport(input);
+    expect(report.ok).toBe(false);
+    const line = report.lines.find((l) => l.startsWith("✘ hooks"))!;
+    expect(line).toContain("runtime/0.1.2");
+    expect(line).toContain("different install than the service");
+    expect(line).toContain("re-point");
+  });
+  // An npx on-ramp puts nothing on PATH, so a checklist that says `seorak …` is
+  // a dead end for exactly the install most likely to be reading it.
+  it("names the command this reader can actually run", () => {
+    const input = healthy();
+    input.hooks = { ok: false, present: [], missing: [...SEORAK_EVENTS] };
+    input.invocation = "npx seorak";
+    const line = buildStatusReport(input).lines.find((l) => l.startsWith("✘ hooks"))!;
+    expect(line).toContain("npx seorak setup");
+  });
 });
 
 describe("buildStatusReport — service and daemon legs", () => {
@@ -122,7 +271,7 @@ describe("buildStatusReport — service and daemon legs", () => {
   it("missing plist and unloaded plist carry distinct remedies", () => {
     const a = healthy();
     a.service = evaluateService(false, false, true);
-    expect(buildStatusReport(a).lines.join("\n")).toContain("✘ service — not installed. Run `seorak init`.");
+    expect(buildStatusReport(a).lines.join("\n")).toContain("✘ service — not installed. Run `seorak setup`.");
     const b = healthy();
     b.service = evaluateService(true, false, true);
     expect(buildStatusReport(b).lines.join("\n")).toContain("✘ service — installed but not loaded. Run `seorak start`.");

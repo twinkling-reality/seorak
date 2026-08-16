@@ -159,7 +159,7 @@ export function resolveReadTargets(
  *
  * `resolveWorkerUrl` always answers with a URL, because every read surface needs
  * one to build a request. That default is exactly what used to make an
- * account-free install look broken: `seorak init` and `seorak status` probed
+ * account-free install look broken: `seorak setup` and `seorak status` probed
  * `http://localhost:8787`, found nothing there, and reported an incomplete
  * setup — for a product whose Free tier is complete WITHOUT a worker.
  *

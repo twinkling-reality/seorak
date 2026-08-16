@@ -9,8 +9,8 @@ describe('buildAgentsHistory', () => {
 
   it('materializes the day spine; absent days are measured zeros, null lines stay null', () => {
     const daily: AgentDailyPoint[] = [
-      { agent: 'claude-code', day: '2026-07-10', sessions: 3, lines: { added: 40, removed: 5 } },
-      { agent: 'codex', day: '2026-07-11', sessions: 1, lines: null },
+      { agent: 'claude-code', day: '2026-07-10', sessions: 3, lines: { added: 40, removed: 5 }, tokensTotal: null },
+      { agent: 'codex', day: '2026-07-11', sessions: 1, lines: null, tokensTotal: null },
     ];
     const h = buildAgentsHistory(daily, [], ['claude-code', 'codex'], 7, NOW, 0);
     expect(h.days).toHaveLength(7);

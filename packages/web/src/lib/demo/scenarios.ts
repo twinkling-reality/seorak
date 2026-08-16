@@ -197,7 +197,13 @@ function soloCC(rangeDays?: number): DemoData {
       agentOutcomes: base.tools.agentOutcomes.filter((o) => o.agent === 'claude-code'),
       agentOutcomesUnusable: 0,
       agentDaily: day
-        ? [{ agent: 'claude-code', day, sessions: 1, lines: { added: 180, removed: 40 } }]
+        ? [{
+          agent: 'claude-code',
+          day,
+          sessions: 1,
+          lines: { added: 180, removed: 40 },
+          tokensTotal: session.tokens.total,
+        }]
         : [],
       agentModels: (projects[0]?.byModel ?? []).slice(0, 3).map((m) => ({
         agent: 'claude-code' as const,

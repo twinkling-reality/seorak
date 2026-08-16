@@ -290,15 +290,19 @@ decision are visible as such.
 ### 3. Local UI packaging
 
 **The built dashboard is a versioned public npm package, `@seorak/dashboard`,
-whose one runtime consumer is `@seorak/collector`. The private worker consumes it
+whose one runtime consumer is the collector CLI. The private worker consumes it
 as a build input, not as its asset root.**
+
+That consumer was published as `@seorak/collector` when this was decided and is
+published as the unscoped `seorak` from `0.2.0` onward, so that the command a
+reader types names the product. The directory stays `packages/collector`.
 
 ```
                 @seorak/dashboard (built assets, public CI)
                    |                          |
         runtime dependency            build input, merged
                    v                          v
-          @seorak/collector          private site build
+             seorak (CLI)           private site build
              (local)              (marketing + dashboard + headers)
                                               |
                                               v
@@ -700,7 +704,7 @@ repository, and the private one is untouched.
 graph TD
   subgraph PUB["seorak (public, Apache-2.0)"]
     T["@seorak/types<br/>contracts, catalogs, protocol"]
-    C["@seorak/collector<br/>capture, SQLite, projections,<br/>local and self-hosted plane, terminal"]
+    C["seorak (collector CLI)<br/>capture, SQLite, projections,<br/>local and self-hosted plane, terminal"]
     D["@seorak/dashboard<br/>built primary UI"]
     W["dashboard source<br/>views, widgets"]
   end
@@ -925,8 +929,8 @@ keep.
 ## Consequences
 
 **The local product becomes shippable.** The published collector carries its
-interface. `npm i -g @seorak/collector && seorak init` opens the primary dashboard
-on loopback with no account, no key, and no network, which is what every
+interface. `npx seorak setup` opens the primary dashboard on loopback
+with no account, no key, and no Seorak service connection, which is what every
 customer-facing document already claimed.
 
 **"Open source" becomes a defensible claim rather than an aspiration.** Someone

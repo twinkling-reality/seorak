@@ -163,3 +163,41 @@ export function stopLaunchdService(
       "launchctl still reports the service as loaded",
   };
 }
+
+/**
+ * The daemon entry point the INSTALLED service actually runs, straight out of
+ * the plist's `ProgramArguments`.
+ *
+ * The CLI and the daemon can be two different builds, and nothing used to say
+ * so. On this machine the CLI resolved through an `npm link` to a live checkout
+ * while launchd ran a months-old published build unpacked into a session
+ * scratchpad, which meant reading repository source to explain daemon behaviour
+ * that build did not contain. Reporting the path is what turns that from a trap
+ * into a line of output.
+ *
+ * Deliberately string-scraped rather than XML-parsed, matching `servicePlistEnv`:
+ * the file is one this package writes, and a parser dependency for two fields is
+ * not worth it. Returns null on anything unexpected, because a status surface
+ * that cannot read the plist must say nothing rather than guess.
+ */
+export function servicedDaemonProgram(
+  plistPath: string,
+  readFile: (path: string) => string,
+): string | null {
+  let xml: string;
+  try {
+    xml = readFile(plistPath);
+  } catch {
+    return null;
+  }
+  const key = xml.indexOf("<key>ProgramArguments</key>");
+  if (key === -1) return null;
+  const open = xml.indexOf("<array>", key);
+  const close = xml.indexOf("</array>", open);
+  if (open === -1 || close === -1) return null;
+  const entries = [...xml.slice(open, close).matchAll(/<string>([^<]*)<\/string>/g)]
+    .map((match) => match[1]!);
+  // The node binary leads and the script follows. Pick by what it is rather than
+  // by position, so an added flag cannot silently shift the answer.
+  return entries.find((entry) => entry.endsWith(".mjs") || entry.endsWith(".ts")) ?? null;
+}

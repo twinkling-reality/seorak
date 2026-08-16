@@ -280,7 +280,8 @@ only when there is another idea worth stating.
 
 **Medium:** HTML and CSS. No lock icon, no privacy theater, no simulated controls.
 
-The `seorak init` command stays on Home and in the menu because it is the product activation path, not a visual requirement for this page.
+The `npx seorak setup` command stays on Home and in the menu because
+it is the product activation path, not a visual requirement for this page.
 
 ## Implementation rules
 

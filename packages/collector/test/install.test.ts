@@ -88,14 +88,21 @@ describe("mergeHooks (pure)", () => {
     expect(hooks.SessionStart).toHaveLength(1);
   });
 
-  it("matches an already-present Seorak hook by bin FILENAME, not full path", () => {
-    // A relocated checkout (different absolute dir) must still read as installed.
+  it("re-points a Seorak hook bound to another dir rather than duplicating it", () => {
+    // Recognised by bin FILENAME, so a relocated install is never bound twice —
+    // but it is RE-POINTED, not left behind. Skipping it was safe only while the
+    // bin dir was version-stable; with ~/.seorak/runtime/<version>/ it left the
+    // hooks on the previous build while the LaunchAgent moved to the new one.
     const existing = {
       hooks: { SessionEnd: [{ hooks: [{ type: "command", command: "node /old/path/hook-session-end.mjs" }] }] },
     };
-    const { added, skipped } = mergeHooks(existing, "/new/path");
-    expect(skipped).toContain("SessionEnd");
+    const { added, repaired, settings } = mergeHooks(existing, "/new/path");
+    expect(repaired).toContain("SessionEnd");
     expect(added).not.toContain("SessionEnd");
+    const groups = (settings.hooks as Record<string, unknown[]>).SessionEnd!;
+    expect(groups).toHaveLength(1);
+    expect(JSON.stringify(groups)).toContain("/new/path/hook-session-end.mjs");
+    expect(JSON.stringify(groups)).not.toContain("/old/path");
   });
 });
 

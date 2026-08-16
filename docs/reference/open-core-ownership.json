@@ -143,7 +143,7 @@
       "why": "ADR 005 decision 2. Already Apache-2.0, zero production identifiers, and the wire contract every consumer must agree on."
     },
     {
-      "package": "@seorak/collector",
+      "package": "seorak",
       "root": "packages/collector",
       "visibility": "public",
       "sourceRoots": [
@@ -193,7 +193,7 @@
         "@seorak/types"
       ],
       "moduleLoaders": "forbidden",
-      "why": "ADR 005 decision 3, built by B6. The Free primary UI as a versioned public package, whose one runtime consumer is @seorak/collector. It carries no production source root because it carries no production source: `dist/` is the dashboard entry of packages/web, built. @seorak/types is a DEVELOPMENT edge only, from the staging script, which reads DATA_PLANE_PROTOCOL_VERSION to check the version the artifact declares; the published package has zero runtime dependencies and the gate asserts it. No edge crosses into packages/web, because the staging script runs that build through npm rather than importing a mixed workspace."
+      "why": "ADR 005 decision 3, built by B6. The Free primary UI as a versioned public package, whose one runtime consumer is the collector CLI, published as the unscoped seorak (formerly @seorak/collector). It carries no production source root because it carries no production source: `dist/` is the dashboard entry of packages/web, built. @seorak/types is a DEVELOPMENT edge only, from the staging script, which reads DATA_PLANE_PROTOCOL_VERSION to check the version the artifact declares; the published package has zero runtime dependencies and the gate asserts it. No edge crosses into packages/web, because the staging script runs that build through npm rather than importing a mixed workspace."
     },
     {
       "package": "@seorak/web",
@@ -686,7 +686,7 @@
       "pattern": "scripts/check-test-timeouts*",
       "visibility": "public",
       "source": "c2t",
-      "why": "Fails when a vitest workspace would run on the implicit 5000ms default. The measurements and the reasoning are in the gate's own docblock and are deliberately not repeated here. What this entry decides is PLACEMENT: it ships public for the reason check-isolated-git* does, that the public tree carries two workspaces which run vitest, @seorak/collector and @seorak/web, and a contributor there runs them under the same kind of pre-push hook, so the rule has to be enforced where the suites are. Wiring is per-repository, both halves running their own copy. The failure that prompted it was in packages/web, which is in the public file set, so it is a public-core defect start to finish. The glob covers the test beside it, because a gate nobody has watched fail is scenery. Neither ADR 005 nor B1a placed it."
+      "why": "Fails when a vitest workspace would run on the implicit 5000ms default. The measurements and the reasoning are in the gate's own docblock and are deliberately not repeated here. What this entry decides is PLACEMENT: it ships public for the reason check-isolated-git* does, that the public tree carries two workspaces which run vitest, the collector (packages/collector, published as seorak) and @seorak/web, and a contributor there runs them under the same kind of pre-push hook, so the rule has to be enforced where the suites are. Wiring is per-repository, both halves running their own copy. The failure that prompted it was in packages/web, which is in the public file set, so it is a public-core defect start to finish. The glob covers the test beside it, because a gate nobody has watched fail is scenery. Neither ADR 005 nor B1a placed it."
     },
     {
       "pattern": "scripts/one-public-file-set*",

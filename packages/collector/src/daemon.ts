@@ -29,6 +29,7 @@ import {
   recoverAcknowledgedEventLogs,
 } from "./event-log.ts";
 import { advanceEventRejectionCheckpoint } from "./event-rejections.ts";
+import { currentCollectorInvocation } from "./invocation.ts";
 import { momentumEnabled } from "./git.ts";
 import { getDeviceId } from "./identity.ts";
 import {
@@ -49,7 +50,7 @@ import {
   startSelfHostedPlane,
   type StartedLocalPlane,
 } from "./local-plane.ts";
-import { importLegacyEventLog } from "./local-store.ts";
+import { compactSyncActivated, importLegacyEventLog } from "./local-store.ts";
 import { readOffset } from "./log-reader.ts";
 import {
   collectorDir,
@@ -117,7 +118,7 @@ const COLLECTOR_VERSION = collectorVersion();
  * worker's ingest guard enforces (unset on either side keeps local dev open).
  * `readKey` is the owner-lock READ token: GET /settings is gated by
  * `requireReadAuth`, NOT the ingest guard, so an ingest-only key 401s there.
- * Both are baked into the launchd plist by `seorak init`.
+ * Both are baked into the launchd plist by `seorak setup`.
  *
  * The read-key precedence (SEORAK_READ_KEY over SEORAK_INGEST_KEY, the one-token
  * model) lives in worker-url.ts and is resolved there for BOTH consumers. This
@@ -398,6 +399,7 @@ const flushOnce = async (): Promise<DrainEventQueueResult> => {
       acceptedEvents: 0,
       acceptedChunks: 0,
       rejectedLocalRecords: 0,
+      route: "local",
       blocked: false,
     };
   }
@@ -405,6 +407,11 @@ const flushOnce = async (): Promise<DrainEventQueueResult> => {
     workerUrl: WORKER_URL,
     installationId: await getDeviceId(),
     ...(INGEST_KEY ? { ingestKey: INGEST_KEY } : {}),
+    // The managed plane spans BOTH access classes, so it needs both tokens: the
+    // batch/rebaseline POSTs are ingest-gated, the entitlement and data-plane
+    // reads are not. Sending only the ingest key made every read 401 on a
+    // deployment with a distinct read key, which is the one that stops delivery.
+    ...(READ_KEY ? { readKey: READ_KEY } : {}),
     ...(activeNetworkSignal ? { signal: activeNetworkSignal } : {}),
     onAccepted: writeHeartbeat,
   });
@@ -415,7 +422,15 @@ const flushOnce = async (): Promise<DrainEventQueueResult> => {
   }
   await acknowledgeLocalEventMirror();
   await maintainEventLog();
-  return managed.result;
+  // The mirror was just acknowledged, so the cursor has moved past bytes this
+  // drain did not post anywhere. That is correct ONLY when a managed cell is
+  // actually holding them; otherwise local history is the authority and nothing
+  // was delivered. Saying which lets `seorak status` stop reporting a delivery
+  // that never happened, which is how a total outage stayed green for days.
+  return {
+    ...managed.result,
+    route: compactSyncActivated() ? "managed" : "local",
+  };
 };
 
 /**
@@ -562,7 +577,7 @@ export async function runDaemon(): Promise<void> {
   const stateDir = collectorDir();
   if (collectorCaptureRevoked(stateDir)) {
     throw new Error(
-      "collector capture is disabled after purge; run `seorak init` to reactivate it.",
+      `collector capture is disabled after purge; run \`${currentCollectorInvocation()} setup\` to reactivate it.`,
     );
   }
 

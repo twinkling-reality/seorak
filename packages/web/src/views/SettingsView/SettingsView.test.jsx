@@ -931,12 +931,13 @@ describe('SettingsView', () => {
     unmount();
   });
 
-  it('keeps the public tab when the plane serves publication', async () => {
+  it('withholds the public tab even when publication foundations are available', async () => {
     const SettingsView = await loadSettingsView();
     const { container, unmount } = renderComponent(SettingsView, {});
     await flushEffects();
 
-    expect(container.querySelector('[data-tab="public"]')).not.toBeNull();
+    expect(container.querySelector('[data-tab="public"]')).toBeNull();
+    expect(container.querySelector('[data-tab="capture"]')).not.toBeNull();
 
     unmount();
   });

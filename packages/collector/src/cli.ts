@@ -1,6 +1,6 @@
 /**
  * cli.ts — the `seorak` onboarding CLI. One command replaces the manual SETUP.md
- * steps: `seorak init` installs the six Claude Code hooks (via the shared
+ * steps: `seorak setup` installs the six Claude Code hooks (via the shared
  * src/install.ts module), registers a macOS launchd LaunchAgent for the daemon,
  * and verifies the whole chain end-to-end. The status command lives in status.ts;
  * worker URL + access-token resolution lives in
@@ -67,6 +67,11 @@ import {
 } from "./local-store.ts";
 import { boundedIntOr } from "./env-numbers.ts";
 import { collectorExecutableDirectory } from "./package-layout.ts";
+import { ensureCollectorRuntime } from "./runtime-install.ts";
+import {
+  collectorInvocation,
+  currentCollectorInvocation,
+} from "./invocation.ts";
 import { downloadRecoveryBundle } from "./recovery-download.ts";
 import { codexSessionsRoot, codexTailEnabled } from "./codex-tailer.ts";
 import { dashboardDeepLink } from "./dashboard.ts";
@@ -103,8 +108,8 @@ import {
 } from "./terminal/demo/fixtures.ts";
 
 /** Absolute path to the daemon entry owned by this source or package layout. */
-export function daemonEntryPath(): string {
-  return join(collectorExecutableDirectory(), "daemon.mjs");
+export function daemonEntryPath(binDir: string = collectorExecutableDirectory()): string {
+  return join(binDir, "daemon.mjs");
 }
 
 // ---------------------------------------------------------------------------
@@ -253,8 +258,8 @@ export function resolveInitCredentials(
 /**
  * What "setup succeeded" means.
  *
- * A Free install is COMPLETE with no account, no key, and no network: hooks
- * bound and capture running is the whole product on this machine. Worker
+ * A Free install is COMPLETE with no account, no key, and no Seorak service:
+ * hooks bound and capture running is the whole product on this machine. Worker
  * reachability used to be part of this verdict, which meant a fresh install
  * reported "setup incomplete" for doing exactly what the product promises.
  *
@@ -369,12 +374,14 @@ function parseArgs(argv: string[]): ParsedArgs {
 async function cmdInitConfigured(
   flags: Record<string, string | boolean>,
   lifecyclePaths: CollectorLifecyclePaths,
+  binDir: string,
+  commandPrefix: string,
 ): Promise<number> {
   const noService = flags["no-service"] === true;
   const savedConnection = loadSavedConnection();
 
   // A RE-init must not lose the working config: the status check's remedy for a
-  // missing hook or a moved checkout is "run `seorak init`", so the values the
+  // missing hook or a moved checkout is "run `seorak setup`", so the values the
   // previous init baked into the plist are the fallback for anything not passed
   // explicitly. Without this, a keyless/non-TTY re-init would silently rewrite
   // a deployed install to an unauthenticated localhost service.
@@ -424,12 +431,12 @@ async function cmdInitConfigured(
     });
   }
 
-  console.log("seorak init\n");
+  console.log(`${commandPrefix} setup\n`);
 
   // (a) hooks ---------------------------------------------------------------
   let installed;
   try {
-    installed = installHooks();
+    installed = installHooks({ binDir });
   } catch (err) {
     console.error(`✘ hook install failed: ${(err as Error).message}`);
     return 1;
@@ -437,7 +444,9 @@ async function cmdInitConfigured(
   if (installed.added.length > 0 || installed.repaired.length > 0) {
     if (installed.added.length > 0) console.log(`✓ hooks installed (${installed.added.join(", ")})`);
     if (installed.repaired.length > 0) {
-      console.log(`✓ hooks re-pointed to this checkout (${installed.repaired.join(", ")})`);
+      // Not always a checkout: the common case now is an upgrade re-pointing
+      // hooks off the previous runtime, where naming a "checkout" is nonsense.
+      console.log(`✓ hooks re-pointed to this install (${installed.repaired.join(", ")})`);
     }
     if (installed.backedUp) console.log(`  • backed up previous settings to ${installed.settingsPath}.bak`);
   } else {
@@ -458,12 +467,12 @@ async function cmdInitConfigured(
         readKey !== undefined
           ? ` SEORAK_READ_KEY=${readKey ? "<key>" : "''"}`
           : ""
-      } seorak start --foreground`,
+      } ${commandPrefix} start --foreground`,
     );
   } else {
     const plist = buildLaunchAgentPlist({
       nodeBin: process.execPath,
-      daemonPath: daemonEntryPath(),
+      daemonPath: daemonEntryPath(binDir),
       ...(connectionRequested ? { workerUrl } : {}),
       stdoutPath: daemonLogPath(),
       stderrPath: daemonLogPath(),
@@ -556,18 +565,18 @@ async function cmdInitConfigured(
     console.log("");
     console.log("next:");
     console.log("  1. restart Claude Code (or start a new session) so the hooks load");
-    console.log("  2. run `seorak` to watch the live board");
+    console.log(`  2. run \`${commandPrefix}\` to watch the live board`);
     // A connected install signs the browser in through the worker's deep link;
     // an account-free one opens the dashboard the local plane already serves,
     // with no key, no fragment, and no sign-in.
     console.log(`  3. dashboard: ${connectionRequested ? dashboardDeepLink(workerUrl) : localDashboardUrl()}`);
     if (!connectionRequested) {
       console.log("");
-      console.log("   this machine holds the complete record. `seorak login` adds a managed connection later.");
+      console.log(`   this machine holds the complete record. \`${commandPrefix} login\` adds a managed connection later.`);
     }
   } else {
-    console.log(`⚠ setup incomplete. Run \`seorak status\` for the checklist.`);
-    console.log("\nRestart Claude Code (or start a new session) so the hooks load.");
+    console.log("⚠ setup needs attention.");
+    console.log(`   Run \`${commandPrefix} status\` for the checklist and exact recovery steps.`);
   }
   return allOk ? 0 : 1;
 }
@@ -592,10 +601,20 @@ function localDashboardUrl(): string {
   return `${localPlaneOrigin()}/dashboard`;
 }
 
-async function cmdInit(flags: Record<string, string | boolean>): Promise<number> {
-  const flagError = validateCommandFlags(flags, INIT_FLAGS, "init");
+async function cmdSetup(
+  extraPositionals: string[],
+  flags: Record<string, string | boolean>,
+): Promise<number> {
+  const invocation = currentCollectorInvocation();
+  if (extraPositionals.length > 0) {
+    console.error(`✘ unexpected setup argument: ${extraPositionals[0]}`);
+    console.error(`  Run \`${invocation} setup --help\` to see the supported options.`);
+    return 1;
+  }
+  const flagError = validateCommandFlags(flags, INIT_FLAGS, "setup");
   if (flagError) {
     console.error(`✘ ${flagError}`);
+    console.error(`  Run \`${invocation} setup --help\` to see the supported options.`);
     return 1;
   }
   let lifecyclePaths: CollectorLifecyclePaths;
@@ -609,15 +628,34 @@ async function cmdInit(flags: Record<string, string | boolean>): Promise<number>
   try {
     release = acquireCollectorLifecycleLock(lifecyclePaths);
   } catch (error) {
-    console.error(`✘ collector initialization failed: ${(error as Error).message}`);
+    console.error(`✘ collector setup failed: ${(error as Error).message}`);
+    console.error(`  Run \`${invocation} status\` for the checklist and recovery steps.`);
     return 1;
   }
   try {
     assertCollectorCanInitialize(lifecyclePaths);
+    // Claim a custom state directory while it is still empty. A staged runtime
+    // lives below that directory, so staging it first would make the lifecycle
+    // guard correctly refuse its own newly populated path.
     claimCollectorState(lifecyclePaths);
-    return await cmdInitConfigured(flags, lifecyclePaths);
+    const runtime = ensureCollectorRuntime(lifecyclePaths.stateDir);
+    if (runtime.installed) console.log("✓ Seorak is ready on this machine");
+    // Recompute from where the runtime actually landed: an npx launch that just
+    // staged a durable copy still has to tell the reader to use npx.
+    const commandPrefix = collectorInvocation({
+      packageRoot: runtime.packageRoot,
+      binDir: runtime.binDir,
+      stateDir: lifecyclePaths.stateDir,
+    });
+    return await cmdInitConfigured(
+      flags,
+      lifecyclePaths,
+      runtime.binDir,
+      commandPrefix,
+    );
   } catch (error) {
-    console.error(`✘ collector initialization failed: ${(error as Error).message}`);
+    console.error(`✘ collector setup failed: ${(error as Error).message}`);
+    console.error(`  Run \`${invocation} status\` for the checklist and recovery steps.`);
     return 1;
   } finally {
     release();
@@ -680,7 +718,7 @@ async function cmdLogin(
     return 1;
   }
   let release: (() => void) | null = null;
-  console.log("seorak login\n");
+  console.log(`${currentCollectorInvocation()} login\n`);
   try {
     const lifecyclePaths = resolveCollectorLifecyclePaths(collectorDir());
     release = acquireCollectorLifecycleLock(lifecyclePaths);
@@ -695,7 +733,7 @@ async function cmdLogin(
         ? `✓ signed in to ${connection.home.name} (${connection.home.kind === "workspace" ? "Shared workspace" : "Personal"})`
         : "✓ signed in",
     );
-    console.log("  run `seorak init` to install capture");
+    console.log(`  run \`${currentCollectorInvocation()} setup\` to install capture`);
     return 0;
   } catch (error) {
     console.error(`✘ login failed: ${(error as Error).message}`);
@@ -730,7 +768,7 @@ function cmdHome(
     console.log(
       `✓ active home — ${selected.home.name} (${selected.home.kind === "workspace" ? "Shared workspace" : "Personal"})`,
     );
-    console.log("  run `seorak init` to point capture at this home");
+    console.log(`  run \`${currentCollectorInvocation()} setup\` to point capture at this home`);
     return 0;
   }
 
@@ -739,14 +777,14 @@ function cmdHome(
   const homes = connections.filter(
     (connection) => connection.home !== undefined,
   );
-  console.log("seorak homes\n");
+  console.log(`${currentCollectorInvocation()} homes\n`);
   if (homes.length === 0) {
     if (active) {
       console.log("● Personal (legacy connection)");
       console.log("  Sign in again to name this home and enable switching.");
       return 0;
     }
-    console.log("No saved homes. Run `seorak login`.");
+    console.log(`No saved homes. Run \`${currentCollectorInvocation()} login\`.`);
     return 0;
   }
   for (const connection of homes) {
@@ -756,7 +794,7 @@ function cmdHome(
       home.kind === "workspace" ? "Shared workspace" : "Personal";
     console.log(`${marker} ${home.name} — ${label} (${home.id})`);
   }
-  console.log("\nSwitch with `seorak home <name-or-id>`.");
+  console.log(`\nSwitch with \`${currentCollectorInvocation()} home <name-or-id>\`.`);
   return 0;
 }
 
@@ -1001,7 +1039,7 @@ async function cmdLocal(
     // brings up the SAME loopback data plane the daemon runs and points at the
     // SAME primary dashboard, because a second local UI was a second product.
     //
-    // The bundle arrives with the install: `@seorak/collector` depends on
+    // The bundle arrives with the install: `@seorakseorak` depends on
     // `@seorak/dashboard` exactly, and the plane resolves it by name. So the two
     // branches below are the two real failures, not the normal case they used to
     // be: nothing installed the package, or the one installed speaks a different
@@ -1078,7 +1116,21 @@ function cmdSession(flags: Record<string, string | boolean>): Promise<number> {
   return runInteractive(options);
 }
 
-function cmdStart(flags: Record<string, string | boolean>): number {
+export async function runForegroundDaemon(
+  loadDaemon: () => Promise<{ runDaemon: () => Promise<void> }> = () =>
+    import("./daemon.ts"),
+): Promise<number> {
+  try {
+    const { runDaemon } = await loadDaemon();
+    await runDaemon();
+    return 0;
+  } catch (error) {
+    console.error(`✘ foreground collector stopped: ${(error as Error).message}`);
+    return 1;
+  }
+}
+
+async function cmdStart(flags: Record<string, string | boolean>): Promise<number> {
   const flagError = validateCommandFlags(flags, START_FLAGS, "start");
   if (flagError) {
     console.error(`✘ ${flagError}`);
@@ -1086,23 +1138,23 @@ function cmdStart(flags: Record<string, string | boolean>): number {
   }
   if (collectorCaptureRevoked(collectorDir())) {
     console.error(
-      "✘ collector capture is disabled after purge. Run `seorak init` to reactivate it.",
+      `✘ collector capture is disabled after purge. Run \`${currentCollectorInvocation()} setup\` to reactivate it.`,
     );
     return 1;
   }
   if (flags.foreground === true) {
-    // Run the daemon in this process (inherits the current env). import() keeps
-    // the daemon's side-effecting top-level main() out of module load for tests.
-    void import("./daemon.ts");
-    return 0;
+    // Run and await the daemon in this process so the documented recovery path
+    // owns its lifetime and reports a startup refusal instead of exiting after
+    // a successful import.
+    return runForegroundDaemon();
   }
   if (!isMac()) {
-    console.error("✘ no launchd on this platform. Use `seorak start --foreground`.");
+    console.error(`✘ no launchd on this platform. Use \`${currentCollectorInvocation()} start --foreground\`.`);
     return 1;
   }
   const plistPath = launchAgentPlistPath();
   if (!existsSync(plistPath)) {
-    console.error(`✘ no LaunchAgent at ${plistPath}. Run \`seorak init\` first.`);
+    console.error(`✘ no LaunchAgent at ${plistPath}. Run \`${currentCollectorInvocation()} setup\` first.`);
     return 1;
   }
   const res = spawnSync("launchctl", ["load", plistPath], { encoding: "utf8" });
@@ -1361,6 +1413,9 @@ async function cmdUninstall(
 
 const HELP = `seorak: performance tracking for agentic development (Claude Code and Codex)
 
+start here:
+  npx seorak setup                                 set up local capture without a global install
+
 usage:
   seorak                                           open the live terminal session (the product)
   seorak [--once] [--days 7|30|90] [--json]        render the board once and exit (--once)
@@ -1375,9 +1430,10 @@ usage:
   seorak remote credential [--rotate]              mint the credential the plane's routable binding requires
   seorak recovery download --cell URL --output /absolute/dir
                                                    download the Seorak-operated copy during the recovery window
-  seorak init [--no-service]                       install hooks + background service (no account, no network)
-  seorak init --worker-url URL [--ingest-key KEY] [--read-key KEY]
+  seorak setup [--no-service]                      install hooks + background service (no account or hosted connection)
+  seorak setup --worker-url URL [--ingest-key KEY] [--read-key KEY]
                                                    the same, plus an explicit worker connection
+  seorak init [options]                            compatibility alias for setup
   seorak status [--worker-url URL]                 ✓/✗ checklist
   seorak start [--foreground]                      load the background daemon (or run it here)
   seorak stop                                      unload the background daemon
@@ -1442,8 +1498,12 @@ export async function run(argv: string[] = process.argv.slice(2)): Promise<numbe
     case "":
       // Bare `seorak` (plus --once / --demo / --days flags) → the session.
       return cmdSession(flags);
+    // `init` is a pure alias. It used to skip the durable runtime, which meant
+    // `npx … init` bound hooks and the LaunchAgent to npm's disposable cache.
+    // Where the code runs decides that now, not which name was typed.
+    case "setup":
     case "init":
-      return cmdInit(flags);
+      return cmdSetup(extraPositionals, flags);
     case "login":
       return cmdLogin(flags);
     case "home":

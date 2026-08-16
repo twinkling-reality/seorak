@@ -22,7 +22,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
  * build and stages what it emitted, so there is exactly one dashboard build in
  * the repository and this package cannot drift from it.
  *
- * WHY THE PACKAGE EXISTS AT ALL. `npm i -g @seorak/collector` shipped no
+ * WHY THE PACKAGE EXISTS AT ALL. `npm i -g @seorak/collector`, the collector's
+ * name before it was renamed to the unscoped `seorak`, shipped no
  * interface: the collector's plane probed two package-relative directories that
  * are empty in an npm install and printed "no dashboard bundle installed with
  * this collector". The complete Free UI existed only in a source checkout. ADR

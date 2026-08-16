@@ -5,10 +5,7 @@ import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it } from "vitest";
 import type { SessionEvent } from "@seorak/types";
 import {
-  acknowledgeLocalSyncCandidate,
   appendLocalEvent,
-  buildLocalSyncCandidate,
-  compactSyncActivated,
   importLegacyEventLog,
   listLocalSessions,
   localHistoryCounts,
@@ -16,6 +13,11 @@ import {
   openLocalHistory,
   replayLocalSession,
 } from "../src/local-store.ts";
+import {
+  acknowledgeLocalSyncCandidate,
+  buildLocalSyncCandidate,
+  compactSyncActivated,
+} from "../src/local-sync-store.ts";
 import { buildLocalReport, exportLocalHistory } from "../src/local-dashboard.ts";
 
 const temporary: string[] = [];

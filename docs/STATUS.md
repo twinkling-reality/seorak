@@ -23,7 +23,7 @@ terms.
 | **2** | Developer model (honest, period-scoped) | **Active** — finish measured identity/payoff; no peer norms |
 | **Long-term 1** | Versioned read-only API/query contract | **Implemented and release-gated** — distinct scoped authority, external refs/cursors, grounded period/session/outcome/Replay projections, mounted v1 HTTP reads, and owner UI for one-time secret issuance, scopes, expiry, project/date limits, inventory, and revoke; a production Personal cell has not yet been provisioned for hosted proof |
 | **Long-term 2** | Private MCP | **Implemented and mounted** — four read-only tools share the private DTO boundary. Collector loopback/self-hosted MCP uses a distinct exact-audience static `srkx_` bearer and no OAuth discovery; managed owner cells keep authorization code + PKCE, refresh rotation/replay revocation, RFC 9728/8707 discovery, `srmcp_` tokens, durable revoke retry, and content-free audit. The released official TypeScript client passes locally and over real self-hosted TLS; hosted OAuth awaits the still-unprovisioned control-plane Worker and real IdP credentials |
-| **Long-term 3** | Public developer profile and project gallery | **Implemented, isolated directory hosted and verified** — owner-controlled extraction, frozen activity/streak and project evidence, durable ordered delivery with privacy-prioritized revoke supersession, independent web/search/API/MCP grants, signed-out profile/project/activity API and MCP reads, account-deletion retirement, revoke/non-resurrection, and HTTPS contact only. General availability still waits for the production control plane and a real Personal owner-cell rollout |
+| **Long-term 3** | Public developer profile and project gallery | **Implemented foundations, temporarily hidden** — owner-controlled extraction, frozen activity/streak and project evidence, durable ordered delivery, revoke supersession, and account-deletion retirement remain intact. User-facing routes, navigation, Settings publication controls, metadata/discovery documents, and public web/search/API/MCP reads are default-off until a separate launch review |
 | — | Away control plane (phone act + multi-session cockpit) | **Parked** |
 | beta gate | Paid Pro tier | Free and Pro contain the same product capabilities; Pro sells Seorak-operated infrastructure and adds no exclusive feature. US-only Stripe test-mode Checkout, Portal, webhook reconciliation, and billing UI are code-complete at $12/month or $120/year. A product cell now provisions its own R2 archive bucket and live-sync namespace, `/health` reports the stores it binds and provisioning refuses a cell missing any, a verified billing decision reaches the cell through a durable outbox drained on the existing cron, grants are keyed by provider so one cannot revoke another, and both configured Stripe prices are verified against Stripe before a checkout with the button labels derived from that fetch. Five recorded defects are now closed in engineering terms: region is decided before the charge and re-checked on renewal, one open checkout per identity replaces two cadence forms, the Customer Portal switches cadence through a verified configuration that cannot offer quantity, a refused provider event is dead-lettered and replayable through operator routes instead of disabling the endpoint, and the dashboard reads a worker's data plane. Test-mode Product and Price objects exist and a real test Checkout with verified webhooks is recorded for both cadences on 2026-08-03; the four billing closures listed above (region, one open checkout, portal cadence, dead-letter) merged on 2026-08-04 and are not covered by that run (the gap). Live billing is not enabled and no owner has been charged ([ADR 004](./adr/004-per-cell-archive-and-live-sync-topology.md)) |
 
@@ -51,16 +51,16 @@ terms.
 | Hosted owner cells | Product posture, control-plane binding, provision and account-cleanup jobs, session handoff, and collector/mobile pairing are code-complete; external deploy unverified |
 | Shared workspaces | Personal cells plus isolated workspace cells, 2–5 member invites, member-bound capture, responsible-person intervention routing, collector home selection, web home switcher, and one-at-a-time mobile Personal/Shared selection are code-complete; external deploy unverified |
 | Dashboard auth | Apple + GitHub + Google OAuth control plane; one-time cell handoff; no normal pasted-token UX |
-| Collector install | Global npm package path, `seorak login` device PKCE, packaged hooks, and clean-install smoke are code-complete; `@seorak/collector@0.1.0` published to npm with provenance on 2026-08-10, and a clean registry install in a temporary directory resolved its pins and ran `dist/seorak.mjs` |
+| Collector install | `setup` is the primary command and `init` remains compatible. The `0.2.0` repository candidate stages a durable per-user runtime for npx launches and renames the CLI's npm package from `@seorak/collector` to the unscoped `seorak`, so `npx seorak setup` resolves on the package name and the `collector` bin alias is gone. `seorak@0.2.0` is not published on npm pending approval. `@seorak/collector@0.1.1` remains the last published release under the old name |
 | Project identity repair | Root-commit ledger; historical merges explicit in web settings |
-| Account-free local plane | `seorak init` succeeds with no worker; the collector's loopback plane on 4317 serves the **primary** dashboard over the public route contract with no operator credential. Ten of twelve surfaces are served. The two that answer 501 are not owed derivations: `deliveryHealth` reports on a delivery path the collector does not have, and `publication` needs an operated directory to publish to ([ADR 003](./adr/003-one-primary-ui-over-a-modular-data-plane.md)). `integrations` atomically serves owner management, four HTTP reads, and static-bearer MCP; `sessionOutcome`, `developerModel`, and `interventions` are also derived from local history |
+| Account-free local plane | `seorak setup` succeeds with no worker; `seorak init` is the supported compatibility alias. The collector's loopback plane on 4317 serves the **primary** dashboard over the public route contract with no operator credential. Ten of twelve surfaces are served. The two that answer 501 are not owed derivations: `deliveryHealth` reports on a delivery path the collector does not have, and `publication` needs an operated directory to publish to ([ADR 003](./adr/003-one-primary-ui-over-a-modular-data-plane.md)). `integrations` atomically serves owner management, four HTTP reads, and static-bearer MCP; `sessionOutcome`, `developerModel`, and `interventions` are also derived from local history |
 | Self-hosted plane | The same collector plane also binds a routable interface behind a minted credential and TLS it terminates itself, reporting `remote` / `self-hosted` with no lifecycle window. Off unless four settings and a minted credential are all present, and a partial configuration refuses to bind ([hardening](./reference/self-hosted-plane-hardening.md)). Exercised over real TLS in `self-hosted-plane.test.ts`, including every surface the descriptor declares; not yet operated on a routable host |
 
 ## Code-complete, deployment unverified
 
 | Area | Note |
 |------|------|
-| Public web + installed-client beta | Local contracts prove all three provider paths, Apple token verification/revocation, repeat identity binding, browser session revoke, collector login, package init, scoped ingest, mobile callback/redemption, pair revocation, deletion scheduling/finalization, and Shared-member purge. Provider credentials, Apple configuration, Google production publishing, Cloudflare, npm, and signed physical iOS proof remain external gates |
+| Public web + installed-client beta | Local contracts prove all three provider paths, Apple token verification/revocation, repeat identity binding, browser session revoke, collector login, package setup, scoped ingest, mobile callback/redemption, pair revocation, deletion scheduling/finalization, and Shared-member purge. Provider credentials, Apple configuration, Google production publishing, Cloudflare, npm, and signed physical iOS proof remain external gates |
 | Live Activity / Dynamic Island | Needs production Fly dispatcher, production worker binding, and signed physical-device proof |
 | App Store submission | Sign in with Apple and exact-identity deletion are code-complete; candidate metadata is versioned, and unsigned structure passes. Production provider/deletion proof, Apple Distribution archive, App Store Connect record/numeric `ascAppId`, TestFlight, review metadata/decision, and physical-iPhone proof remain |
 
@@ -88,7 +88,7 @@ terms.
 | Local and managed lifecycle | `packages/types/src/data-plane.ts` defines the plane descriptor, managed coverage, lifecycle window, 30-day recovery window, published archive allowance, and rebaseline handshake, and `packages/types/test/data-plane.test.ts` proves the refusals. Web Settings renders the plan, the exact remote-service-end and hosted-deletion dates, and managed-copy coverage from that contract (`ManagedPlanSection`, `managedPlanCopy`). Whether a plane reports those values, the customer recovery export, and the wired rebaseline are separate work |
 | Compact managed sync | Versioned encrypted collector protocol plus owner-scoped D1, R2, and Durable Object adapters are implemented locally; production resources, migrations, and deploy remain approval-gated |
 | Private integrations | **In an owner cell and on the local plane.** Collector loopback and self-hosted bindings mount secret-free owner inventory, issue/revoke, four `/api/v1` reads, and `/mcp/private` together. They use separate exact-audience static `srkx_` API/MCP grants with mandatory expiry, scopes, restrictions, persistent budgets, opaque refs/cursors, honest-empty DTOs, and bounded content-free audit; operator and integration credentials never cross. The dashboard offers static MCP only on local/self-hosted and displays each raw token once. Managed owner cells retain their separate `srmcp_` OAuth authority and durable revoke outbox; hosted OAuth is not claimed before the control plane and real IdPs are provisioned ([ADR 002](./adr/002-private-api-mcp-and-public-projection.md)) |
-| Public developer directory | Separate public-only D1, database-enforced generation ordering, web/API reads including activity, bounded search, anonymous projection-only MCP, owner extraction/durable retry, revoke supersession, management UI, public UI, per-cell provisioning, and account-deletion retirement are wired. The isolated directory is hosted and synthetic apply/read/revoke/non-resurrection proof passes; the production identity/owner-cell chain is not yet deployed |
+| Public developer directory | **Temporarily hidden.** Public routes, navigation, discovery documents, profile/project pages, publication controls, and public reads are default-off. The separate D1, publication delivery, projection storage, revocation, owner extraction, management routes, and account-deletion foundations remain intact for a later reviewed launch |
 
 ---
 
@@ -116,9 +116,7 @@ terms.
   frees the public name has landed. **C3 create and initial push are done**
   (2026-08-10): public `twinkling-reality/seorak` exists with the reviewed
   initial commit `c51c17aa` (Apache-2.0 `LICENSE` at root; 1092 files). Private
-  remotes remain on `seorak-internal`. **C3 npm publish is done** (2026-08-10):
-  `@seorak/types@0.1.0`, then `@seorak/dashboard@0.1.0`, then
-  `@seorak/collector@0.1.0`, each carrying both an npm publish attestation and a
+  remotes remain on `seorak-internal`. **C3 npm publish is done for `@seorak/types@0.1.0`, `@seorak/dashboard@0.1.0`, and `@seorak/collector@0.1.0`** (2026-08-10), each carrying both an npm publish attestation and a
   SLSA v1 provenance attestation naming the public repo's
   `.github/workflows/publish.yml` at commit `91b7e9a6`.
   Those three `0.1.0` versions ran on a short-lived granular access token, so
@@ -169,16 +167,21 @@ terms.
   provenance, needing no account compromise. Publishing a tarball also executes
   no lifecycle scripts at all, and provenance is unaffected by it: npm rebuilds
   the spec from the manifest's own name and version.
-  Nothing has gone end to end through the split path to a new version yet, so
-  the first real use will be `0.1.1` and provenance under the split is read off
-  npm's source rather than observed. What is proven is that the split path
-  authenticates and packs, from three probe runs dispatched against the
-  already-registered `@seorak/types@0.1.0`: a successful OIDC handshake surfaces
-  as `EPUBLISHCONFLICT`, which npm reaches only after authenticating, where a
-  failure surfaces as `E404` or `ENEEDAUTH`, so the two are distinguishable
-  while burning no version number.
-  C4 prep gates refuse reduction until one green publish/pin/deploy evidence
-  file exists.
+  **First end-to-end split-path publish observed 2026-08-11:**
+  `@seorak/collector@0.1.1` published via
+  [run 31489305944](https://github.com/twinkling-reality/seorak/actions/runs/31489305944)
+  on public tip `7d98e06`, with both attestation types present. The signed SLSA
+  v1 DSSE payload names repository `https://github.com/twinkling-reality/seorak`,
+  workflow `.github/workflows/publish.yml`, ref `refs/heads/main`, commit
+  `7d98e0630701779befa76b0bacc397e1a91cc0de`, builder
+  `https://github.com/actions/runner/github-hosted`, and subject
+  `pkg:npm/%40seorak/collector@0.1.1` whose sha512 matches the packument
+  integrity. `@seorak/types` and `@seorak/dashboard` remain at `0.1.0`; the
+  collector pin stays exact `@seorak/dashboard@0.1.0`. Earlier the same path was
+  proven to authenticate and pack via three probe runs against already-registered
+  `@seorak/types@0.1.0` (`EPUBLISHCONFLICT` after auth vs `E404`/`ENEEDAUTH`).
+  C4 prep gates still refuse reduction until one green publish/pin/deploy
+  evidence file exists.
 - **90-day range** — least used, most expensive to build; product call whether it stays. Capacity may `413` before plan policy does.
 - **Activity-proportional scheduling** — rollups advance on ingest and the local
   and deployed dogfood release uses one Durable Object alarm per isolated cell

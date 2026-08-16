@@ -80,7 +80,7 @@ describe("entryCard", () => {
     // Not "first-run": this machine has seen a version before, so the honest
     // claim is that capture broke or was removed, not that it is new here.
     expect(card.reason).toBe("not-capturing");
-    expect(card.body.join(" ")).toContain("seorak init");
+    expect(card.body.join(" ")).toContain("seorak setup");
   });
 
   it("an EXISTING install adopting this build is not welcomed to a product it already uses", () => {

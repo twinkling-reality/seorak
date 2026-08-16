@@ -1,6 +1,6 @@
 /**
  * install.ts — the shared hook-merge logic behind both the manual installer
- * entry point and the `seorak init` CLI.
+ * entry point and the `seorak setup` CLI (`init` remains an alias).
  *
  * Idempotently MERGES the six Seorak collector hook bindings into Claude Code's
  * settings.json (default ~/.claude/settings.json, override with SEORAK_SETTINGS),
@@ -245,12 +245,29 @@ export function presentEvents(settings: unknown): { present: string[]; missing: 
  * merged in (idempotent: an event already running its Seorak bin is left as-is),
  * plus the added/skipped/repaired event lists. Does not mutate the input.
  *
- * `scriptExists` (injected so the merge stays pure) enables SELF-HEAL for a
- * moved checkout: a binding whose script path no longer exists on disk would
- * otherwise read as "already present" forever (the match is by bin FILENAME),
- * leaving Claude Code firing hooks into ENOENT with no way back short of a full
- * uninstall. When every Seorak binding for an event is stale, it is replaced
- * with a fresh binding against the current bin dir and reported as repaired.
+ * A binding is CURRENT only when it runs the exact script this merge was asked
+ * to bind — same bin dir, same filename — and (when `scriptExists` is injected)
+ * that script is actually on disk. Anything else is re-pointed and reported as
+ * repaired.
+ *
+ * Two distinct failures make that the rule rather than "present by filename":
+ *
+ *   1. A MOVED CHECKOUT leaves a binding whose script no longer exists. Matching
+ *      by bin FILENAME alone would read it as "already present" forever, so
+ *      Claude Code fires hooks into ENOENT with no way back short of a full
+ *      uninstall. `scriptExists` (injected, so the merge stays pure) catches it.
+ *
+ *   2. A VERSION-SCOPED bin dir (~/.seorak/runtime/<version>/…) makes "the
+ *      script still exists" stop implying "the script is current": nothing
+ *      prunes an old runtime, so after an upgrade the previous version's hook
+ *      scripts are still on disk and a presence-only check skips all six. The
+ *      LaunchAgent is rewritten unconditionally, so the result was a daemon on
+ *      the new version and hooks on the old one — permanently, and invisibly,
+ *      because the status checklist only asked whether the paths existed.
+ *
+ * Setup is the authoritative act, so hooks follow the bin dir it chose, exactly
+ * as the LaunchAgent already does. Presence-by-filename is still the right
+ * question for `presentEvents`, which answers "are the six bound at all".
  */
 export function mergeHooks(
   settings: Record<string, unknown>,
@@ -263,12 +280,13 @@ export function mergeHooks(
       ? { ...(next.hooks as Record<string, unknown>) }
       : {};
 
-  /** True when this hook group carries a Seorak command for `binFile` whose
-   *  script path is confirmed missing (and none that still resolves). */
+  /** True when this hook group carries a Seorak command for `binFile` and none
+   *  of them is CURRENT — i.e. every one either points somewhere other than the
+   *  bin dir being installed, or (with `scriptExists` injected) is missing. */
   const groupIsStale = (group: unknown, binFile: string): boolean => {
-    if (!scriptExists) return false;
     const inner = (group as { hooks?: unknown })?.hooks;
     if (!Array.isArray(inner)) return false;
+    const wanted = join(binDir, binFile);
     let sawSeorak = false;
     for (const h of inner) {
       const cmd = (h as { command?: unknown })?.command;
@@ -276,7 +294,7 @@ export function mergeHooks(
       const path = seorakCommandPath(cmd, binFile);
       if (!path) continue;
       sawSeorak = true;
-      if (path && scriptExists(path)) return false;
+      if (path === wanted && (!scriptExists || scriptExists(path))) return false;
     }
     return sawSeorak;
   };

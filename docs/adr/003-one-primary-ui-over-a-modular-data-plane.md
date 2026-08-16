@@ -375,9 +375,26 @@ moving the DECLARATION rather than the module holding it — which it must be,
 since the point of the type edge is that no implementation is needed. So the
 closure is bounded, and this is the number the extraction is actually held to:
 
-**Value closure: 20 modules, 7,492 lines.** Seventeen scoped (6,174 lines — 4a's
-5,805 pure lines plus the 369-line D1 tail of `tools.ts`, `usage.ts`, and
+**Value closure: 20 modules, 7,561 lines.** Seventeen scoped (6,243 lines — 4a's
+5,874 pure lines plus the 369-line D1 tail of `tools.ts`, `usage.ts`, and
 `outcomes.ts` that a split leaves behind) plus three the slices never named:
+
+Restated 2026-08-16, from 7,548 and 6,230. The 13-line delta is one scoped
+module: `overviewWindow.ts`, where `resolveOverviewWindow` took an injected
+`nowMs` instead of reading the wall clock. That was a defect fix, not a feature
+— the parity gate pinned an instant on the local side while the worker's window
+drifted with real time, so the check went red on its own once real time passed
+the fixture. The addition is pure, so the D1 tail stays 369 and 4a's pure lines
+go 5,861 to 5,874. The module counts did not move: the closure is still 20 by
+value, 17 scoped, 5 type-only, 36 gate-visible.
+
+Restated 2026-08-12, from 7,492 and 6,174. The 56-line delta is two scoped
+modules and is entirely the `tokensTotal` leg of the per-agent daily series:
+`usage.ts` 656 to 698, where `agentDailyFromBuckets` learned to carry tokens,
+and `overviewProjects.ts` 392 to 406, its call site. Both additions are pure, so
+the D1 tail stays 369 and 4a's pure lines go 5,805 to 5,861. The module counts
+did not move. The numbers below in sections 5, 6 and A are the ones the decision
+was weighed against and are left at what was measured then.
 
 | Reached by value | Lines | D1 | By, and for what |
 |---|---:|---|---|

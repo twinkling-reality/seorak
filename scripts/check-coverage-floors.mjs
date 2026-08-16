@@ -56,6 +56,32 @@ export const COVERAGE_RUNS = Object.freeze([
     id: "worker",
     runner: "vitest",
     workspace: "packages/worker",
+    // Coverage is a focused second pass after the complete worker suite. Keep
+    // it on the tests that own these seams: running every worker test again
+    // buffered hundreds of thousands of log lines and was terminated by the
+    // hosted runner before Vitest could write its summary.
+    tests: [
+      "test/auth.test.ts",
+      "test/browser-sessions.test.ts",
+      "test/capability-gate-rows.test.ts",
+      "test/cron-budget.test.ts",
+      "test/delivery-ledger.test.ts",
+      "test/event-ingest-boundary.test.ts",
+      "test/event-ingest-compatibility.test.ts",
+      "test/ingest-clock-skew.test.ts",
+      "test/integration-credentials.test.ts",
+      "test/intervention-delivery.test.ts",
+      "test/live-activity.test.ts",
+      "test/observability-events.test.ts",
+      "test/owner-cell.test.ts",
+      "test/private-integration-api.test.ts",
+      "test/push-delivery.test.ts",
+      "test/rate-limit.test.ts",
+      "test/route-contract.test.ts",
+      "test/session-ownership.test.ts",
+      "test/session-projection.test.ts",
+      "test/workspace-principals.test.ts",
+    ],
     floors: Object.freeze({
       // AUTH: the complete method/path authorization policy and the one
       // middleware that enforces it, plus the abuse budget and capability
@@ -250,6 +276,7 @@ export function vitestCoverageArgs(run, reportsDirectory) {
     "--coverage",
     "--coverage.provider=v8",
     "--coverage.reporter=json-summary",
+    "--silent=passed-only",
     `--coverage.reportsDirectory=${reportsDirectory}`,
     ...Object.keys(run.floors).map((file) => `--coverage.include=${file}`),
   ];

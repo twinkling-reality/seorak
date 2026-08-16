@@ -102,6 +102,10 @@ describe("sequential event queue drain", () => {
       acceptedEvents: 2,
       acceptedChunks: 2,
       rejectedLocalRecords: 0,
+      // The legacy drain is the one route that genuinely posts to the worker,
+      // and it says so: `seorak status` must not have to infer a delivery from
+      // the absence of an error.
+      route: "worker",
       blocked: false,
     });
     expect(offsets).toEqual([100, 200]);

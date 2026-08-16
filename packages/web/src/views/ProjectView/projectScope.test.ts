@@ -284,7 +284,7 @@ describe('scopeToProject no silent global under scope (SCOPE.md Phase 0)', () =>
     // The global-only agent series, each carrying a DISTINCTIVE all-repos value so
     // a spread-through leak would be visible under scope.
     o.tools.agentDaily = [
-      { agent: 'claude-code', day: '2026-06-10', sessions: 9, lines: { added: 90, removed: 30 } },
+      { agent: 'claude-code', day: '2026-06-10', sessions: 9, lines: { added: 90, removed: 30 }, tokensTotal: null },
     ];
     o.tools.agentModels = [
       { agent: 'claude-code', model: 'claude-opus-4-8', calls: 44, tokensTotal: 90_000, costUsd: 9.9 },

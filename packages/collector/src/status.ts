@@ -18,6 +18,8 @@
  *     exit code; they are reported for the eye, not for CI.
  */
 import { existsSync, readFileSync, statSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { collectorVersion } from "./terminal/news-store.ts";
 import { platform } from "node:os";
 import {
   bearerHeader,
@@ -35,7 +37,8 @@ import {
   type CurrentEventRejections,
 } from "./event-rejections.ts";
 import { SEORAK_EVENTS, defaultSettingsPath, presentEvents, seorakHookPaths } from "./install.ts";
-import { launchdServiceLoaded } from "./launchd.ts";
+import { BINARY_INVOCATION, currentCollectorInvocation } from "./invocation.ts";
+import { launchdServiceLoaded, servicedDaemonProgram } from "./launchd.ts";
 import { LAUNCHD_LABEL, eventsLogPath, heartbeatPath, launchAgentPlistPath } from "./paths.ts";
 import {
   readShippingStatus,
@@ -158,7 +161,7 @@ export function evaluateHeartbeat(writtenMs: number | null, nowMs: number, stale
  * isDaemonWedged — PURE (FOLLOW-UP #4 review fixup). A loaded launchd service whose
  * heartbeat is PRESENT-BUT-STALE is genuinely hung (launchd reports it "loaded"
  * while it hangs) → wedged. An ABSENT heartbeat is NOT wedged: a just-loaded daemon
- * hasn't written its first beat yet (a race right after `seorak init`), so absent
+ * hasn't written its first beat yet (a race right after `seorak setup`), so absent
  * reads as "still starting", reported but never failing the exit code. On a
  * platform with no launchd (foreground), the heartbeat is informational only.
  */
@@ -300,7 +303,18 @@ export interface StatusReportInput {
   hooks: HookCheck;
   /** Bound Seorak scripts whose file no longer exists (moved checkout). */
   staleHookPaths: Array<{ event: string; path: string }>;
+  /**
+   * Bound Seorak scripts that exist but belong to a DIFFERENT install than the
+   * one the service runs. Version-scoped runtime directories made this possible:
+   * the previous version's hook scripts are still on disk after an upgrade, so
+   * an existence check alone reports a healthy 6/6 while capture is split across
+   * two builds. Optional so a caller built before this field keeps compiling.
+   */
+  skewedHookPaths?: Array<{ event: string; path: string }>;
   service: ServiceCheck;
+  /** Optional so a caller built before this field keeps compiling; absent simply
+   *  prints no runtime line. */
+  runtime?: RuntimeCheck;
   platformName: string;
   label: string;
   heartbeat: HeartbeatCheck;
@@ -315,6 +329,12 @@ export interface StatusReportInput {
   /** Null on a local-only install, where there is nothing to probe. */
   worker: WorkerProbe | null;
   ingest: WorkerProbe | null;
+  /**
+   * How THIS reader runs Seorak — `seorak` for an install on PATH, `npx …` for
+   * an npx on-ramp that put nothing there. Optional so a caller built before
+   * this field keeps compiling, defaulting to the binary form.
+   */
+  invocation?: string;
   /** Where the primary dashboard reads from on this machine. */
   localPlaneUrl: string;
   shipping: ShippingStatusRead;
@@ -338,6 +358,10 @@ export interface StatusReport {
 export function buildStatusReport(input: StatusReportInput): StatusReport {
   const lines: string[] = [];
   const totalEvents = SEORAK_EVENTS.length;
+  // Every remedy below has to name a command this reader can type. An npx
+  // on-ramp installs nothing on PATH, so a hardcoded `seorak …` was a dead end
+  // for precisely the install most likely to need the checklist.
+  const cmd = input.invocation ?? BINARY_INVOCATION;
 
   if (input.activeHome) {
     lines.push(
@@ -348,14 +372,21 @@ export function buildStatusReport(input: StatusReportInput): StatusReport {
   // hooks (critical): valid JSON, all six bound, none pointing at a dead path.
   let hooksOk = false;
   if (!input.settingsValid) {
-    lines.push(`✘ hooks — ${input.settingsPath} is not valid JSON. Fix or restore it (look for a .bak next to it), then run \`seorak init\`.`);
+    lines.push(`✘ hooks — ${input.settingsPath} is not valid JSON. Fix or restore it (look for a .bak next to it), then run \`${cmd} setup\`.`);
   } else if (!input.hooks.ok) {
     const missing = input.hooks.missing.join(", ");
     const pronoun = input.hooks.missing.length === 1 ? "it" : "them";
-    lines.push(`✘ hooks — ${input.hooks.present.length}/${totalEvents} bound (missing ${missing}). Run \`seorak init\` to add ${pronoun}.`);
+    lines.push(`✘ hooks — ${input.hooks.present.length}/${totalEvents} bound (missing ${missing}). Run \`${cmd} setup\` to add ${pronoun}.`);
   } else if (input.staleHookPaths.length > 0) {
     const stalePath = input.staleHookPaths[0]!.path;
-    lines.push(`✘ hooks — ${totalEvents}/${totalEvents} bound, but they point at a missing checkout (${stalePath}). Run \`seorak init\` from the current checkout to re-point them.`);
+    lines.push(`✘ hooks — ${totalEvents}/${totalEvents} bound, but they point at a missing checkout (${stalePath}). Run \`${cmd} setup\` from the current checkout to re-point them.`);
+  } else if (input.skewedHookPaths && input.skewedHookPaths.length > 0) {
+    // Bound, present, and WRONG: the scripts exist, but they belong to a build
+    // the service is not running. Capture is split until setup re-points them.
+    const skewed = input.skewedHookPaths[0]!.path;
+    lines.push(
+      `✘ hooks — ${totalEvents}/${totalEvents} bound, but they run a different install than the service (${skewed}). Run \`${cmd} setup\` to re-point them.`,
+    );
   } else {
     hooksOk = true;
     lines.push(`✓ hooks — ${totalEvents}/${totalEvents} bound`);
@@ -363,13 +394,34 @@ export function buildStatusReport(input: StatusReportInput): StatusReport {
 
   // service (critical on mac, N/A elsewhere)
   if (input.service.unsupported) {
-    lines.push(`• service — N/A on ${input.platformName} (run \`seorak start --foreground\`)`);
+    lines.push(`• service — N/A on ${input.platformName} (run \`${cmd} start --foreground\`)`);
   } else if (input.service.ok) {
     lines.push(`✓ service — launchd loaded (${input.label})`);
   } else if (!input.service.plistPresent) {
-    lines.push(`✘ service — not installed. Run \`seorak init\`.`);
+    lines.push(`✘ service — not installed. Run \`${cmd} setup\`.`);
   } else {
-    lines.push(`✘ service — installed but not loaded. Run \`seorak start\`.`);
+    lines.push(`✘ service — installed but not loaded. Run \`${cmd} start\`.`);
+  }
+
+  // Which build the service actually runs. The CLI and the daemon are separate
+  // installs and can silently disagree; saying so costs one line and saves
+  // reading source that the running build does not contain.
+  if (input.runtime && input.runtime.daemonPath !== null) {
+    const version = input.runtime.daemonVersion ?? "unknown version";
+    if (input.runtime.ephemeral) {
+      lines.push(
+        `✘ runtime — daemon ${version} runs from a temporary directory that may be deleted: ${input.runtime.daemonPath}. Reinstall it somewhere durable.`,
+      );
+    } else if (
+      input.runtime.daemonVersion !== null &&
+      input.runtime.daemonVersion !== input.runtime.cliVersion
+    ) {
+      lines.push(
+        `• runtime — daemon ${version} differs from this CLI ${input.runtime.cliVersion} (${input.runtime.daemonPath})`,
+      );
+    } else {
+      lines.push(`• runtime — daemon ${version} (${input.runtime.daemonPath})`);
+    }
   }
 
   // daemon liveness (heartbeat): wedged is critical, the rest informational.
@@ -394,14 +446,14 @@ export function buildStatusReport(input: StatusReportInput): StatusReport {
   let connectionOk = true;
   if (!input.connected || worker === null || ingest === null) {
     lines.push(
-      "• connection — none configured. Run `seorak login`, or `seorak init --worker-url URL` for a worker you operate.",
+      `• connection — none configured. Run \`${cmd} login\`, or \`${cmd} setup --worker-url URL\` for a worker you operate.`,
     );
   } else {
     if (worker.ok) {
       lines.push(`✓ worker reads — ${input.workerUrl} reachable`);
     } else if (worker.authRejected) {
       connectionOk = false;
-      lines.push(`✘ worker reads — ${input.workerUrl} answered ${worker.status}: no valid read authority is set. Set SEORAK_READ_KEY, or re-run \`seorak init\` with --read-key.`);
+      lines.push(`✘ worker reads — ${input.workerUrl} answered ${worker.status}: no valid read authority is set. Set SEORAK_READ_KEY, or re-run \`${cmd} setup\` with --read-key.`);
     } else {
       connectionOk = false;
       const why = worker.error ?? `HTTP ${worker.status}`;
@@ -415,7 +467,7 @@ export function buildStatusReport(input: StatusReportInput): StatusReport {
     } else if (ingest.authRejected) {
       connectionOk = false;
       lines.push(
-        `✘ worker ingest — worker answered ${ingest.status}: no valid ingest authority is set. Set SEORAK_INGEST_KEY, or re-run \`seorak init\` with --ingest-key.`,
+        `✘ worker ingest — worker answered ${ingest.status}: no valid ingest authority is set. Set SEORAK_INGEST_KEY, or re-run \`${cmd} setup\` with --ingest-key.`,
       );
     } else {
       connectionOk = false;
@@ -441,7 +493,21 @@ export function buildStatusReport(input: StatusReportInput): StatusReport {
       "✘ shipping — local delivery status is invalid. Restart the collector to rebuild it.",
     );
   } else if (input.shipping.snapshot.state === "caught-up") {
-    lines.push("✓ shipping — event backlog caught up");
+    // "caught-up" means the cursor reached the end of the log, which is NOT the
+    // same as "the worker has it". A local acknowledgement moves the cursor
+    // without posting anything, so reporting a delivery here is how a total
+    // outage read healthy for eight days. Only a route that left this machine
+    // earns the delivered wording.
+    const route = input.shipping.snapshot.route;
+    if (route === "local") {
+      lines.push(
+        "• shipping — nothing delivered; complete history stays on this machine",
+      );
+    } else if (route === "managed") {
+      lines.push("✓ shipping — managed sync current");
+    } else {
+      lines.push("✓ shipping — event backlog caught up");
+    }
   } else if (input.shipping.snapshot.state === "retrying") {
     const waitMs = Math.max(
       0,
@@ -544,6 +610,9 @@ export function buildStatusReport(input: StatusReportInput): StatusReport {
     input.service.ok &&
     connectionOk &&
     shippingOk &&
+    // A daemon in a directory the OS may reclaim is a capture outage waiting to
+    // happen, so it fails the run rather than merely noting itself.
+    !(input.runtime?.ephemeral ?? false) &&
     captureContractOk &&
     captureContinuityOk &&
     !wedged;
@@ -603,6 +672,63 @@ function heartbeatWrittenMs(): number | null {
   }
 }
 
+export interface RuntimeCheck {
+  /** The daemon entry the plist names, or null when it could not be read. */
+  daemonPath: string | null;
+  /** The `seorak` version that path resolves to, when discoverable. */
+  daemonVersion: string | null;
+  /** This process's own version, for the comparison. */
+  cliVersion: string;
+  /** The daemon lives somewhere the OS may delete out from under it. */
+  ephemeral: boolean;
+}
+
+/** Directories an OS or a tool may reclaim while the daemon is still running.
+ *  A collector installed into one of these keeps working right up until it
+ *  silently does not, and capture is the product. */
+const EPHEMERAL_ROOTS = ["/tmp/", "/private/tmp/", "/var/folders/"];
+
+/**
+ * evaluateRuntime — PURE. Whether the service runs a build this CLI can reason
+ * about, and whether it runs it from somewhere durable.
+ *
+ * Neither answer is a failure on its own: a deliberate version pin is legitimate,
+ * and so is running a published build while the CLI is linked to a checkout. An
+ * EPHEMERAL path is different, because nothing about it is deliberate for long.
+ */
+export function evaluateRuntime(input: {
+  daemonPath: string | null;
+  daemonVersion: string | null;
+  cliVersion: string;
+}): RuntimeCheck {
+  const ephemeral =
+    input.daemonPath !== null &&
+    EPHEMERAL_ROOTS.some((root) => input.daemonPath!.startsWith(root));
+  return { ...input, ephemeral };
+}
+
+/**
+ * The `seorak` version owning a daemon entry point, by walking up to
+ * the nearest `package.json`. Null when there is none to read, which is the
+ * honest answer for a daemon run straight out of a source tree.
+ */
+function packageVersionFor(daemonPath: string): string | null {
+  let dir = dirname(daemonPath);
+  for (let depth = 0; depth < 6; depth += 1) {
+    try {
+      const raw = readFileSync(join(dir, "package.json"), "utf8");
+      const parsed = JSON.parse(raw) as { name?: unknown; version?: unknown };
+      if (typeof parsed.version === "string") return parsed.version;
+    } catch {
+      // Keep walking: a dist/ or bin/ directory legitimately has no manifest.
+    }
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return null;
+}
+
 /** `seorak status`. Accepts the session's flags so
  *  `--worker-url` works here too. Returns the process exit code. */
 export async function cmdStatus(flags: Record<string, string | boolean> = {}): Promise<number> {
@@ -619,10 +745,29 @@ export async function cmdStatus(flags: Record<string, string | boolean> = {}): P
   const settingsPath = defaultSettingsPath();
   const settings = loadSettings(settingsPath);
   const hooks = evaluateHooks(settings);
-  const staleHookPaths =
-    settings === null ? [] : seorakHookPaths(settings).filter((p) => !existsSync(p.path));
+  const boundHookPaths = settings === null ? [] : seorakHookPaths(settings);
+  const staleHookPaths = boundHookPaths.filter((p) => !existsSync(p.path));
 
   const service = evaluateService(existsSync(plistPath), launchctlLoaded(), isMac());
+  const daemonPath = servicedDaemonProgram(plistPath, (path: string) =>
+    readFileSync(path, "utf8"),
+  );
+  // A hook script that EXISTS can still be the wrong one. Version-scoped runtime
+  // directories are not pruned, so after an upgrade the previous build's hooks
+  // are still on disk next to the new ones; only comparing them against the
+  // daemon the service actually runs tells the two apart.
+  const daemonBinDir = daemonPath === null ? null : dirname(daemonPath);
+  const skewedHookPaths =
+    daemonBinDir === null
+      ? []
+      : boundHookPaths.filter(
+          (p) => existsSync(p.path) && dirname(p.path) !== daemonBinDir,
+        );
+  const runtime = evaluateRuntime({
+    daemonPath,
+    daemonVersion: daemonPath === null ? null : packageVersionFor(daemonPath),
+    cliVersion: collectorVersion(),
+  });
   const heartbeat = evaluateHeartbeat(heartbeatWrittenMs(), nowMs);
   const connected = hasWorkerConnection(
     flags,
@@ -660,7 +805,10 @@ export async function cmdStatus(flags: Record<string, string | boolean> = {}): P
     settingsValid: settings !== null,
     hooks,
     staleHookPaths,
+    skewedHookPaths,
+    invocation: currentCollectorInvocation(),
     service,
+    runtime,
     platformName: platform(),
     label: LAUNCHD_LABEL,
     heartbeat,

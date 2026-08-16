@@ -70,8 +70,7 @@ export function runLocalPrivateMcpFocusedSuite() {
     "npm",
     [
       "--workspace",
-      "@seorak/collector",
-      "exec",
+      "seorak",      "exec",
       "vitest",
       "run",
       "test/local-private-mcp.test.ts",

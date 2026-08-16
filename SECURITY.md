@@ -87,7 +87,7 @@ Stating these plainly is part of the policy, not a disclaimer under it.
 
 | Component | What a report should look like |
 |---|---|
-| `@seorak/collector` | anything that sends captured data off the machine, writes outside its own state directory, or executes content from a captured session |
+| the collector CLI (`seorak`) | anything that sends captured data off the machine, writes outside its own state directory, or executes content from a captured session |
 | the local data plane | anything a non-loopback caller can reach without the credential the self-hosted binding requires, or any way to bypass the loopback `Host` and `Origin` checks |
 | the local store | anything that lets one project's history be read as another's, or that corrupts the SQLite authority |
 | `@seorak/types` | anything in the parsers a hostile payload can exploit |

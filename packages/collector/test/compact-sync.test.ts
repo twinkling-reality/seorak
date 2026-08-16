@@ -15,12 +15,11 @@ import {
   buildCompactSyncBatch,
   drainManagedCompactSync,
 } from "../src/compact-sync.ts";
+import { appendLocalEvent, localHistoryCounts } from "../src/local-store.ts";
 import {
-  appendLocalEvent,
   buildLocalSyncCandidate,
-  localHistoryCounts,
   readLocalManagedSyncState,
-} from "../src/local-store.ts";
+} from "../src/local-sync-store.ts";
 import { localArchiveKeyPath } from "../src/paths.ts";
 
 function directory(): string {
@@ -126,6 +125,74 @@ describe("collector compact sync", () => {
       },
     });
     expect(result).toEqual({ kind: "legacy" });
+  });
+
+  it("reads its entitlement with the READ key, not the ingest key", async () => {
+    // A hosted worker sets a read key distinct from its ingest key, and gates
+    // /entitlements on the read guard. Sending the ingest key there 401s, and
+    // the swallowed failure used to resolve an entitled Pro install as
+    // unentitled — which routes it into the downgraded branch, where the daemon
+    // acknowledges the local mirror and the shipping cursor runs to the end of
+    // the log with nothing posted. Silent, total delivery loss from one header.
+    const dir = directory();
+    const seen: Array<string | null> = [];
+    const result = await drainManagedCompactSync({
+      workerUrl: "https://worker.test",
+      installationId: "install-1",
+      ingestKey: "ingest-token",
+      readKey: "read-token",
+      directory: dir,
+      nowMs: TEST_NOW_MS,
+      fetchImpl: async (url, init) => {
+        const path = new URL(String(url)).pathname;
+        if (path === "/sync/health") return json(health);
+        if (path === "/entitlements") {
+          const authorization = new Headers(init?.headers).get("authorization");
+          seen.push(authorization);
+          return authorization === "Bearer read-token"
+            ? json(entitlement("pro"))
+            : json({ error: "unauthorized" }, 401);
+        }
+        return json(null, 500);
+      },
+    });
+
+    expect(seen).toEqual(["Bearer read-token"]);
+    // The grant was accepted and parsed, so the install reads as entitled
+    // rather than resolving against the null grant a 401 leaves behind. Caching
+    // it is the observable proof: the downgraded path never gets this far.
+    const cached = readLocalManagedSyncState(dir).cachedEntitlementJson;
+    expect(cached).not.toBeNull();
+    expect(JSON.parse(cached!)).toMatchObject({
+      plan: "pro",
+      hosted: { managedSync: true },
+    });
+    expect(result.kind).toBe("handled");
+  });
+
+  it("falls back to the ingest key when no read key is configured", async () => {
+    // The one-token model: SEORAK_READ_KEY unset means reads authenticate with
+    // the ingest key, so a single-token install must keep working unchanged.
+    const dir = directory();
+    const seen: Array<string | null> = [];
+    await drainManagedCompactSync({
+      workerUrl: "https://worker.test",
+      installationId: "install-1",
+      ingestKey: "ingest-token",
+      directory: dir,
+      nowMs: TEST_NOW_MS,
+      fetchImpl: async (url, init) => {
+        const path = new URL(String(url)).pathname;
+        if (path === "/sync/health") return json(health);
+        if (path === "/entitlements") {
+          seen.push(new Headers(init?.headers).get("authorization"));
+          return json(entitlement("free"));
+        }
+        return json(null, 500);
+      },
+    });
+
+    expect(seen).toEqual(["Bearer ingest-token"]);
   });
 
   it("keeps complete local work Free and never posts it to hosted storage", async () => {

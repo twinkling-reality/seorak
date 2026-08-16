@@ -272,6 +272,43 @@
   cursor: default;
 }
 
+.embedPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--hairline);
+}
+
+.embedUrl {
+  display: block;
+  overflow-wrap: anywhere;
+  padding: 10px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-xs);
+  background: color-mix(in srgb, var(--paper) 96%, var(--ink));
+  color: var(--ink);
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+}
+
+.embedActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.embedPreview {
+  display: block;
+  width: min(100%, 560px);
+  height: auto;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-xs);
+  background: var(--paper);
+}
+
 .unsaved,
 .feedback {
   margin: -8px 0 0;

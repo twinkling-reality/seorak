@@ -37,21 +37,40 @@ import {
 } from "../src/compact-sync.ts";
 import {
   appendLocalEvent,
-  applyLocalRebaseline,
   listLocalSessions,
   localHistoryCounts,
+  replayLocalSession,
+} from "../src/local-store.ts";
+import {
+  applyLocalRebaseline,
   localHistoryFrom,
   readLocalBaselineEpoch,
   readLocalManagedBacklog,
   readLocalManagedSyncState,
-  replayLocalSession,
-} from "../src/local-store.ts";
+} from "../src/local-sync-store.ts";
 import { localArchiveKeyPath } from "../src/paths.ts";
 
 const NOW_MS = Date.parse("2026-08-15T12:00:00.000Z");
 
 function directory(): string {
   return mkdtempSync(join(tmpdir(), "seorak-managed-coverage-"));
+}
+
+/**
+ * Capture on the FIXTURE clock, which is the same clock every drain below runs
+ * on.
+ *
+ * `projectEvent` derives each projected row's `next_sync_at_ms` from the instant
+ * of capture, and the drain sends rows `WHERE dirty = 1 AND next_sync_at_ms <=
+ * <its own now>`. Capturing on the wall clock while draining at a pinned
+ * `NOW_MS` puts every row in the drain's future: nothing is ever due, no row
+ * clears `dirty`, and the backlog cannot empty. That is not a hypothetical — it
+ * is how this file went red the moment real time passed the literal above. One
+ * clock for capture and drain is what makes it deterministic for good, rather
+ * than deterministic until a date arrives.
+ */
+function append(event: SessionEvent, dir: string, atMs = NOW_MS): boolean {
+  return appendLocalEvent(event, dir, atMs);
 }
 
 function start(id: string, at: string): SessionEvent {
@@ -249,7 +268,7 @@ function coverage(dir: string, nowMs = NOW_MS): ManagedSyncCoverage {
 describe("upgrade backfill coverage", () => {
   it("reports nothing rather than zero before any managed plane exists", () => {
     const dir = directory();
-    appendLocalEvent(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
+    append(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
     const value = coverage(dir);
     expect(value).toMatchObject({
       state: "not-connected",
@@ -266,8 +285,8 @@ describe("upgrade backfill coverage", () => {
   it("measures the Free-period backlog an upgrade has to drain", () => {
     const dir = directory();
     for (const index of [1, 2, 3]) {
-      appendLocalEvent(start(`session-${index}`, `2026-08-0${index}T10:00:00.000Z`), dir);
-      appendLocalEvent(end(`session-${index}`, `2026-08-0${index}T11:00:00.000Z`), dir);
+      append(start(`session-${index}`, `2026-08-0${index}T10:00:00.000Z`), dir);
+      append(end(`session-${index}`, `2026-08-0${index}T11:00:00.000Z`), dir);
     }
     expect(readLocalManagedBacklog(dir)).toMatchObject({
       sessions: 3,
@@ -282,8 +301,8 @@ describe("upgrade backfill coverage", () => {
   it("shrinks the backlog and advances the synchronized instant as it drains", async () => {
     const dir = directory();
     for (const index of [1, 2, 3]) {
-      appendLocalEvent(start(`session-${index}`, `2026-08-0${index}T10:00:00.000Z`), dir);
-      appendLocalEvent(end(`session-${index}`, `2026-08-0${index}T11:00:00.000Z`), dir);
+      append(start(`session-${index}`, `2026-08-0${index}T10:00:00.000Z`), dir);
+      append(end(`session-${index}`, `2026-08-0${index}T11:00:00.000Z`), dir);
     }
     const before = coverage(dir);
     await drainUntilCaughtUp(dir, { plan: "pro" });
@@ -295,8 +314,8 @@ describe("upgrade backfill coverage", () => {
 
   it("claims completeness only when the backlog is measured empty and something was acknowledged", async () => {
     const dir = directory();
-    appendLocalEvent(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
-    appendLocalEvent(end("session-1", "2026-08-01T11:00:00.000Z"), dir);
+    append(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
+    append(end("session-1", "2026-08-01T11:00:00.000Z"), dir);
     await drainUntilCaughtUp(dir, { plan: "pro" });
     const value = coverage(dir);
     expect(readLocalManagedBacklog(dir)).toMatchObject({
@@ -315,12 +334,12 @@ describe("upgrade backfill coverage", () => {
 
   it("drops the completeness claim the moment new local work arrives", async () => {
     const dir = directory();
-    appendLocalEvent(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
-    appendLocalEvent(end("session-1", "2026-08-01T11:00:00.000Z"), dir);
+    append(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
+    append(end("session-1", "2026-08-01T11:00:00.000Z"), dir);
     await drainUntilCaughtUp(dir, { plan: "pro" });
     expect(coverage(dir).managedCopyComplete).toBe(true);
 
-    appendLocalEvent(start("session-2", "2026-08-14T10:00:00.000Z"), dir);
+    append(start("session-2", "2026-08-14T10:00:00.000Z"), dir);
     const value = coverage(dir);
     expect(value.managedCopyComplete).toBe(false);
     expect(value.state).toBe("backfilling");
@@ -329,7 +348,7 @@ describe("upgrade backfill coverage", () => {
 
   it("names a retriable stall as paused and a permanent one as blocked", async () => {
     const dir = directory();
-    appendLocalEvent(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
+    append(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
     const paused = worker({ plan: "pro", batchStatus: 503 });
     await drainManagedCompactSync({
       workerUrl: "https://worker.test",
@@ -364,7 +383,7 @@ describe("upgrade backfill coverage", () => {
     // "because of the service being unavailable" and the cap was never named.
     // Same status, same retry behaviour, different fact.
     const dir = directory();
-    appendLocalEvent(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
+    append(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
     const capped = worker({
       plan: "pro",
       batchStatus: 503,
@@ -390,7 +409,7 @@ describe("upgrade backfill coverage", () => {
 
   it("never reports an instant later than the moment of observation", async () => {
     const dir = directory();
-    appendLocalEvent(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
+    append(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
     await drainUntilCaughtUp(dir, { plan: "pro" });
     const early = localManagedSyncCoverage({
       directory: dir,
@@ -404,13 +423,13 @@ describe("downgrade keeps the local record whole", () => {
   it("keeps capture, history, statistics, and replay working with no entitlement", async () => {
     const dir = directory();
     // Before Pro.
-    appendLocalEvent(start("before", "2026-07-01T10:00:00.000Z"), dir);
-    appendLocalEvent(end("before", "2026-07-01T11:00:00.000Z"), dir);
+    append(start("before", "2026-07-01T10:00:00.000Z"), dir);
+    append(end("before", "2026-07-01T11:00:00.000Z"), dir);
     await drainUntilCaughtUp(dir, { plan: "pro" });
 
     // During Pro.
-    appendLocalEvent(start("during", "2026-08-01T10:00:00.000Z"), dir);
-    appendLocalEvent(end("during", "2026-08-01T11:00:00.000Z"), dir);
+    append(start("during", "2026-08-01T10:00:00.000Z"), dir);
+    append(end("during", "2026-08-01T11:00:00.000Z"), dir);
     await drainUntilCaughtUp(dir, { plan: "pro" });
 
     // After Pro: the worker now refuses everything managed.
@@ -430,8 +449,8 @@ describe("downgrade keeps the local record whole", () => {
         },
       }),
     });
-    appendLocalEvent(start("after", "2026-08-14T10:00:00.000Z"), dir);
-    appendLocalEvent(end("after", "2026-08-14T11:00:00.000Z"), dir);
+    append(start("after", "2026-08-14T10:00:00.000Z"), dir);
+    append(end("after", "2026-08-14T11:00:00.000Z"), dir);
     const result = await drainManagedCompactSync({
       workerUrl: "https://worker.test",
       installationId: "install-1",
@@ -464,8 +483,8 @@ describe("downgrade keeps the local record whole", () => {
 
   it("uploads the queued backlog when an entitled connection returns", async () => {
     const dir = directory();
-    appendLocalEvent(start("queued", "2026-08-14T10:00:00.000Z"), dir);
-    appendLocalEvent(end("queued", "2026-08-14T11:00:00.000Z"), dir);
+    append(start("queued", "2026-08-14T10:00:00.000Z"), dir);
+    append(end("queued", "2026-08-14T11:00:00.000Z"), dir);
     const downgraded = worker({ plan: "free" });
     await drainManagedCompactSync({
       workerUrl: "https://worker.test",
@@ -486,7 +505,7 @@ describe("downgrade keeps the local record whole", () => {
 
   it("issues no hosted request at all from a Free install that never activated", async () => {
     const dir = directory();
-    appendLocalEvent(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
+    append(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
     const free = worker({ plan: "free" });
     await drainManagedCompactSync({
       workerUrl: "https://worker.test",
@@ -524,7 +543,7 @@ describe("the local plane relays the managed lifecycle window", () => {
 
   it("answers null when no managed plane was ever observed", () => {
     const dir = directory();
-    appendLocalEvent(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
+    append(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
     // Honest-null, not a fabricated `none`: an account-free install has no
     // managed lifecycle at all, which is different from having one that is over.
     expect(localManagedLifecycleWindow({ directory: dir, nowMs: NOW_MS })).toBeNull();
@@ -532,7 +551,7 @@ describe("the local plane relays the managed lifecycle window", () => {
 
   it("relays the exact dates the managed side established", async () => {
     const dir = directory();
-    appendLocalEvent(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
+    append(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
     await observe(dir, ending);
     const window = localManagedLifecycleWindow({ directory: dir, nowMs: NOW_MS });
     expect(parseManagedLifecycleWindow(window)).toEqual(window);
@@ -549,7 +568,7 @@ describe("the local plane relays the managed lifecycle window", () => {
 
   it("advances the countdown on the local clock with no worker involved", async () => {
     const dir = directory();
-    appendLocalEvent(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
+    append(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
     await observe(dir, ending);
 
     // Past the service end but inside the window: recovery, export available.
@@ -580,7 +599,7 @@ describe("the local plane relays the managed lifecycle window", () => {
 
   it("never invents deletion, and carries it through once proven", async () => {
     const dir = directory();
-    appendLocalEvent(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
+    append(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
     await observe(
       dir,
       dataPlane({
@@ -610,7 +629,7 @@ describe("the local plane relays the managed lifecycle window", () => {
 
   it("relays a renewing subscription without inventing an end date", async () => {
     const dir = directory();
-    appendLocalEvent(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
+    append(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
     await observe(
       dir,
       dataPlane({
@@ -642,7 +661,7 @@ describe("the local plane relays the managed lifecycle window", () => {
 
   it("pairs with coverage, which the status contract requires beside it", async () => {
     const dir = directory();
-    appendLocalEvent(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
+    append(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
     await observe(dir, ending);
     const window = localManagedLifecycleWindow({ directory: dir, nowMs: NOW_MS });
     expect(window?.phase).not.toBe("none");
@@ -677,8 +696,8 @@ describe("rebaseline after the managed copy is deleted", () => {
 
   it("resets every checkpoint in one transaction and only then acknowledges", async () => {
     const dir = directory();
-    appendLocalEvent(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
-    appendLocalEvent(end("session-1", "2026-08-01T11:00:00.000Z"), dir);
+    append(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
+    append(end("session-1", "2026-08-01T11:00:00.000Z"), dir);
     await drainUntilCaughtUp(dir, { plan: "pro" });
     expect(coverage(dir).managedCopyComplete).toBe(true);
 
@@ -726,7 +745,7 @@ describe("rebaseline after the managed copy is deleted", () => {
 
   it("is inert for a replayed or lower-epoch directive", async () => {
     const dir = directory();
-    appendLocalEvent(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
+    append(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
     expect(applyLocalRebaseline(3, dir).applied).toBe(true);
     expect(readLocalBaselineEpoch(dir)).toBe(3);
     // The same epoch again, and an older one, both change nothing.
@@ -740,8 +759,8 @@ describe("rebaseline after the managed copy is deleted", () => {
 
   it("rebuilds the managed copy from local history after the reset", async () => {
     const dir = directory();
-    appendLocalEvent(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
-    appendLocalEvent(end("session-1", "2026-08-01T11:00:00.000Z"), dir);
+    append(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
+    append(end("session-1", "2026-08-01T11:00:00.000Z"), dir);
     await drainUntilCaughtUp(dir, { plan: "pro" });
     applyLocalRebaseline(1, dir);
 
@@ -771,7 +790,7 @@ describe("rebaseline after the managed copy is deleted", () => {
 
   it("does not resume uploading until the acknowledgement is delivered", async () => {
     const dir = directory();
-    appendLocalEvent(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
+    append(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
     const script = worker({
       plan: "pro",
       status: deletedStatus,
@@ -795,7 +814,7 @@ describe("rebaseline after the managed copy is deleted", () => {
 
   it("re-sends the acknowledgement after a delivery failure rather than stalling", async () => {
     const dir = directory();
-    appendLocalEvent(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
+    append(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
     const status = JSON.parse(JSON.stringify(deletedStatus));
 
     // First attempt: the reset lands, the acknowledgement does not.
@@ -838,7 +857,7 @@ describe("rebaseline after the managed copy is deleted", () => {
 
   it("resets nothing a second time for a directive the local epoch has passed", async () => {
     const dir = directory();
-    appendLocalEvent(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
+    append(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
     applyLocalRebaseline(5, dir);
     const stale = worker({ plan: "pro", status: deletedStatus });
     const outcome = await applyRebaselineDirective({
@@ -873,7 +892,7 @@ describe("rebaseline after the managed copy is deleted", () => {
     // A stored instant the compact-sync protocol will not accept. Building the
     // batch throws, and ADR-001's rollback matrix says the answer is to fail
     // hosted sync closed and repair explicitly, never to take the drain down.
-    appendLocalEvent(
+    append(
       { ...start("bad", "2026-08-01T10:00:00.000Z"), at: "2026-08-01T12:00:00.000+02:00" },
       dir,
     );
@@ -903,7 +922,7 @@ describe("rebaseline after the managed copy is deleted", () => {
     // `event-validation.ts` accepts `z.iso.datetime({ offset: true })`, so this
     // is a legitimate stored instant even though Seorak's own hooks always
     // write `Z`. It reaches local storage through an imported log.
-    appendLocalEvent(
+    append(
       { ...start("session-1", "2026-08-01T10:00:00.000Z"), at: "2026-08-01T12:00:00.000+02:00" },
       dir,
     );
@@ -931,11 +950,11 @@ describe("rebaseline after the managed copy is deleted", () => {
     const dir = directory();
     // Chronologically: 08:00Z, then 09:00Z. Lexicographically the `+02:00` row
     // sorts LAST, so `MIN(at)` picks the 09:00Z row and misses the true oldest.
-    appendLocalEvent(
+    append(
       { ...start("later-text", "2026-08-01T09:00:00.000Z"), at: "2026-08-01T09:00:00.000Z" },
       dir,
     );
-    appendLocalEvent(
+    append(
       { ...start("earlier-real", "2026-08-01T10:00:00.000Z"), at: "2026-08-01T10:00:00.000+02:00" },
       dir,
     );
@@ -968,8 +987,8 @@ describe("rebaseline after the managed copy is deleted", () => {
 
   it("reports a missing archive key instead of claiming a full reconstruction", async () => {
     const dir = directory();
-    appendLocalEvent(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
-    appendLocalEvent(end("session-1", "2026-08-01T11:00:00.000Z"), dir);
+    append(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
+    append(end("session-1", "2026-08-01T11:00:00.000Z"), dir);
     await drainUntilCaughtUp(dir, { plan: "pro" });
     // The key that produced the uploaded ciphertext is gone. New chunks can be
     // encrypted with a new key, but this installation is no longer the one that
@@ -996,7 +1015,7 @@ describe("rebaseline after the managed copy is deleted", () => {
 
   it("treats an unreadable archive key as missing rather than usable", async () => {
     const dir = directory();
-    appendLocalEvent(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
+    append(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
     await drainUntilCaughtUp(dir, { plan: "pro" });
     writeFileSync(localArchiveKeyPath(dir), "too short", { mode: 0o600 });
     const script = worker({ plan: "pro", status: deletedStatus });
@@ -1013,7 +1032,7 @@ describe("rebaseline after the managed copy is deleted", () => {
 
   it("reports a deleted managed copy as covering nothing", () => {
     const dir = directory();
-    appendLocalEvent(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
+    append(start("session-1", "2026-08-01T10:00:00.000Z"), dir);
     const value = localManagedSyncCoverage({ directory: dir, nowMs: NOW_MS });
     expect(parseManagedSyncCoverage(value)).toEqual(value);
     expect(value.synchronizedThrough).toBeNull();

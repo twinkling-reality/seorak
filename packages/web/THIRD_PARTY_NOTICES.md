@@ -11,14 +11,18 @@ descriptive use, not product endorsement.
 (mobile, loaded from the package at runtime rather than vendored here)
 **License:** [OFL-1.1](https://openfontlicense.org/), full text at
 [`packages/dashboard/LICENSES/OFL-1.1-Figtree.txt`](../dashboard/LICENSES/OFL-1.1-Figtree.txt)
-**Vendored:** 2026-08-04
-**Verified against upstream:** 2026-08-04, all four files byte-identical to the
-pinned package
+**Vendored:** 2026-08-04 (web `figtree-web`); control-plane copy
+(`figtree-control-plane`) synced 2026-08-11 from those same four bytes
+**Verified against upstream:** 2026-08-04 (web) and 2026-08-11 (control-plane),
+all four files byte-identical to the pinned package
 
 **Four `.woff` cuts** under `public/fonts/` at 300 / 400 / 500 / 600, named by
-the `@font-face` block in `src/app.css`. That is the whole vendored set.
+the `@font-face` block in `src/app.css`, plus the same four cuts under
+`packages/control-plane/public/fonts/` for the private control-plane asset
+binding. That is the whole vendored set.
 
-Re-sync: `node packages/web/scripts/sync-fonts.mjs`
+Re-sync: `node packages/web/scripts/sync-fonts.mjs`, then
+`cp packages/web/public/fonts/Figtree-*.woff packages/control-plane/public/fonts/`
 
 **Why one container now.** Four `.ttf` cuts of the same family used to sit under
 `apps/menubar/Sources/SeorakMenuBar/Resources/Fonts`, because the menu bar
@@ -26,15 +30,15 @@ resolved faces through CoreText, which cannot register a WOFF container, and
 `@fontsource/*` ships woff and woff2 only. That surface was removed on
 2026-08-10 and its TrueType copies went with it. Mobile loads the face from
 `@expo-google-fonts/figtree` directly, so nothing in this repository vendors a
-second container. The files that TrueType set had replaced were WOFF containers
-named `.ttf`, which is why every check below reads magic bytes rather than
-extensions.
+TrueType second container. The files that TrueType set had replaced were WOFF
+containers named `.ttf`, which is why every check below reads magic bytes rather
+than extensions.
 
-**Why the web copies are vendored rather than imported.** The mono below is
-imported through the bundler and lands under a content hash. The product sans
-cannot be, because `packages/control-plane` serves this package's `public/`
-directory as its `[assets]` root and writes its own `@font-face` block naming
-`/fonts/*.woff` literally.
+**Why the copies are vendored rather than imported.** The mono below is imported
+through the bundler and lands under a content hash. The product sans cannot be:
+the dashboard and site need stable `/fonts/*.woff` URLs, and
+`packages/control-plane` binds its own `public/` as `[assets]` (ADR 005 B4) with
+`htmlStyles.ts` naming those URLs literally.
 
 **This is checked, not just recorded.** Every copy is byte-identical to a file
 its pinned package ships;

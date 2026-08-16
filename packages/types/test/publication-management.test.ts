@@ -5,12 +5,16 @@ import {
   PUBLICATION_ACTIVITY_RANGE_DAYS,
   PUBLICATION_EVIDENCE_RANGE_DAYS,
   PUBLICATION_MANAGEMENT_VERSION,
+  PUBLICATION_TOKEN_USAGE_RANGE_DAYS,
   PUBLIC_ACTIVITY_FIELDS,
+  PUBLIC_TOKEN_USAGE_AGENTS,
+  PUBLIC_TOKEN_USAGE_FIELDS,
   type OwnerPublicationManifest,
   type PublicActivityPublicationDto,
   type OwnerPublicationStatus,
   type PublicPublicationApplyDelivery,
   type PublicPublicationApplyReceipt,
+  type PublicTokenUsagePublicationDto,
 } from "../src/index.ts";
 
 const disabled = { enabled: false, fields: [] } as const;
@@ -19,7 +23,10 @@ test("publication management vocabularies are closed and versioned", () => {
   assert.equal(PUBLICATION_MANAGEMENT_VERSION, "v1");
   assert.deepEqual([...PUBLICATION_EVIDENCE_RANGE_DAYS], [7, 30, 90]);
   assert.deepEqual([...PUBLICATION_ACTIVITY_RANGE_DAYS], [30, 90, 365]);
+  assert.deepEqual([...PUBLICATION_TOKEN_USAGE_RANGE_DAYS], [30, 90]);
   assert.deepEqual([...PUBLIC_ACTIVITY_FIELDS], ["calendar", "streak"]);
+  assert.deepEqual([...PUBLIC_TOKEN_USAGE_FIELDS], ["series", "totals"]);
+  assert.deepEqual([...PUBLIC_TOKEN_USAGE_AGENTS], ["claude-code", "codex"]);
 });
 
 test("the private owner manifest carries selections but no measured values", () => {
@@ -36,6 +43,7 @@ test("the private owner manifest carries selections but no measured values", () 
       mcp: disabled,
     },
     activity: null,
+    tokenUsage: null,
     projects: [{
       sourceProjectId: "b".repeat(64),
       projectSlug: "compiler",
@@ -51,12 +59,15 @@ test("the private owner manifest carries selections but no measured values", () 
         rangeDays: 30,
         unavailable: "publish-unavailable",
       },
+      tokenUsage: null,
     }],
   };
   assert.equal(manifest.projects[0]?.sourceProjectId.length, 64);
+  assert.equal(manifest.tokenUsage, null);
+  assert.equal(manifest.projects[0]?.tokenUsage, null);
   assert.doesNotMatch(
     JSON.stringify(manifest),
-    /"(?:value|sampleSize|generatedAt|freshness|distinctSessionCount)"/,
+    /"(?:value|sampleSize|generatedAt|freshness|distinctSessionCount|tokensTotal)"/,
   );
 });
 
@@ -105,6 +116,61 @@ test("activity freezes timezone days and makes an interrupted streak unknown", (
   };
   assert.equal(activity.streak.status, "unknown");
   assert.equal(activity.days[0]?.distinctSessionCount, null);
+});
+
+test("token usage freezes a daily series without inventing zeros for gaps", () => {
+  const tokenUsage: PublicTokenUsagePublicationDto = {
+    apiVersion: "v1",
+    publicationVersion: 2,
+    publishedAt: "2026-08-02T12:00:00.000Z",
+    updatedAt: "2026-08-02T12:00:00.000Z",
+    revokedAt: null,
+    profileSlug: "ada",
+    projectSlug: null,
+    rangeDays: 30,
+    period: { from: "2026-07-04", through: "2026-08-02" },
+    grants: {
+      web: { enabled: true, fields: ["series", "totals"] },
+      search: disabled,
+      api: disabled,
+      mcp: disabled,
+    },
+    days: [
+      {
+        date: "2026-08-01",
+        byAgent: { "claude-code": 1_200 },
+        total: 1_200,
+        coverage: "complete",
+        availability: { state: "available", reason: null },
+      },
+      {
+        date: "2026-08-02",
+        byAgent: {},
+        total: null,
+        coverage: "unavailable",
+        availability: { state: "unavailable", reason: "not-captured" },
+      },
+    ],
+    totals: {
+      total: 1_200,
+      byAgent: { "claude-code": 1_200 },
+      availability: { state: "partial", reason: "not-captured" },
+      sampleSize: 1,
+      coverage: {
+        period: { from: "2026-07-04", through: "2026-08-02" },
+        complete: false,
+      },
+    },
+    generatedAt: "2026-08-02T12:00:00.000Z",
+    freshness: {
+      state: "fresh",
+      generatedAt: "2026-08-02T12:00:00.000Z",
+      dataThrough: "2026-08-01T20:00:00.000Z",
+      staleAt: "2026-08-02T12:05:00.000Z",
+    },
+  };
+  assert.equal(tokenUsage.days[1]?.total, null);
+  assert.equal(tokenUsage.totals.coverage.complete, false);
 });
 
 test("one full bundle is acknowledged by generation and digest", () => {

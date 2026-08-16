@@ -11,14 +11,14 @@ name: CI
 # tree has no open-core/ directory, so the check has nothing to mean here.
 # Inventing the script would also fail the gate-coverage guard below.
 #
-# Everything here is credential-free. No job needs a secret, and none is
-# configured, so a fork gets the same green or the same red on the same commit,
-# which is the only version of this workflow worth publishing.
+# Everything here is credential-free. The core job runs once for the exact
+# merged SHA on main; branch pushes rely on the repository's local pre-push
+# gate, and the registry-shaped publication job is manual to avoid paid fan-out.
 
 on:
-  pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -207,15 +207,15 @@ jobs:
       - name: Test
         run: |
           npm run test --workspace @seorak/types
-          npm run test --workspace @seorak/collector
+          npm run test --workspace seorak
           npm run test --workspace @seorak/dashboard
           npm run test --workspace @seorak/web
 
-      # The floor machinery, without the measurement. `coverage:check` names
-      # files in the worker, which is private, so the public root manifest
-      # declares only the test: it proves the shortfall reporting, the
-      # file-existence rule, and the audit-seam rule still hold. Measuring a
-      # floor here would need the workspace the floors are about.
+      # The floor machinery, without the measurement. The private counterpart
+      # runs a focused, successful-output-silent worker pass because its full
+      # suite already ran; this tree has no worker at all. It therefore declares
+      # only the policy test, proving the shortfall reporting, file-existence
+      # rule, and audit-seam rule without inventing a workspace to measure.
       - name: Coverage floor policy
         run: npm run coverage:test
 
@@ -234,6 +234,7 @@ jobs:
   publication:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    if: github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7

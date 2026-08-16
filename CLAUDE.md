@@ -53,14 +53,16 @@ rules by number, so the numbers are stable even where a rule's wording is not.
 
 | Path | Role |
 |------|------|
-| `packages/collector/` | Hooks, daemon, loopback and self-hosted data plane, terminal (`seorak`) |
+| `packages/collector/` | Hooks, daemon, loopback and self-hosted data plane, terminal (`seorak`); the npm name is the unscoped `seorak` |
 | `packages/dashboard/` | The built primary UI as a package, `@seorak/dashboard` |
 | `packages/types/` | Shared schemas |
 | `packages/web/` | The primary UI's source. A **mixed** workspace: the dashboard half is here, Seorak's website is not |
 | `scripts/` | The gates `npm run check` runs, including both boundary gates |
 
-`@seorak/types`, `@seorak/collector`, and `@seorak/dashboard` published to npm on
-2026-08-10 with provenance attesting to this repository.
+`@seorak/types@0.1.0`, `@seorak/collector@0.1.1`, and `@seorak/dashboard@0.1.0` published to npm with provenance attesting to this repository. The CLI package
+has since been renamed from `@seorak/collector` to the unscoped `seorak`, so
+`@seorak/collector@0.1.1` is the last release under the old name.
+`seorak@0.2.0` is not published on npm pending approval.
 
 Detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), which describes the whole
 product including the parts kept private, and says which is which.

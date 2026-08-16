@@ -60,7 +60,6 @@ import {
   cacheLocalDataPlaneStatus,
   cacheLocalEntitlement,
   compactSyncActivated,
-  type LocalHourRow,
   type LocalRebaselineResult,
   type LocalSyncCandidate,
   persistPendingCompactSync,
@@ -68,7 +67,8 @@ import {
   readLocalManagedSyncState,
   recordLocalSyncAttempt,
   recordLocalSyncError,
-} from "./local-store.ts";
+} from "./local-sync-store.ts";
+import type { LocalHourRow } from "./local-store.ts";
 import {
   localArchiveKeyPath,
   resolveEventLogPathContext,
@@ -129,6 +129,35 @@ async function timedFetch(
 
 function authorization(ingestKey: string | undefined): Record<string, string> {
   return ingestKey ? { authorization: `Bearer ${ingestKey}` } : {};
+}
+
+/**
+ * The credential a READ-gated managed route needs.
+ *
+ * The managed data plane is split across both access classes: `POST
+ * /sync/v1/batches` and `POST /sync/v1/rebaseline` are ingest-gated, while
+ * `/entitlements` and `GET /sync/v1/data-plane` are read-gated (routeAccess.ts).
+ * The worker's read guard is NOT the ingest guard, so on any deployment that
+ * sets a distinct `SEORAK_READ_KEY` — the documented hosted setup — an
+ * ingest key sent to a read route is correctly rejected.
+ *
+ * Sending the ingest key to both is what silently stopped delivery: the
+ * entitlement read 401s, `effectiveEntitlement` swallows the failure and
+ * resolves against a null grant, and an entitled Pro install reads as
+ * unentitled. The downgraded branch then returns a no-op success, `flushOnce`
+ * treats that as the managed cell having taken the data, and
+ * `acknowledgeLocalEventMirror` advances the shipping cursor to the end of the
+ * log without posting anything. Capture healthy, status "caught up", nothing
+ * delivered to the worker the user configured.
+ *
+ * Falling back to the ingest key preserves the one-token model, where
+ * `SEORAK_READ_KEY` is unset and reads authenticate with the ingest key.
+ */
+function readAuthorization(input: {
+  readKey?: string;
+  ingestKey?: string;
+}): Record<string, string> {
+  return authorization(input.readKey ?? input.ingestKey);
 }
 
 function loadArchiveKey(directory?: string): Buffer {
@@ -326,6 +355,7 @@ async function effectiveEntitlement(
   input: {
     workerUrl: string;
     ingestKey?: string;
+  readKey?: string;
     directory?: string;
     fetchImpl: typeof fetch;
     nowMs: number;
@@ -341,7 +371,7 @@ async function effectiveEntitlement(
       input.fetchImpl,
       `${input.workerUrl}${seorakRoutes.entitlements()}`,
       {
-        headers: authorization(input.ingestKey),
+        headers: readAuthorization(input),
         ...(input.signal ? { signal: input.signal } : {}),
       },
     );
@@ -445,6 +475,7 @@ function cachedDataPlaneStatus(directory?: string): DataPlaneStatus | null {
 async function refreshDataPlaneStatus(input: {
   workerUrl: string;
   ingestKey?: string;
+  readKey?: string;
   directory?: string;
   fetchImpl: typeof fetch;
   nowMs: number;
@@ -455,7 +486,7 @@ async function refreshDataPlaneStatus(input: {
       input.fetchImpl,
       `${input.workerUrl}${DATA_PLANE_PATH}`,
       {
-        headers: authorization(input.ingestKey),
+        headers: readAuthorization(input),
         ...(input.signal ? { signal: input.signal } : {}),
       },
     );
@@ -618,6 +649,7 @@ export async function applyRebaselineDirective(input: {
 async function observeDowngradedDataPlane(input: {
   workerUrl: string;
   ingestKey?: string;
+  readKey?: string;
   directory?: string;
   fetchImpl: typeof fetch;
   nowMs: number;
@@ -804,6 +836,7 @@ export async function drainManagedCompactSync(input: {
   workerUrl: string;
   installationId: string;
   ingestKey?: string;
+  readKey?: string;
   directory?: string;
   fetchImpl?: typeof fetch;
   nowMs?: number;
@@ -820,6 +853,7 @@ export async function drainManagedCompactSync(input: {
       await observeDowngradedDataPlane({
         workerUrl,
         ...(input.ingestKey ? { ingestKey: input.ingestKey } : {}),
+        ...(input.readKey ? { readKey: input.readKey } : {}),
         ...(input.directory ? { directory: input.directory } : {}),
         fetchImpl,
         nowMs,
@@ -853,6 +887,7 @@ export async function drainManagedCompactSync(input: {
   const entitlement = await effectiveEntitlement({
     workerUrl,
     ...(input.ingestKey ? { ingestKey: input.ingestKey } : {}),
+    ...(input.readKey ? { readKey: input.readKey } : {}),
     ...(input.directory ? { directory: input.directory } : {}),
     fetchImpl,
     nowMs,
@@ -862,6 +897,7 @@ export async function drainManagedCompactSync(input: {
     await observeDowngradedDataPlane({
       workerUrl,
       ...(input.ingestKey ? { ingestKey: input.ingestKey } : {}),
+      ...(input.readKey ? { readKey: input.readKey } : {}),
       ...(input.directory ? { directory: input.directory } : {}),
       fetchImpl,
       nowMs,
@@ -884,6 +920,7 @@ export async function drainManagedCompactSync(input: {
   const dataPlane = await refreshDataPlaneStatus({
     workerUrl,
     ...(input.ingestKey ? { ingestKey: input.ingestKey } : {}),
+    ...(input.readKey ? { readKey: input.readKey } : {}),
     ...(input.directory ? { directory: input.directory } : {}),
     fetchImpl,
     nowMs,

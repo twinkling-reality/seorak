@@ -458,6 +458,7 @@ describe('contract parity — OverviewSnapshot survives the web schema', () => {
             day: '2026-06-14',
             sessions: 4,
             lines: { added: 400, removed: 80 },
+            tokensTotal: 120_000,
           },
         ],
         agentModels: [

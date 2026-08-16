@@ -28,7 +28,7 @@ export function collectorDir(): string {
   return normalize(canonicalProspectivePath(resolved));
 }
 
-/** The launchd service label `seorak init` registers on macOS. */
+/** The launchd service label `seorak setup` registers on macOS. */
 export const LAUNCHD_LABEL = "app.seorak.collector";
 
 /** Absolute path to the launchd plist for this user. */

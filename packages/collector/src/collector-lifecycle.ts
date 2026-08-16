@@ -981,8 +981,9 @@ function isDefaultStateDir(
 }
 
 /**
- * `init` claims a directory before any hook or daemon can write to it. A custom
- * pre-existing non-empty directory is never adopted implicitly.
+ * `setup` claims a directory before any hook, daemon, or durable runtime can
+ * write to it. A custom pre-existing non-empty directory is never adopted
+ * implicitly.
  */
 export function claimCollectorState(
   paths: CollectorLifecyclePaths,

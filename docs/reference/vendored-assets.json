@@ -6,7 +6,8 @@
   "note": "THE PROVENANCE RECORD FOR EVERY THIRD-PARTY FILE UNDER `roots`, AND THE THING THAT MAKES IT CHECKABLE. `packages/web/THIRD_PARTY_NOTICES.md` recorded `Simple Icons v15.0.0, vendored 2026-07-06` from the day the icons landed, and nothing verified it: `simple-icons` is not a dependency in any manifest, the files were fetched by a script and committed, and a recorded version with no way to check it is a measurement that reads as current state forever. B7 found the same failure one directory up, where the thirteen vendored AI-tool marks were recorded as Simple Icons content and nine of thirteen were not. This file is the machine-readable half; `npm run vendored-assets:check` recomputes the digests, refuses a file nothing declares, and fails when the notices file and this one disagree. Adding a vendored file is an edit to this file alone.",
   "roots": [
     "packages/web/public/assets",
-    "packages/web/public/fonts"
+    "packages/web/public/fonts",
+    "packages/control-plane/public/fonts"
   ],
   "outOfScope": [
     {
@@ -29,8 +30,24 @@
       "notices": "packages/web/THIRD_PARTY_NOTICES.md",
       "fileCount": 4,
       "digest": "sha256:53e29328e78cefd53a89857684fd4bcccb929882acd5627bb7dd934a7bae6fa7",
-      "why": "The product sans and display face at 300/400/500/600, named by the `@font-face` block in `packages/web/src/app.css`. Vendored under stable names rather than imported through the bundler because `packages/control-plane` serves this `public/` directory as its `[assets]` root and writes its own `@font-face` block naming these URLs literally; a content-hashed name is not something a second package's hand-written stylesheet can follow.",
+      "why": "The product sans and display face at 300/400/500/600, named by the `@font-face` block in `packages/web/src/app.css`. Vendored under stable names rather than imported through the bundler so the dashboard package and the site can serve fixed URLs; a content-hashed name would break those hand-written `@font-face` blocks.",
       "verification": "Each file is byte-identical to the cut the pinned `@fontsource/figtree` ships, checked by `node packages/web/scripts/sync-fonts.mjs --check`. Identity against a pinned dependency rather than against a network fetch is what makes this verifiable offline, and it is the same relation `packages/dashboard/scripts/build-package.mjs` asserts before it will stage a font binary at all."
+    },
+    {
+      "id": "figtree-control-plane",
+      "root": "packages/control-plane/public/fonts",
+      "upstream": "https://github.com/erikdkennedy/figtree",
+      "version": "@fontsource/figtree 5.3.0",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://openfontlicense.org/",
+      "syncedOn": "2026-08-11",
+      "verifiedAgainstUpstreamOn": "2026-08-11",
+      "resync": "node packages/web/scripts/sync-fonts.mjs && cp packages/web/public/fonts/Figtree-*.woff packages/control-plane/public/fonts/",
+      "notices": "packages/web/THIRD_PARTY_NOTICES.md",
+      "fileCount": 4,
+      "digest": "sha256:6be0ad022fa3a56a223761b1832625636b7fcba5672c9463c53386440822c5a0",
+      "why": "Private control-plane copy of the same four Figtree cuts. ADR 005 stage B4 required the control plane's `[assets]` directory to resolve inside `packages/control-plane` rather than bind `../web/public`; `htmlStyles.ts` names `/fonts/Figtree-*.woff` literally. Bytes match `figtree-web`; the digest differs because the collection digest includes path.",
+      "verification": "Each file is byte-identical to the matching file under `packages/web/public/fonts`, which `figtree-web` already pins to `@fontsource/figtree` 5.3.0 via `sync-fonts.mjs --check`."
     },
     {
       "id": "simple-icons-stack",

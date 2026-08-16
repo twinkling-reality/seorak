@@ -32,7 +32,7 @@ This is the part most likely to surprise you, so it comes first.
 | Component | State today |
 |---|---|
 | `packages/types` (`@seorak/types`) | public, Apache-2.0, its own `LICENSE` |
-| `packages/collector` (`@seorak/collector`) | public, Apache-2.0, its own `LICENSE` |
+| `packages/collector` (the unscoped `seorak` package) | public, Apache-2.0, its own `LICENSE` |
 | the dashboard, in `packages/web/src` | public as source, and built into `packages/dashboard` (`@seorak/dashboard`), Apache-2.0 |
 | everything else | private, and not in this list by accident |
 
@@ -43,10 +43,14 @@ website, which stays private. The split runs file by file and the map is
 which two gates read. That file is the answer to "is this file public", and
 there is deliberately only one copy of that answer.
 
-**`@seorak/types`, `@seorak/collector`, and `@seorak/dashboard` published to npm
-on 2026-08-10** with provenance attesting to `twinkling-reality/seorak`, so
-`npm i -g @seorak/collector && seorak init` installs the local product. The
-dashboard ships as `@seorak/dashboard`, which the local plane resolves by name.
+**`@seorak/types@0.1.0`, `@seorak/collector@0.1.1`, and
+`@seorak/dashboard@0.1.0` published to npm** with provenance attesting to
+`twinkling-reality/seorak`. The CLI package has since been renamed from
+`@seorak/collector` to the unscoped `seorak`, so `@seorak/collector@0.1.1` is
+the last release under the old name.
+`seorak@0.2.0` is not published on npm pending approval; the approved release is
+what will make `npx seorak setup` the local-product install path. The dashboard
+ships as `@seorak/dashboard`, which the local plane resolves by name.
 **Building from this tree remains the development path**; the rest of this page
 describes that checkout workflow.
 
@@ -77,10 +81,11 @@ source it compiles, so the dashboard build is the whole web build in this
 repository. It emits no marketing page, no blog, and none of the discovery
 documents.
 
-**The collector and the local plane.** `seorak init` installs the hooks and the
-background daemon and needs no account, no key, and no network. The plane serves
-the same public route contract the hosted worker serves, read from your own
-`history.sqlite` on `127.0.0.1:4317`.
+**The collector and the local plane.** `seorak setup` installs the hooks and the
+background daemon and needs no account, no key, or Seorak service connection.
+`seorak init` remains a compatibility alias. The plane serves the same public
+route contract the hosted worker serves, read from your own `history.sqlite` on
+`127.0.0.1:4317`.
 
 A source checkout is wired for this: the collector looks for a sibling
 `packages/web/dist-dashboard` when `@seorak/dashboard` has not been staged, so
@@ -92,7 +97,7 @@ the collector depends on `@seorak/dashboard` exactly and resolves it by name.
 **Tests.**
 
 ```bash
-npm run test --workspace @seorak/collector
+npm run test --workspace seorak
 npm run test --workspace @seorak/types
 npm run test --workspace @seorak/web
 ```
@@ -213,5 +218,7 @@ them is its own pass.
 
 ---
 
-*Accurate as of 2026-08-10. The three public packages are on npm at 0.1.0; see
+*Accurate as of 2026-08-16. `@seorak/types` and `@seorak/dashboard` are on npm
+at 0.1.0; the CLI's last registry release is `@seorak/collector@0.1.1`, under
+the name it has since traded for the unscoped `seorak`. See
 [`docs/STATUS.md`](docs/STATUS.md) for ship state that ages faster than this page.*

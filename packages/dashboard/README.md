@@ -3,17 +3,23 @@
 Seorak's primary dashboard, built. This package is **static assets**, not source
 and not a library: there is nothing here to import and no code to call.
 
-Its one runtime consumer is [`@seorak/collector`](https://www.npmjs.com/package/@seorak/collector),
-which serves it from the local data plane on your own machine. Installing the
-collector installs this, and `seorak local dashboard` opens it.
+Its one runtime consumer is [`seorak`](https://www.npmjs.com/package/seorak), the
+collector CLI, which serves it from the local data plane on your own machine.
+Installing the collector installs this, and `seorak local dashboard` opens it.
 
 ```bash
-npm i -g @seorak/collector
-seorak init
-seorak local dashboard
+npx seorak setup
+npx seorak local dashboard
 ```
 
-No account, no key, no network. The dashboard reads the plane that served it.
+No account, no key, and no Seorak service connection after the package download.
+The dashboard reads the plane that served it. `seorak init` remains a supported
+compatibility alias for existing global installs and scripts.
+
+The CLI package was renamed from `@seorak/collector` to the unscoped `seorak`,
+and the commands above require `seorak@0.2.0`, which this repository prepares but
+does not publish. `@seorak/collector@0.1.1` remains the last registry release
+under the old name.
 
 ## What is in it
 

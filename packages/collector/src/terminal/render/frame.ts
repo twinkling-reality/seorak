@@ -328,10 +328,10 @@ export function renderFrame(
  * this surface's job: the paragraph says what is true, and this says where the
  * rest of it lives. The terminal is deliberately not the place to browse depth.
  *
- * The URL is printed WITHOUT the one-click `#token` fragment that `seorak init`
+ * The URL is printed WITHOUT the one-click `#token` fragment that `seorak setup`
  * attaches. Init prints once into scrollback; this sits on screen for as long as
  * the session is open, through every screen share and screenshot, and a bearer
- * token does not belong there. Cmd-click still opens it, and `seorak init` is
+ * token does not belong there. Cmd-click still opens it, and `seorak setup` is
  * still the path that signs the browser in.
  */
 function gatewayLines(ctx: RenderContext, dim: (s: string) => string): string[] {

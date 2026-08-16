@@ -39,9 +39,10 @@
  * its first draft ran `coverage:check`, which that manifest does not define, and
  * the step failed with "Missing script" the first time anybody ran it. It fails.
  *
- * EXTRA is reported and does not fail. A workflow that runs more than the root
- * test script is a workflow that builds, typechecks and compiles, which is what
- * a workflow is for. `run-gates.mjs` runs those too, so nothing local is lost.
+ * WORKFLOW-ONLY is an exact set of build/release commands with a reason to stay
+ * outside `npm test`. Every other extra fails. Without that reverse check,
+ * deleting a gate from the root test script merely reclassified it as EXTRA and
+ * the guard stayed green.
  *
  * THERE IS DELIBERATELY NO ACCEPTANCE FILE, and the eleven are why. Six sibling
  * gates in this repository carry one, so the obvious move was to record the
@@ -79,6 +80,25 @@ export const WORKFLOW_PATH = ".github/workflows/ci.yml";
 export const MANIFEST_PATH = "package.json";
 
 const NAME_PATTERN = /npm run ([A-Za-z0-9:_-]+)/g;
+
+const WORKFLOW_ONLY_ROOT_SCRIPTS = new Set([
+  "typecheck",
+  "patches:check",
+  "hosted-rehearsals-prep:test",
+  "build:web",
+  // The public half's ci.yml builds the dashboard where this half builds the
+  // site, for the same reason `build:web` is here: producing an artifact is not
+  // a gate, and requiring it in the root `test` script would make every local
+  // test run build a bundle. Only the PUBLIC tree trips this — the private
+  // workflow has no `build:dashboard` step — so it fails nowhere except inside
+  // `assemble-public-tree --verify`, which is the one place nobody runs by
+  // habit. It has been red there since before the open-core split shipped.
+  "build:dashboard",
+  "mobile-release:test",
+  "mobile-release:check",
+  "mobile-native-release:check",
+  "browser-e2e",
+]);
 
 /**
  * Script names a shell fragment invokes through `npm run`. The public core's
@@ -120,12 +140,17 @@ export function compareCoverage({ manifest, workflow }) {
   const invented = [...run].filter(
     (name) => manifest.scripts[name] === undefined && !scopedNames.has(name),
   );
+  const unexpectedExtra = extra.filter(
+    (name) => manifest.scripts[name] !== undefined &&
+      !WORKFLOW_ONLY_ROOT_SCRIPTS.has(name),
+  );
 
-  return { declared, run, uncovered, extra, invented };
+  return { declared, run, uncovered, extra, invented, unexpectedExtra };
 }
 
 export function checkGateCoverage(repositoryRoot = REPO_ROOT) {
-  const { uncovered, extra, invented, declared } = compareCoverage(loadSources(repositoryRoot));
+  const { uncovered, extra, invented, unexpectedExtra, declared } =
+    compareCoverage(loadSources(repositoryRoot));
 
   const problems = [
     ...uncovered.map(
@@ -133,6 +158,9 @@ export function checkGateCoverage(repositoryRoot = REPO_ROOT) {
     ),
     ...invented.map(
       (name) => `${WORKFLOW_PATH} runs ${name}, which ${MANIFEST_PATH} does not define`,
+    ),
+    ...unexpectedExtra.map(
+      (name) => `${WORKFLOW_PATH} runs ${name}, but the root test script no longer does`,
     ),
   ];
 

@@ -16,6 +16,7 @@
  * leaves your machine. Shipping the notes means they arrive with the upgrade,
  * work offline, and cost nothing to trust.
  */
+import { currentCollectorInvocation } from "../invocation.ts";
 
 /** Which true thing the card is on screen to say. */
 export type EntryReason = "first-run" | "not-capturing" | "news";
@@ -104,7 +105,7 @@ export function entryCard(input: EntryInputs): EntryCard | null {
       body: [
         "Seorak watches your Claude Code and Codex sessions and tells you",
         "when one is waiting on you. Nothing is being captured yet.",
-        "Run seorak init to set up the hooks.",
+        `Run ${currentCollectorInvocation()} setup to set up the hooks.`,
       ],
     };
   }

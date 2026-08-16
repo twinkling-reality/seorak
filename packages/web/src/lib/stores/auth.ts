@@ -59,7 +59,7 @@ const authStore = createStore<AuthState>((set) => ({
     if (!hash.includes('token=')) return null;
     const match = hash.match(/token=([^&]+)/);
     if (!match || !match[1]) return null;
-    // `seorak init` URL-encodes the token in the #token fragment; decode it back to
+    // `seorak setup` URL-encodes the token in the #token fragment; decode it back to
     // the raw key (fall back to the raw match if it isn't valid encoding).
     clearAuthFragment();
     try {

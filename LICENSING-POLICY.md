@@ -43,7 +43,7 @@ There are **two** Apache-2.0 grants in this tree, and they are file-scoped:
 
 | File | Covers |
 |---|---|
-| `packages/collector/LICENSE` | `@seorak/collector` |
+| `packages/collector/LICENSE` | the collector CLI, published as `seorak` |
 | `packages/types/LICENSE` | `@seorak/types` |
 
 **There is no `LICENSE` at this repository's root, and one must not be added

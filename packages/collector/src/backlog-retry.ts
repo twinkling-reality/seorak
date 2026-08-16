@@ -105,6 +105,7 @@ export class BacklogRetryController {
         state: "caught-up",
         updatedAt,
         consecutiveFailures: 0,
+        ...(result.route ? { route: result.route } : {}),
       });
       return;
     }

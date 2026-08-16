@@ -43,6 +43,9 @@ developer's private record. They are not a scorecard.
   performance, output, or impact.
 - A streak means consecutive measured active days only. It does not prove
   improvement, quality, consistency of outcomes, or developer ability.
+- Call the portable embed **token usage** (with window and tool lines). Never
+  call it productivity, skill, grades, impact, or a peer comparison. Tokens
+  never feed calendar intensity.
 - Put the measurement window, coverage, and unavailable state beside any public
   stat that needs them to be interpreted honestly.
 - Never say "verified developer," "proven productivity," "proof of
@@ -100,9 +103,9 @@ Capture today: Claude Code and Codex ([specs/multi-tool.md](../specs/multi-tool.
 
 ## OSS extraction
 
-The public core is Apache-2.0 `@seorak/types`, `@seorak/collector`, and
-`@seorak/dashboard`, the last being the built primary UI the collector's loopback
-plane serves. The private cloud keeps identity, billing, provisioning, managed
+The public core is Apache-2.0 `@seorak/types`, the collector CLI (published as
+the unscoped `seorak`), and `@seorak/dashboard`, the last being the built primary
+UI the collector's loopback plane serves. The private cloud keeps identity, billing, provisioning, managed
 cells, APNs, the operated directory, and Seorak's website. Decision, ownership
 matrix, and migration sequence:
 [ADR 005](../adr/005-open-core-repository-and-free-ui-packaging.md).

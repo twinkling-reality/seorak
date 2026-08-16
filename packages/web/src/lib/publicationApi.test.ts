@@ -44,6 +44,7 @@ function manifest(): OwnerPublicationManifest {
       mcp: { enabled: false, fields: [] },
     },
     activity: null,
+    tokenUsage: null,
     projects: [],
   };
 }
@@ -106,7 +107,10 @@ describe('publicationApi', () => {
       expect(init?.headers).toMatchObject({
         'x-seorak-csrf': 'csrf-proof-for-public-presence',
       });
-      expect(JSON.stringify(init)).not.toMatch(/publisher|secret|token/i);
+      // tokenUsage is a legitimate manifest field; strip it before scanning for secrets.
+      expect(JSON.stringify(init).replace(/tokenUsage/g, '')).not.toMatch(
+        /publisher|secret|token/i,
+      );
     }
     expect(JSON.parse(String(calls[1]?.[1]?.body))).toEqual(manifest());
     expect(JSON.parse(String(calls[2]?.[1]?.body))).toEqual({ manifestRevision: 3 });

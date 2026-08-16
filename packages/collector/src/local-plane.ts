@@ -103,7 +103,7 @@ import {
   buildLocalSessionSummary,
   LocalSessionOutcomeTooLargeError,
 } from "./local-projection.ts";
-import { localHistoryThrough } from "./local-store.ts";
+import { localHistoryThrough } from "./local-sync-store.ts";
 import { collectorPackageRoot } from "./package-layout.ts";
 import { captureSettingsPath, localSettingsPath } from "./paths.ts";
 import {

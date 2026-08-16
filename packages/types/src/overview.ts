@@ -999,7 +999,9 @@ export interface AgentModelRollup {
 
 /** One (agent, day) activity point for the Agents history chart. PAST ACTIVITY
  *  ONLY. `lines` is null when no row that day carried the collector's line
- *  fields — unmeasured, never {0,0}. */
+ *  fields — unmeasured, never {0,0}. `tokensTotal` is input+output for that
+ *  agent that day (Claude from tool.call / rollup_model; Codex from the
+ *  session.tokens carrier). Null when unmeasured; 0 only when measured zero. */
 export interface AgentDailyPoint {
   agent: AgentId;
   /** ISO date YYYY-MM-DD, bucketed by each event's OWN `at` date (UTC). */
@@ -1007,6 +1009,8 @@ export interface AgentDailyPoint {
   /** Distinct sessions STARTED that day. */
   sessions: number;
   lines: { added: number; removed: number } | null;
+  /** Input+output tokens that day for this agent. Null when unmeasured. */
+  tokensTotal: number | null;
 }
 
 /**

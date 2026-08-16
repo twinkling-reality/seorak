@@ -43,7 +43,7 @@ const VISIBILITIES = {
 
 const WORKSPACE_PACKAGES = new Map([
   ["@seorak/types", "public"],
-  ["@seorak/collector", "public"],
+  ["seorak", "public"],
   ["@seorak/web", "mixed"],
   ["@seorak/worker", "private"],
   ["seorak-app", "private"],

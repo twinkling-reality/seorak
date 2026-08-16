@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { COLLECTOR_PACKAGE } from "./package-name.ts";
 
 function isCollectorRoot(candidate: string): boolean {
   const manifestPath = join(candidate, "package.json");
@@ -9,7 +10,7 @@ function isCollectorRoot(candidate: string): boolean {
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
       name?: unknown;
     };
-    return manifest.name === "@seorak/collector";
+    return manifest.name === COLLECTOR_PACKAGE;
   } catch {
     return false;
   }
@@ -22,7 +23,7 @@ export function collectorPackageRoot(moduleUrl: string = import.meta.url): strin
     if (isCollectorRoot(candidate)) return candidate;
     const parent = dirname(candidate);
     if (parent === candidate) {
-      throw new Error("cannot locate the @seorak/collector package root");
+      throw new Error(`cannot locate the ${COLLECTOR_PACKAGE} package root`);
     }
     candidate = parent;
   }

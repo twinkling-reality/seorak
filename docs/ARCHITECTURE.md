@@ -560,8 +560,9 @@ Depend on `@seorak/types`, build URLs from `seorakRoutes`, send `bearerHeader(to
 The boundary is settled in
 [ADR 005](./adr/005-open-core-repository-and-free-ui-packaging.md): two
 repositories, one direction, no mirror. The public core is
-`@seorak/types`, `@seorak/collector`, and `@seorak/dashboard`, the last being the
-built primary UI the collector's loopback plane serves. The private cloud keeps
+`@seorak/types`, the collector CLI (published as the unscoped `seorak`), and
+`@seorak/dashboard`, the last being the built primary UI the collector's loopback
+plane serves. The private cloud keeps
 identity, billing, entitlement issuance, provisioning, managed cells, APNs, the
 operated directory, and Seorak's website. The public core never imports the
 private cloud; the private cloud pins exact published versions of the public

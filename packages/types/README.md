@@ -17,8 +17,8 @@ import {
 
 `@seorak/types/push` is the optional runtime mobile-surface integration. A
 consumer of that subpath must install the matching
-`@mobile-surfaces/surface-contracts@9.0.0` peer. Core consumers, including
-`@seorak/collector`, do not install any `@mobile-surfaces`, Expo, or React
+`@mobile-surfaces/surface-contracts@9.0.0` peer. Core consumers, including the
+collector CLI (`seorak`), do not install any `@mobile-surfaces`, Expo, or React
 Native dependency tree.
 
 The device token wire contract this subpath validates is the same one

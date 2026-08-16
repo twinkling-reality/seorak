@@ -41,7 +41,7 @@ does not cover, and an agent whose record starts inside the window says so besid
 its own share. An unmeasured leg is not spoken at all, so the paragraph shrinks on
 thin data rather than filling with `--`.
 
-- `seorak init` sets up hooks and the daemon once. Re-init preserves the configured worker URL and key and heals hooks orphaned by a moved checkout.
+- `seorak setup` sets up hooks and the daemon once. Re-running it preserves the configured worker URL and key and heals hooks orphaned by a moved checkout. `seorak init` remains a compatibility alias.
 - `seorak status` prints a check-per-line list with a remedy on every failure, resolving the worker URL and token exactly as the session does.
 - `seorak` opens the live session plus an input line (`/range`, `/view`, `/help`, `/quit`, free text to chat).
 - **left/right change the window, up/down focus one project.** A focused board narrows both halves to that repo's rollup, which the worker computes with the same definitions as the global aggregates. Hints spell the keys: `←↑↓→` are not cell-exact in monospace and font-fall-back at the wrong size.

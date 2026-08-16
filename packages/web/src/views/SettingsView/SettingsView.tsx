@@ -40,6 +40,7 @@ import {
   formatToggleCount,
 } from './settingsTabSummaries.js';
 import styles from './SettingsView.module.css';
+import { DIRECTORY_EXPERIENCE_ENABLED } from '../../lib/directoryExperience.js';
 
 // Settings is the solo, local-user surface. Panel blocks use DetailSection —
 // the same label / answer / content hierarchy as Usage and Outcomes detail
@@ -79,7 +80,7 @@ type SectionId = (typeof SECTION_IDS)[number];
  * keeps every deployment predating the contract exactly as it was.
  */
 function servedSectionIds(): readonly SectionId[] {
-  return currentPlaneServes('publication')
+  return DIRECTORY_EXPERIENCE_ENABLED && currentPlaneServes('publication')
     ? SECTION_IDS
     : SECTION_IDS.filter((id) => id !== 'public');
 }

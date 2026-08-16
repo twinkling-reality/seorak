@@ -9,16 +9,24 @@ import {
   type PublicProjectField,
   type PublicProjectProjectionDto,
 } from "./integration-api.ts";
+import {
+  PUBLIC_TOKEN_USAGE_FIELDS,
+  type PublicTokenUsageField,
+} from "./publication-management.ts";
 
 export const PUBLIC_DIRECTORY_API_PREFIX = "/v1" as const;
 export const PUBLIC_API_SEARCH_PATH = "/v1/search" as const;
 export const PUBLIC_API_PROFILE_PATH = "/v1/profiles/:profileSlug" as const;
 export const PUBLIC_API_ACTIVITY_PATH =
   "/v1/profiles/:profileSlug/activity" as const;
+export const PUBLIC_API_TOKEN_USAGE_PATH =
+  "/v1/profiles/:profileSlug/token-usage" as const;
 export const PUBLIC_API_PROFILE_PROJECTS_PATH =
   "/v1/profiles/:profileSlug/projects" as const;
 export const PUBLIC_API_PROJECT_PATH =
   "/v1/profiles/:profileSlug/projects/:projectSlug" as const;
+export const PUBLIC_API_PROJECT_TOKEN_USAGE_PATH =
+  "/v1/profiles/:profileSlug/projects/:projectSlug/token-usage" as const;
 export const PUBLIC_API_DOCS_PATH = "/docs/api" as const;
 
 export const PUBLIC_WEB_API_PREFIX = "/v1/web" as const;
@@ -27,10 +35,18 @@ export const PUBLIC_WEB_PROFILE_PATH =
   "/v1/web/profiles/:profileSlug" as const;
 export const PUBLIC_WEB_ACTIVITY_PATH =
   "/v1/web/profiles/:profileSlug/activity" as const;
+export const PUBLIC_WEB_TOKEN_USAGE_PATH =
+  "/v1/web/profiles/:profileSlug/token-usage" as const;
+export const PUBLIC_WEB_TOKEN_USAGE_SVG_PATH =
+  "/v1/web/profiles/:profileSlug/usage.svg" as const;
 export const PUBLIC_WEB_PROFILE_PROJECTS_PATH =
   "/v1/web/profiles/:profileSlug/projects" as const;
 export const PUBLIC_WEB_PROJECT_PATH =
   "/v1/web/profiles/:profileSlug/projects/:projectSlug" as const;
+export const PUBLIC_WEB_PROJECT_TOKEN_USAGE_PATH =
+  "/v1/web/profiles/:profileSlug/projects/:projectSlug/token-usage" as const;
+export const PUBLIC_WEB_PROJECT_TOKEN_USAGE_SVG_PATH =
+  "/v1/web/profiles/:profileSlug/projects/:projectSlug/usage.svg" as const;
 
 export const PUBLIC_DIRECTORY_PAGE_DEFAULT = 10;
 export const PUBLIC_DIRECTORY_PAGE_MAX = 20;
@@ -212,6 +228,53 @@ export const PUBLIC_HTTP_DOC_ENDPOINTS = [
       },
     ],
   },
+  {
+    id: "tokenUsage",
+    method: "GET",
+    navLabel: "Get token usage",
+    path: PUBLIC_API_TOKEN_USAGE_PATH,
+    summary:
+      "Read the frozen profile-wide token-usage series when its public API grant is enabled.",
+    parameters: [
+      {
+        name: "profileSlug",
+        kind: "path",
+        required: true,
+        note: "The public profile slug.",
+        type: "string",
+        maxLength: PUBLIC_SLUG_MAX_LENGTH,
+        pattern: PUBLIC_SLUG_PATTERN,
+      },
+    ],
+  },
+  {
+    id: "projectTokenUsage",
+    method: "GET",
+    navLabel: "Get project token usage",
+    path: PUBLIC_API_PROJECT_TOKEN_USAGE_PATH,
+    summary:
+      "Read the frozen project-scoped token-usage series when its public API grant is enabled.",
+    parameters: [
+      {
+        name: "profileSlug",
+        kind: "path",
+        required: true,
+        note: "The public profile slug.",
+        type: "string",
+        maxLength: PUBLIC_SLUG_MAX_LENGTH,
+        pattern: PUBLIC_SLUG_PATTERN,
+      },
+      {
+        name: "projectSlug",
+        kind: "path",
+        required: true,
+        note: "The public project slug.",
+        type: "string",
+        maxLength: PUBLIC_SLUG_MAX_LENGTH,
+        pattern: PUBLIC_SLUG_PATTERN,
+      },
+    ],
+  },
 ] as const satisfies readonly PublicHttpDocEndpoint[];
 
 /** Every documented read, as a literal union. */
@@ -223,7 +286,9 @@ export const PUBLIC_MCP_TOOL_NAMES = [
   "search_public_projects",
   "get_public_profile",
   "get_public_activity",
+  "get_public_token_usage",
   "get_public_project",
+  "get_public_project_token_usage",
   "list_public_profile_projects",
 ] as const;
 export type PublicMcpToolName = (typeof PUBLIC_MCP_TOOL_NAMES)[number];
@@ -237,8 +302,12 @@ export const PUBLIC_MCP_TOOL_DESCRIPTIONS: Readonly<Record<PublicMcpToolName, st
     "Get one stored public profile projection when its MCP grant is enabled.",
   get_public_activity:
     "Get the frozen calendar or streak fields explicitly granted to public MCP for a profile.",
+  get_public_token_usage:
+    "Get the frozen profile-wide token-usage series when its MCP grant is enabled.",
   get_public_project:
     "Get one stored public project projection when its MCP grant is enabled.",
+  get_public_project_token_usage:
+    "Get the frozen project-scoped token-usage series when its MCP grant is enabled.",
   list_public_profile_projects:
     "List projects under a public profile when each project's MCP grant is enabled; search permission is not required.",
 };
@@ -299,6 +368,16 @@ const MCP_PROFILE_SLUG: PublicMcpToolParameter = {
  * website renders the same table, so a documented tool argument cannot describe
  * something the runtime does not validate.
  */
+const MCP_PROJECT_SLUG: PublicMcpToolParameter = {
+  name: "projectSlug",
+  type: "string",
+  required: true,
+  note: "Public project slug under the selected profile.",
+  minLength: 1,
+  maxLength: PUBLIC_SLUG_MAX_LENGTH,
+  pattern: PUBLIC_SLUG_PATTERN,
+};
+
 export const PUBLIC_MCP_TOOL_INPUTS: Readonly<
   Record<PublicMcpToolName, readonly PublicMcpToolParameter[]>
 > = {
@@ -306,18 +385,9 @@ export const PUBLIC_MCP_TOOL_INPUTS: Readonly<
   search_public_projects: MCP_SEARCH_INPUT,
   get_public_profile: [MCP_PROFILE_SLUG],
   get_public_activity: [MCP_PROFILE_SLUG],
-  get_public_project: [
-    MCP_PROFILE_SLUG,
-    {
-      name: "projectSlug",
-      type: "string",
-      required: true,
-      note: "Public project slug under the selected profile.",
-      minLength: 1,
-      maxLength: PUBLIC_SLUG_MAX_LENGTH,
-      pattern: PUBLIC_SLUG_PATTERN,
-    },
-  ],
+  get_public_token_usage: [MCP_PROFILE_SLUG],
+  get_public_project: [MCP_PROFILE_SLUG, MCP_PROJECT_SLUG],
+  get_public_project_token_usage: [MCP_PROFILE_SLUG, MCP_PROJECT_SLUG],
   list_public_profile_projects: [
     {
       ...MCP_PROFILE_SLUG,
@@ -722,6 +792,139 @@ export const PUBLIC_ACTIVITY_RESPONSE_FIELDS: readonly PublicDocField[] = [
   },
 ];
 
+const TOKEN_USAGE_DAY_FIELDS: readonly PublicDocField[] = [
+  { name: "date", type: "string", note: "The calendar day the tokens were observed on." },
+  {
+    name: "byAgent",
+    type: "object",
+    note: "Input+output tokens for each published agent that day. Absent keys were not measured.",
+    fields: [
+      { name: "claude-code", type: "integer", optional: true, note: "Claude Code tokens that day." },
+      { name: "codex", type: "integer", optional: true, note: "Codex tokens that day." },
+    ],
+  },
+  {
+    name: "total",
+    type: "integer | null",
+    note: "Sum of byAgent for that day, or null when coverage cannot support a total.",
+  },
+  {
+    name: "coverage",
+    type: "string",
+    note: "How much of the day the record can account for.",
+    values: ["complete", "partial", "unavailable"],
+  },
+  {
+    name: "availability",
+    type: "object",
+    note: "Why a day could not be claimed, when it could not.",
+    fields: AVAILABILITY_FIELDS,
+  },
+];
+
+const TOKEN_USAGE_FIELD_NOTES: Readonly<Record<PublicTokenUsageField, string>> = {
+  series: "Frozen day-by-day token series. Readers never recompute it from private history.",
+  totals: "Period sum across the frozen window, with availability and coverage.",
+};
+
+export const PUBLIC_TOKEN_USAGE_RESPONSE_FIELDS: readonly PublicDocField[] = [
+  ...PUBLICATION_STAMP_FIELDS,
+  SURFACE_FIELD,
+  { name: "profileSlug", type: "string", note: "The public profile slug." },
+  {
+    name: "projectSlug",
+    type: "string | null",
+    note: "Null for a profile-wide series; set for a project-scoped embed.",
+  },
+  {
+    name: "rangeDays",
+    type: "integer",
+    note: "Frozen window length in days.",
+    values: ["30", "90"],
+  },
+  { name: "period", type: "object", note: "Window the series covers.", fields: DATE_RANGE_FIELDS },
+  {
+    name: "fields",
+    type: "object",
+    note: "Only the frozen token-usage fields this surface's allowlist selected.",
+    fields: PUBLIC_TOKEN_USAGE_FIELDS.map((name) =>
+      name === "series"
+        ? {
+            name,
+            type: "object",
+            optional: true,
+            note: TOKEN_USAGE_FIELD_NOTES[name],
+            fields: [
+              {
+                name: "days",
+                type: "object[]",
+                note: "One entry per day in the period.",
+                fields: TOKEN_USAGE_DAY_FIELDS,
+              },
+              { name: "generatedAt", type: "string", note: "When the series was frozen." },
+              {
+                name: "freshness",
+                type: "object",
+                note: "Age of the frozen series.",
+                fields: FRESHNESS_FIELDS,
+              },
+            ],
+          }
+        : {
+            name,
+            type: "object",
+            optional: true,
+            note: TOKEN_USAGE_FIELD_NOTES[name],
+            fields: [
+              {
+                name: "total",
+                type: "integer | null",
+                note: "Period total, or null when the sum cannot be claimed.",
+              },
+              {
+                name: "byAgent",
+                type: "object",
+                note: "Period totals by agent.",
+                fields: [
+                  {
+                    name: "claude-code",
+                    type: "integer",
+                    optional: true,
+                    note: "Claude Code period total.",
+                  },
+                  { name: "codex", type: "integer", optional: true, note: "Codex period total." },
+                ],
+              },
+              {
+                name: "availability",
+                type: "object",
+                note: "Whether the period total could be supported.",
+                fields: AVAILABILITY_FIELDS,
+              },
+              {
+                name: "sampleSize",
+                type: "integer",
+                note: "Number of days that contributed a measured total.",
+              },
+              {
+                name: "coverage",
+                type: "object",
+                note: "The window the total describes.",
+                fields: [
+                  { name: "period", type: "object", note: "Measured window.", fields: DATE_RANGE_FIELDS },
+                  {
+                    name: "complete",
+                    type: "boolean",
+                    note: "False means the window has gaps, so the value is a floor.",
+                  },
+                ],
+              },
+            ],
+          }
+    ),
+  },
+];
+
 const NEXT_CURSOR_FIELD: PublicDocField = {
   name: "nextCursor",
   type: "string | null",
@@ -787,6 +990,8 @@ export const PUBLIC_HTTP_RESPONSE_FIELDS: Readonly<
   activity: PUBLIC_ACTIVITY_RESPONSE_FIELDS,
   projects: PUBLIC_PROFILE_PROJECTS_RESPONSE_FIELDS,
   project: PUBLIC_PROJECT_RESPONSE_FIELDS,
+  tokenUsage: PUBLIC_TOKEN_USAGE_RESPONSE_FIELDS,
+  projectTokenUsage: PUBLIC_TOKEN_USAGE_RESPONSE_FIELDS,
 };
 
 /** `structuredContent` shape per MCP tool. Same projections as the HTTP reads. */
@@ -797,6 +1002,8 @@ export const PUBLIC_MCP_TOOL_RESULTS: Readonly<
   search_public_projects: PUBLIC_SEARCH_RESPONSE_FIELDS,
   get_public_profile: PUBLIC_PROFILE_RESPONSE_FIELDS,
   get_public_activity: PUBLIC_ACTIVITY_RESPONSE_FIELDS,
+  get_public_token_usage: PUBLIC_TOKEN_USAGE_RESPONSE_FIELDS,
   get_public_project: PUBLIC_PROJECT_RESPONSE_FIELDS,
+  get_public_project_token_usage: PUBLIC_TOKEN_USAGE_RESPONSE_FIELDS,
   list_public_profile_projects: PUBLIC_PROFILE_PROJECTS_RESPONSE_FIELDS,
 };

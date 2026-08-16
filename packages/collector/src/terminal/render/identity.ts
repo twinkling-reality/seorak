@@ -13,6 +13,7 @@
 import { frameBoxWidth, paint } from "./format.ts";
 import { boxBlock } from "./box.ts";
 import type { IdentityFacts } from "../types.ts";
+import { currentCollectorInvocation } from "../../invocation.ts";
 
 export type { IdentityFacts };
 
@@ -138,7 +139,9 @@ export function identityBlock(
 
   const fact = (label: string, value: string): string =>
     `  ${dim(label.padEnd(10))}${clip(value, inner - 13)}`;
-  rows.push(fact("watching", facts.watching ?? "nothing yet (run seorak init)"));
+  rows.push(
+    fact("watching", facts.watching ?? `nothing yet (run ${currentCollectorInvocation()} setup)`),
+  );
   rows.push(fact("worker", facts.workerHost));
   rows.push(fact("range", `last ${rangeDays} days`) + (compact ? "" : ` ${dim("left/right to change")}`));
 

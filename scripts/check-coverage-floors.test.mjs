@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
@@ -107,6 +107,8 @@ test("node runs are scoped to one file and carry node's own thresholds", () => {
 test("the vitest run includes every floored worker file", () => {
   const run = COVERAGE_RUNS.find((entry) => entry.id === "worker");
   const args = vitestCoverageArgs(run, "/tmp/example");
+  assert.ok(run.tests.length > 0, "the worker coverage pass must stay focused");
+  for (const test of run.tests) assert.ok(args.includes(test));
   for (const file of Object.keys(run.floors)) {
     assert.ok(
       args.includes(`--coverage.include=${file}`),
@@ -114,6 +116,26 @@ test("the vitest run includes every floored worker file", () => {
     );
   }
   assert.ok(args.includes("--coverage.reportsDirectory=/tmp/example"));
+  assert.ok(args.includes("--silent=passed-only"));
+});
+
+// `packages/worker` is private and is not in the public tree, so this file's
+// subject is absent there. A gate whose subject this half does not contain
+// reports nothing rather than failing — the same rule the open-core map states
+// for private paths it deliberately names. Without the guard it threw ENOENT
+// inside `assemble-public-tree --verify`, which is the only place it runs.
+test("the worker coverage provider stays on the exact Vitest version", (t) => {
+  const manifestPath = resolve(REPO_ROOT, "packages/worker/package.json");
+  if (!existsSync(manifestPath)) {
+    t.skip("packages/worker is private and absent from this tree");
+    return;
+  }
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+  assert.equal(
+    manifest.devDependencies["@vitest/coverage-v8"],
+    manifest.devDependencies.vitest,
+    "Vitest rejects mixed versions before producing its coverage report",
+  );
 });
 
 test("focused vitest runs include their owning test files", () => {

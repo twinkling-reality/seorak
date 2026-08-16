@@ -311,7 +311,7 @@ export default function OverviewView() {
           hint={
             <>
               Use Claude Code or Codex and your sessions appear here. If you just ran{" "}
-              <code>seorak init</code>, restart Claude Code so the hooks load.
+              <code>npx seorak setup</code>, then restart Claude Code so the hooks load.
             </>
           }
         />

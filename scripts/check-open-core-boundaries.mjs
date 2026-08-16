@@ -287,6 +287,7 @@ export function analyzeOpenCoreBoundaries(manifest, paths, readFile, holdsPrivat
     placed += 1;
   }
   const unmatchedPrivateRules = [];
+  const unmatchedPublicOnlyRules = [];
   for (const rule of manifest.rules) {
     if (matchedPatterns.has(rule.pattern)) continue;
     if (paths.some((path) => rule.matcher.test(path))) continue;
@@ -299,6 +300,17 @@ export function analyzeOpenCoreBoundaries(manifest, paths, readFile, holdsPrivat
     const relocated = rule.relocatedTo !== undefined;
     if (!holdsPrivate && (relocated || !manifest.publicFileSet.visibilities.includes(rule.visibility))) {
       unmatchedPrivateRules.push(relocated ? `${rule.pattern} (relocated to ${rule.relocatedTo})` : rule.pattern);
+      continue;
+    }
+    // The mirror image, and the map had no way to say it. A few files exist
+    // ONLY in the public repository — the Apache-2.0 root grant governance
+    // forbids at this root, and the publish workflow npm binds by filename —
+    // so a rule for one matches nothing HERE by construction, exactly as a
+    // private rule matches nothing there. Blanket tolerance would be wrong: an
+    // ordinary public rule that stops matching really has lost its directory.
+    // So the exemption is declared per rule, in the map, and is not inferred.
+    if (holdsPrivate && rule.publicRepositoryOnly === true) {
+      unmatchedPublicOnlyRules.push(rule.pattern);
       continue;
     }
     problems.push(`ownership rule ${rule.pattern} matches no tracked file; remove it`);
@@ -398,6 +410,7 @@ export function analyzeOpenCoreBoundaries(manifest, paths, readFile, holdsPrivat
     bindingCount,
     trackedCount: paths.length,
     unmatchedPrivateRules,
+    unmatchedPublicOnlyRules,
     holdsPrivateHalf: holdsPrivate,
   };
 }
@@ -413,6 +426,7 @@ export function checkOpenCoreBoundaries(repositoryRoot = REPO_ROOT) {
       bindingCount: 0,
       trackedCount: 0,
       unmatchedPrivateRules: [],
+      unmatchedPublicOnlyRules: [],
       holdsPrivateHalf: true,
     };
   }
@@ -435,6 +449,11 @@ export function formatReport(result, reconciliation, strict) {
   if (result.unmatchedPrivateRules?.length) {
     lines.push(
       `This tree holds the public half only, so ${result.unmatchedPrivateRules.length} rule(s) place files it does not carry: ${result.unmatchedPrivateRules.join(", ")}.`,
+    );
+  }
+  if (result.unmatchedPublicOnlyRules?.length) {
+    lines.push(
+      `${result.unmatchedPublicOnlyRules.length} rule(s) place files that exist only in the public repository, so they match nothing here: ${result.unmatchedPublicOnlyRules.join(", ")}.`,
     );
   }
   lines.push("");

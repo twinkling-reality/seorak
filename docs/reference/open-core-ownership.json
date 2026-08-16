@@ -958,6 +958,20 @@
       "visibility": "private",
       "source": "b1a",
       "why": "The push dispatcher's container build context. ADR 005 did not place it."
+    },
+    {
+      "pattern": "LICENSE",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "The Apache-2.0 root grant, which exists ONLY in the public repository: governance requires it at the public root and forbids it at this one, so the C3 owner run copies packages/types/LICENSE into place at create time. It was unplaced, and an unplaced tracked file classifies as not-public, which made holdsPrivateHalf() true in the public repository itself. Every private workspace the map names then had to be present there, and none is, so the public core has failed its own boundary gate on every push since it was created. A rule that matches nothing in this tree is the documented shape for exactly this.",
+      "publicRepositoryOnly": true
+    },
+    {
+      "pattern": ".github/workflows/publish.yml",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "The npm publish workflow, written into the public repository by the C3 owner run and never present here. npm binds trusted publishing to this filename, so it is public infrastructure rather than a copied artifact. Unplaced for the same reason LICENSE was, and with the same effect on holdsPrivateHalf().",
+      "publicRepositoryOnly": true
     }
   ]
 }

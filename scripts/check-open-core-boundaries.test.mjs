@@ -373,6 +373,37 @@ test("an unplaced file and a rule that matches nothing both fail hard", () => {
   );
 });
 
+// The mirror of the case below, and the one the map could not express. A file
+// that exists ONLY in the public repository — the Apache-2.0 root grant
+// governance forbids at the private root, the publish workflow npm binds by
+// filename — matches nothing HERE by construction. Unplaced, both classified as
+// not-public, which made `holdsPrivateHalf` true in the public repository
+// itself and failed its boundary gate on every push since it was created.
+test("a public-repository-only rule matching nothing is expected here, and an ordinary one is not", () => {
+  const { manifest } = compiled(
+    manifestFixture({
+      paths: [
+        rule("packages/pub/**", "public"),
+        rule("LICENSE", "public", { publicRepositoryOnly: true }),
+        rule("packages/gone/**", "public"),
+      ],
+    }),
+  );
+  const result = analyzeOpenCoreBoundaries(manifest, ["packages/pub/src/a.ts"], () => "", true);
+
+  assert.deepEqual(result.unmatchedPublicOnlyRules, ["LICENSE"]);
+  assert.ok(
+    !result.problems.some((problem) => problem.includes("LICENSE matches no tracked file")),
+    "a declared public-repository-only rule must not be a finding here",
+  );
+  // The exemption is declared per rule, never inferred from visibility: an
+  // ordinary public rule that stops matching really has lost its directory.
+  assert.ok(
+    result.problems.some((problem) => problem.includes("packages/gone/** matches no tracked file")),
+    "an undeclared public rule matching nothing must still fail",
+  );
+});
+
 test("in the public half alone, a private rule matching nothing is expected and a public one is not", () => {
   const { manifest } = compiled(
     manifestFixture({

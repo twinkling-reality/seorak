@@ -48,8 +48,8 @@ there is deliberately only one copy of that answer.
 `twinkling-reality/seorak`. The CLI package has since been renamed from
 `@seorak/collector` to the unscoped `seorak`, so `@seorak/collector@0.1.1` is
 the last release under the old name.
-`seorak@0.2.0` is not published on npm pending approval; the approved release is
-what will make `npx seorak setup` the local-product install path. The dashboard
+`seorak@0.2.0` published to npm on 2026-08-16 with provenance, which is what
+makes `npx seorak setup` the local-product install path. The dashboard
 ships as `@seorak/dashboard`, which the local plane resolves by name.
 **Building from this tree remains the development path**; the rest of this page
 describes that checkout workflow.

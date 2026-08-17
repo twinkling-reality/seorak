@@ -62,7 +62,8 @@ rules by number, so the numbers are stable even where a rule's wording is not.
 `@seorak/types@0.1.0`, `@seorak/collector@0.1.1`, and `@seorak/dashboard@0.1.0` published to npm with provenance attesting to this repository. The CLI package
 has since been renamed from `@seorak/collector` to the unscoped `seorak`, so
 `@seorak/collector@0.1.1` is the last release under the old name.
-`seorak@0.2.0` is not published on npm pending approval.
+`seorak@0.2.0` published to npm on 2026-08-16 with provenance attesting to this
+repository.
 
 Detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), which describes the whole
 product including the parts kept private, and says which is which.

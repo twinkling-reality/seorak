@@ -339,6 +339,10 @@ the daemon records those as labels. The owner opts in; nothing is inferred.
 - **An owner-facing filter or breakdown by launcher** on the dashboard, terminal,
   and phone.
 - **Codex originator labels** (section 4).
+- **An instance-bound discovery file** for the loopback plane, so a consumer can
+  confirm that the process on the port is this owner's Seorak before it sends a
+  bearer. Today `GET /data-plane` answers without a credential and names the
+  plane, which is a sanity check, not an identity proof.
 - **Live state.** Resolve answers from the projected history. It does not stream,
   and `live:read` stays unissued (ADR 002).
 

@@ -53,8 +53,9 @@ The `npx` command above needs none of that: it runs from npm's own cache and
 links nothing onto your PATH. Your captured history is untouched either way —
 it lives in `~/.seorak`, not in the package.
 
-`seorak@0.2.0` published to npm on 2026-08-16 with provenance attesting to
+`@seorak/types@0.2.0` and `seorak@0.3.0` published to npm on 2026-09-27 with provenance attesting to
 `twinkling-reality/seorak`, so the `npx` form above resolves.
+`seorak@0.2.0` published on 2026-08-16.
 `@seorak/collector@0.1.1` is the last release under the old name. To run the
 development build instead of the released one, use this checkout:
 

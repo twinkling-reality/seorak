@@ -30,8 +30,9 @@ temporary execution cache.
 
 This package was renamed from `@seorak/collector` to the unscoped `seorak`, so
 that `npx seorak` resolves on the package name and the command you type names
-the product. `seorak@0.2.0` published to npm on 2026-08-16 with provenance
+the product. `seorak@0.3.0` published to npm on 2026-09-27 with provenance
 attesting to `twinkling-reality/seorak`, so the `npx` form above resolves.
+`seorak@0.2.0` published on 2026-08-16.
 `@seorak/collector@0.1.1` is the last release under the old name.
 
 ## What happens next

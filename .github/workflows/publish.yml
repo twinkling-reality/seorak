@@ -139,24 +139,6 @@ jobs:
       - name: Publish with provenance
         env:
           TARBALL: ${{ needs.build.outputs.tarball }}
-          # TEMPORARY, and delete this line the moment it has done its job.
-          #
-          # npm refuses to bind a trusted publisher to a package that does not
-          # exist, so the FIRST publish of a new name cannot authenticate by
-          # OIDC. `seorak` is a new name. This is the same short-lived granular
-          # token the three 0.1.0 versions used on 2026-08-10, and it is read by
-          # the .npmrc setup-node wrote above.
-          #
-          # Provenance does NOT depend on it: --provenance is emitted from
-          # GitHub Actions with id-token: write and never inspects how you
-          # authenticated. So this publish is attested exactly like the others.
-          #
-          # AFTER publishing: bind Trusted Publisher for `seorak` on npmjs.com
-          # (GitHub Actions, twinkling-reality/seorak, publish.yml, environment
-          # npm-publish), then revert this env line AND revoke the token. The
-          # header of this file says never add a token back, and it is right for
-          # every publish except the first of a name.
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         # The ./ is load-bearing: npm parses a bare "dir/file.tgz" as the
         # GitHub shorthand owner/repo and tries to git clone it.
         run: npm publish "./dist-pack/${TARBALL}" --access public --provenance

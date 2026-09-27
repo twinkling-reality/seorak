@@ -25,8 +25,8 @@ The CLI's npm package is the unscoped `seorak`, renamed from
 `@seorak/collector` so the command you type names the product rather than one of
 its internal parts. The directory in this tree stays `packages/collector`.
 
-`seorak@0.2.0` published to npm on 2026-08-16 with provenance attesting to this
-repository, so the command above resolves. `@seorak/collector@0.1.1` is the last
+`@seorak/types@0.2.0` and `seorak@0.3.0` published to npm on 2026-09-27 with provenance attesting to this
+repository, so the command above resolves. `seorak@0.2.0` published on 2026-08-16. `@seorak/collector@0.1.1` is the last
 release under the old name.
 Setup keeps the background runtime under Seorak's own state so hooks and capture
 do not depend on npm's temporary execution cache.

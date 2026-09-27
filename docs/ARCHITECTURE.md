@@ -28,7 +28,7 @@ re-measured, so read a section's own dates before trusting it.
 [`reference/open-core-ownership.json`](./reference/open-core-ownership.json), and
 two gates read it: `npm run boundaries:check` and `npm run open-core:check`. The
 extraction has since run: the public repository exists, and the releases
-`@seorak/types@0.1.0`, `@seorak/dashboard@0.1.0` and `seorak@0.2.0` are published to npm with provenance attesting to it. The map stays the one
+`@seorak/types@0.2.0`, `@seorak/dashboard@0.1.0` and `seorak@0.3.0` are published to npm with provenance attesting to it. The map stays the one
 place a placement is recorded. The decision, its rejected alternatives, the
 reasoning behind each placement, and the migration sequence are
 [ADR 005](./adr/005-open-core-repository-and-free-ui-packaging.md).
@@ -619,6 +619,7 @@ have since had their first registry release, each with provenance attesting to
 the public repository.
 `@seorak/types@0.1.0` and `@seorak/dashboard@0.1.0` published to npm 2026-08-10.
 `seorak@0.2.0` published to npm on 2026-08-16.
+`@seorak/types@0.2.0` and `seorak@0.3.0` published to npm on 2026-09-27.
 
 **Two of those three claims do not survive contact with the shipped artifact.**
 Nothing packages `packages/web/dist-dashboard` into the collector, and

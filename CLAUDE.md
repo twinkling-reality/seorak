@@ -63,7 +63,8 @@ rules by number, so the numbers are stable even where a rule's wording is not.
 has since been renamed from `@seorak/collector` to the unscoped `seorak`, so
 `@seorak/collector@0.1.1` is the last release under the old name.
 `seorak@0.2.0` published to npm on 2026-08-16 with provenance attesting to this
-repository.
+repository. `@seorak/types@0.2.0` and `seorak@0.3.0` published to npm on
+2026-09-27 with provenance attesting to this repository.
 
 Detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), which describes the whole
 product including the parts kept private, and says which is which.

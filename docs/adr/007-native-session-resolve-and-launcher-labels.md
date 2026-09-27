@@ -150,6 +150,110 @@ response including a miss, the per-credential and per-route-class budgets apply,
 and nothing captured is returned. Clients must ignore response keys they do not
 know, which is what lets v1 grow a field without a v2.
 
+What else a v1 client may rely on, stated here because the types alone do not
+say it:
+
+- **Closed unions may grow.** v1 may add a value to `availability.reason`,
+  `coverage.omissions`, `endReason`, a lens `unit`, or `fate`. It never removes
+  a value or changes what one means. A client treats an unknown reason as
+  "unavailable for a reason I cannot name", an unknown omission as "coverage is
+  incomplete", and an unknown `endReason` or `fate` as unknown; it does not
+  reject the response.
+- **Available means non-null.** When `availability.state` is `available` or
+  `partial`, the payload (`session`, `outcome`, `result`) is non-null. Only
+  `unavailable` carries a null payload. `partial` means the credential's own
+  restriction bounded the answer, and `coverage.omissions` says how.
+- **A resolve miss** is always `unavailable` with reason `not-captured` or
+  `outside-credential-restriction`, `coverage.observed` null,
+  `freshness.dataThrough` null, and both session counts zero.
+- **Status codes.** 401 with `WWW-Authenticate: Bearer error="invalid_token"`
+  for every credential failure: missing, malformed, unknown, expired, revoked,
+  or issued for another audience. 403 with `error="insufficient_scope"` and the
+  required `scope` named in the header, only when the credential is valid but
+  not permitted: it lacks the scope, or (on an owner cell) its own project or
+  date restriction refuses the request. 429 always carries `Retry-After` in
+  whole seconds. The JSON error bodies are for people; branch on the status and
+  the header.
+- **Scopes.** The same on HTTP and MCP: `period:read` for the period summary;
+  `sessions:read` for the session page, resolve, and outcome; `replay:read` for
+  every lens.
+- **Budget.** A credential gets 60 requests per minute with a burst of 60, on
+  top of a per-route-class ceiling shared by every credential on the plane.
+- **Lenses do not page in v1.** A session lens returns every row in one
+  response and `nextCursor` is always null.
+- **The verification lens.** One row per verification kind that was measured,
+  labelled `test`, `build`, `typecheck`, or `lint` (or `Verification` for a run
+  with no kind), each carrying the metrics `runs` and `passed` (unit `count`)
+  and `passRate` (unit `percent`, but the value is a fraction from 0 to 1, or
+  null when nothing ran). No rows means nothing was measured, and `emptyReason`
+  says so. It is measured for Claude Code only.
+
+An outcome and a verification lens for the same session, with illustrative
+values:
+
+```json
+{
+  "apiVersion": "v1",
+  "availability": { "state": "available", "reason": null },
+  "coverage": {
+    "requested": { "from": "2026-06-28", "through": "2026-09-26" },
+    "observed": { "from": "2026-09-26", "through": "2026-09-26" },
+    "matchedSessionCount": 1,
+    "includedSessionCount": 1,
+    "complete": true,
+    "omissions": []
+  },
+  "freshness": {
+    "state": "fresh",
+    "generatedAt": "2026-09-26T18:00:00.000Z",
+    "dataThrough": "2026-09-26T17:58:12.000Z",
+    "staleAt": "2026-09-26T18:05:00.000Z"
+  },
+  "sessionRef": "ses_6b1f0c2d9e8a47f3b5c4d2e1f0a9b8c7",
+  "outcome": {
+    "commitsLanded": 1,
+    "uncommitted": { "filesTouched": 2, "linesAdded": 40, "linesRemoved": 6, "generatedLinesExcluded": 0 },
+    "lineSurvival": null,
+    "errorCount": 3,
+    "firstErrorAt": "2026-09-26T17:44:10.000Z",
+    "endReason": null
+  }
+}
+```
+
+```json
+{
+  "apiVersion": "v1",
+  "availability": { "state": "available", "reason": null },
+  "coverage": { "...": "as above" },
+  "freshness": { "...": "as above" },
+  "result": {
+    "lens": "verification",
+    "level": "session",
+    "target": { "kind": "session", "sessionRef": "ses_6b1f0c2d9e8a47f3b5c4d2e1f0a9b8c7" },
+    "headline": "Captured verification evidence",
+    "rows": [
+      {
+        "label": "test",
+        "metrics": [
+          { "key": "runs", "label": "Measured runs", "value": 4, "unit": "count" },
+          { "key": "passed", "label": "Passed runs", "value": 3, "unit": "count" },
+          { "key": "passRate", "label": "Pass rate", "value": 0.75, "unit": "percent" }
+        ]
+      }
+    ],
+    "emptyReason": null,
+    "loadedSessionCount": 1,
+    "momentCount": 57,
+    "nextCursor": null
+  }
+}
+```
+
+`lineSurvival` is null, or reports fate `unknown`, until the session's lines are
+three days old, and `endReason` is null while the session is active or when its
+end was not captured.
+
 ### 3. Launcher labels: attribution, not exclusion
 
 A program that launches agents on the developer's behalf sets

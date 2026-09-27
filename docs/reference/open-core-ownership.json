@@ -85,6 +85,7 @@
     "roots": [
       "packages",
       "apps",
+      "Glasses",
       "scripts",
       "docs",
       "open-core",
@@ -503,6 +504,12 @@
       "why": "ADR 005 decision 6: licences have to travel with the artifact, so the notices file ships in the dashboard tarball's files array."
     },
     {
+      "pattern": "packages/web/LICENSES/**",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "The same decision 6, one step further: the notices file above is public and cites the download certificate for the ambient audio bed, so the certificate has to be reachable in the public tree or the notices file ships a dead link to it. A licence that names a licensor and a download date is the evidence the notice summarises; leaving it private would publish the claim without the proof."
+    },
+    {
       "pattern": "packages/web/DESIGN_LANGUAGE.md",
       "visibility": "split",
       "source": "adr-005",
@@ -569,6 +576,12 @@
       "why": "App Store distribution under Seorak's signing identity."
     },
     {
+      "pattern": "Glasses/**",
+      "visibility": "private",
+      "source": "adr-005",
+      "why": "Optional native Meta Ray-Ban Display companion. It is independently buildable, has no import edge into the public core, keeps only a scoped private-API credential on the phone, and ships under Seorak's signing identity. The placement is explicit so a removable root experiment cannot escape open-core coverage."
+    },
+    {
       "pattern": "scripts/**",
       "visibility": "private",
       "source": "b1a",
@@ -615,6 +628,12 @@
       "visibility": "public",
       "source": "adr-005",
       "why": "The public collector's private-MCP resource gate. It proves the exact resource audience, official stateless transport seam, closed tool catalog, and authority/query integration independently of route admission."
+    },
+    {
+      "pattern": "scripts/check-plane-work*",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "The public collector's local-plane responsiveness gate, placed on the same reasoning as `check-local-private-mcp*` and `check-local-integration-activation*` beside it: its whole subject is `packages/collector/**`, which is public whole. It proves that a plane route folds no window on the thread that answers requests, that a read which materialises rows declares a budget, and that every recurring tick in the daemon refuses to overlap itself."
     },
     {
       "pattern": "scripts/check-local-integration-activation*",
@@ -789,6 +808,12 @@
       "visibility": "public",
       "source": "c0",
       "why": "Read by `scripts/check-types-publish-safety.mjs`, which is public because CLAUDE.md rule 2 is a property of the package the public core publishes."
+    },
+    {
+      "pattern": "docs/reference/plane-work-acceptance.json",
+      "visibility": "public",
+      "source": "adr-005",
+      "why": "Read by `scripts/check-plane-work.mjs` as its only escape hatch, and public for the same reason that gate is. It also carries the declared half of rule 3, the per-tick time-budget classification, which is a statement about public collector code."
     },
     {
       "pattern": "docs/reference/shared-union-acceptance.json",

@@ -176,7 +176,7 @@ export function compilePeriodComparison(
         'sessions',
         'Sessions',
         sessionsPair,
-        'Counts captured session starts in adjacent equal windows.',
+        'Counts captured session starts that ran a tool or spent something, in adjacent equal windows.',
       ),
     );
   }

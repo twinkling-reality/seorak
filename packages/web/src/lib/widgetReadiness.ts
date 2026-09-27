@@ -54,9 +54,9 @@ const CAPTURE_MESSAGES: Record<keyof CaptureSettings, string> = {
   gitMomentum: 'Git capture is off in Settings, so this stat cannot be measured.',
   fileSignals: 'File capture is off in Settings, so this stat cannot be measured.',
   lineCounts: 'Line counts are off in Settings, so edit-line volume cannot be measured.',
-  fileLabels: 'File labels are off — stats still work with salted ids.',
+  fileLabels: 'File labels are off. Stats still work with salted ids.',
   toolchain: 'Toolchain capture is off in Settings.',
-  repoLabels: 'Repo labels are off — stats still work with salted ids.',
+  repoLabels: 'Repo labels are off. Stats still work with salted ids.',
 };
 
 const GROUP_WIDGETS: Record<CollectionGroup, readonly string[]> = {

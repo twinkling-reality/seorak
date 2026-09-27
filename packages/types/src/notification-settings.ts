@@ -176,6 +176,103 @@ function coercePerProject(raw: unknown): Record<string, ProjectOverride> {
   return out;
 }
 
+/** Which stored layer decided a resolved value. `"catalog"` means no layer set
+ *  it and the reader falls back to its own seed. */
+export type SignalSettingSource = "project" | "global" | "catalog";
+
+/**
+ * One (repo, signal) resolved across the STORED layers only.
+ *
+ * The precedence — project override, then global, then nothing — is one rule
+ * that three consumers need: the worker evaluates it, and both UIs have to show
+ * what it decided and where the value came from. It was written three times
+ * (authoritatively in `resolveNotificationConfig`, partially in the mobile watch
+ * controls, and not at all for per-project in web), which is how two surfaces
+ * come to disagree about what "off" means without either being edited.
+ *
+ * `thresholds` is deliberately SPARSE: it carries only the catalog keys a stored
+ * layer actually set. What an unset key falls through to is the reader's, not
+ * this function's — the worker falls through to its env-tuned seed, and a UI to
+ * the catalog default. Resolving that here would either force the env seed into
+ * a publish-safe package or silently drop it from the engine.
+ *
+ * This resolves settings against settings. It measures nothing and compares
+ * nothing measured, which is what keeps it on the publish-safe side of CLAUDE.md
+ * rule 2 (`npm run types-boundary:check` is the authority, not this comment).
+ */
+export interface ResolvedProjectSignal {
+  /** Whether this signal may fire for this repo. Always false when the repo is
+   *  muted, whatever the layers say. */
+  enabled: boolean;
+  /** Which layer decided `enabled`, BEFORE the mute short-circuit — so a reader
+   *  can distinguish "off for this project" from "off globally" while a mute is
+   *  also in force. */
+  enabledSource: SignalSettingSource;
+  /** The repo's master switch. `enabled` is false whenever this is true. */
+  muted: boolean;
+  alwaysNotify: boolean;
+  alwaysNotifySource: SignalSettingSource;
+  /** Sparse — only keys a stored layer set. */
+  thresholds: Record<string, number>;
+  /** Same keys as `thresholds`, never `"catalog"`. */
+  thresholdSources: Record<string, Exclude<SignalSettingSource, "catalog">>;
+}
+
+export function resolveProjectSignal(
+  settings: NotificationSettings,
+  repoId: string,
+  signalId: SignalId,
+): ResolvedProjectSignal {
+  const meta = SIGNAL_CATALOG[signalId];
+  const project = settings.perProject[repoId];
+  const override = project?.overrides?.[signalId];
+  const global = settings.signals[signalId];
+  const muted = project?.muted ?? false;
+
+  const enabledSource: SignalSettingSource =
+    override?.enabled !== undefined
+      ? "project"
+      : global?.enabled !== undefined
+        ? "global"
+        : "catalog";
+  const baseEnabled =
+    override?.enabled ?? global?.enabled ?? meta.defaultEnabled;
+
+  const alwaysNotifySource: SignalSettingSource =
+    override?.alwaysNotify !== undefined
+      ? "project"
+      : global?.alwaysNotify !== undefined
+        ? "global"
+        : "catalog";
+
+  const thresholds: Record<string, number> = {};
+  const thresholdSources: Record<string, "project" | "global"> = {};
+  for (const t of meta.thresholds) {
+    const fromProject = override?.thresholds?.[t.key];
+    if (typeof fromProject === "number") {
+      thresholds[t.key] = fromProject;
+      thresholdSources[t.key] = "project";
+      continue;
+    }
+    const fromGlobal = global?.thresholds?.[t.key];
+    if (typeof fromGlobal === "number") {
+      thresholds[t.key] = fromGlobal;
+      thresholdSources[t.key] = "global";
+    }
+  }
+
+  return {
+    enabled: muted ? false : baseEnabled,
+    enabledSource,
+    muted,
+    alwaysNotify:
+      override?.alwaysNotify ?? global?.alwaysNotify ?? meta.defaultAlwaysNotify,
+    alwaysNotifySource,
+    thresholds,
+    thresholdSources,
+  };
+}
+
 /**
  * Coerce an unknown (stored row, request body, fetched JSON) into a full
  * NotificationSettings, defaulting any missing/invalid field to its catalog

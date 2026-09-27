@@ -344,10 +344,14 @@ export function windowRows(overview: OverviewSnapshot, nowMs: number, days: numb
 
   // The label already says "sessions", so the value is the bare count: a row
   // reading "sessions   81 sessions" spends a column agreeing with itself.
+  // The note carries the definition, the same annotation layer the web puts it
+  // on: this count is sessions that MEASURED something, and a reader comparing
+  // it against a raw session list deserves to know that here rather than only
+  // on another surface.
   rows.push({
     label: "sessions",
     value: fmtCount(overview.usage.totals.sessions),
-    note: `across ${count(overview.usage.projects.length, "project")}`,
+    note: `across ${count(overview.usage.projects.length, "project")}, counting sessions that ran a tool or spent something`,
   });
 
   const totalTokens = agents.reduce((n, a) => n + a.tokensTotal, 0);

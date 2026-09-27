@@ -36,66 +36,70 @@ afterEach(() => {
 });
 
 describe('ToolIcon', () => {
-  it('renders a letter fallback for unknown tools', async () => {
+  // toolMeta pins `icon` to null for EVERY tool, so with no icon source passed
+  // this is what every current call site renders. It used to be a brand-filled
+  // disc holding the label's first letter, which made Codex and Claude Code
+  // differ by hue alone; ToolIcon.tsx carries the full reasoning.
+  it('renders nothing for a tool with no mark, rather than inventing one', async () => {
+    const ToolIcon = await load();
+    const { container, unmount } = renderComponent(ToolIcon, { tool: 'claude' });
+
+    expect(container.innerHTML).toBe('');
+
+    unmount();
+  });
+
+  it('renders nothing for an unknown tool', async () => {
     const ToolIcon = await load();
     const { container, unmount } = renderComponent(ToolIcon, { tool: 'unknown_tool_xyz' });
 
-    // Should render the first letter of the label as fallback
-    const span = container.querySelector('[aria-hidden="true"]');
-    expect(span).not.toBeNull();
-    // The fallback renders the first letter of the meta.label
-    expect(span.textContent.length).toBe(1);
+    expect(container.innerHTML).toBe('');
 
     unmount();
   });
 
-  it('renders with aria-hidden true by default', async () => {
+  // The remaining branches are the ones that light up if a mark ever becomes
+  // available, so they are what keeps this component from being dead weight.
+  it('renders a backend-resolved iconUrl', async () => {
     const ToolIcon = await load();
-    const { container, unmount } = renderComponent(ToolIcon, { tool: 'cursor' });
+    const { container, unmount } = renderComponent(ToolIcon, {
+      tool: 'claude',
+      iconUrl: 'https://example.com/mark.svg',
+    });
 
-    const el = container.querySelector('[aria-hidden="true"]');
-    expect(el).not.toBeNull();
-
-    unmount();
-  });
-
-  it('renders with custom size', async () => {
-    const ToolIcon = await load();
-    const { container, unmount } = renderComponent(ToolIcon, { tool: 'cursor', size: 24 });
-
-    const el = container.querySelector('[aria-hidden]');
-    expect(el.style.width).toBe('24px');
-    expect(el.style.height).toBe('24px');
+    const img = container.querySelector('img');
+    expect(img).not.toBeNull();
+    expect(img.getAttribute('src')).toBe('https://example.com/mark.svg');
 
     unmount();
   });
 
-  it('uses favicon for tools with website but no icon', async () => {
+  it('falls back to the favicon service for a tool with a website', async () => {
     const ToolIcon = await load();
     const { container, unmount } = renderComponent(ToolIcon, {
       tool: 'some_niche_tool',
       website: 'https://example.com',
     });
 
-    // Should render a favicon img
     const img = container.querySelector('img');
-    if (img) {
-      expect(img.src).toContain('google.com/s2/favicons');
-    }
+    expect(img).not.toBeNull();
+    expect(img.src).toContain('google.com/s2/favicons');
 
     unmount();
   });
 
-  it('renders monochrome mode', async () => {
+  it('applies aria-hidden and a custom size to a mark it does render', async () => {
     const ToolIcon = await load();
     const { container, unmount } = renderComponent(ToolIcon, {
-      tool: 'cursor',
-      monochrome: true,
+      tool: 'claude',
+      iconUrl: 'https://example.com/mark.svg',
+      size: 24,
     });
 
-    // Should still render an icon element
-    const el = container.querySelector('[aria-hidden]');
+    const el = container.querySelector('[aria-hidden="true"]');
     expect(el).not.toBeNull();
+    expect(el.style.width).toBe('24px');
+    expect(el.style.height).toBe('24px');
 
     unmount();
   });

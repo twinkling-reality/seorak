@@ -610,27 +610,6 @@ button.rowBase {
   display: block;
 }
 
-/* ── Ghost / empty visualization states ─────────────
- * "No data collected yet" (not loading). Shimmer on bar tracks suggests
- * "this space will fill"; gentle pulse on stat/row ghosts keeps them
- * feeling alive without implying active fetch. --shimmer-peak from app.css
- * carries theme-aware peak brightness. */
-
-.ghostStatRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-  animation: ghostPulse 2.4s ease-in-out infinite;
-}
-
-.ghostStatValue {
-  font-family: var(--mono);
-  font-size: var(--text-lg);
-  font-weight: 400;
-  color: var(--muted);
-  letter-spacing: -0.03em;
-}
-
 /* ── Coverage note ─────────────────────────────────
  * Caption appended to a widget that's gated on missing capabilities.
  * The viz-pinning rules below anchor the note to the bottom of stat-viz
@@ -683,18 +662,6 @@ button.rowBase {
   bottom: 20px;
 }
 
-/* ── Shared animations ───────────────────────────── */
-
-@keyframes ghostPulse {
-  0%,
-  100% {
-    opacity: 0.25;
-  }
-  50% {
-    opacity: 0.42;
-  }
-}
-
 /* ── Responsive ──────────────────────────────────── */
 
 /* Narrow desktops: a colSpan-3 KPI tile is too tight for a hero currency value
@@ -730,10 +697,6 @@ button.rowBase {
   .dataRow,
   .metricRow {
     animation: none !important;
-  }
-  .ghostStatRow {
-    animation: none !important;
-    opacity: 0.3;
   }
   .workSegment,
   .metricBarFill {

@@ -1,0 +1,51 @@
+/**
+ * Scroll-edge fades for a vertically scrolling list.
+ *
+ * A list that scrolls under a hard edge reads as CUT OFF rather than as
+ * continuing, and the reader cannot tell the difference between "this is the
+ * last row" and "there are twelve more". Dissolving the edge that has content
+ * beyond it says "more this way" without spending a control on it.
+ *
+ * Apply the class matching the scroll position: `fadeTop` when scrolled down
+ * from the start, `fadeBottom` when there is more below, `fadeBoth` in the
+ * middle, and NO class when the content fits (a fade with nothing behind it is
+ * a lie about there being more).
+ *
+ * `--list-fade-distance` tunes the ramp per call site. 16px is the default the
+ * Replay customize panel and the widget catalog were built with, and
+ * commandStrip.module.css composes these rules so all three surfaces stay one
+ * definition rather than three copies that drift.
+ */
+
+.fadeTop,
+.fadeBottom,
+.fadeBoth {
+  --list-fade-distance: 16px;
+}
+
+.fadeTop {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--list-fade-distance));
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--list-fade-distance));
+}
+
+.fadeBottom {
+  -webkit-mask-image: linear-gradient(to top, transparent 0, #000 var(--list-fade-distance));
+  mask-image: linear-gradient(to top, transparent 0, #000 var(--list-fade-distance));
+}
+
+.fadeBoth {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--list-fade-distance),
+    #000 calc(100% - var(--list-fade-distance)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--list-fade-distance),
+    #000 calc(100% - var(--list-fade-distance)),
+    transparent 100%
+  );
+}

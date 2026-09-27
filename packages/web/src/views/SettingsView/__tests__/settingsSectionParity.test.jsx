@@ -99,7 +99,7 @@ const PANELS = [
     loadName: 'fetchCaptureSettings',
     writeName: 'updateCaptureSettings',
     loaded: CAPTURE,
-    unavailable: 'Worker unreachable — capture controls need a running worker.',
+    unavailable: 'Worker unreachable. Capture controls need a running worker.',
     readOnlyNote: "it can't change capture settings",
     control: (c) => c.querySelector('[aria-label^="Show real file and folder names"]'),
     isOn: (c) =>
@@ -112,7 +112,7 @@ const PANELS = [
     loadName: 'fetchNotificationSettings',
     writeName: 'updateNotificationSettings',
     loaded: NOTIFY,
-    unavailable: 'Worker unreachable — notification controls need a running worker.',
+    unavailable: 'Worker unreachable. Notification controls need a running worker.',
     readOnlyNote: "it can't change notification settings",
     control: (c) => c.querySelector('[aria-label="Session ended notifications"]'),
     isOn: (c) =>
@@ -125,7 +125,7 @@ const PANELS = [
     loadName: 'fetchProjectMerges',
     writeName: 'updateProjectMerges',
     loaded: { byRepo: {} },
-    unavailable: 'Worker unreachable — project merging needs a running worker.',
+    unavailable: 'Worker unreachable. Project merging needs a running worker.',
     readOnlyNote: "it can't merge projects",
     control: (c) =>
       [...c.querySelectorAll('[data-testid="projects-dup-row"] button')].find((b) =>
@@ -133,6 +133,28 @@ const PANELS = [
       ),
     // A merge is confirmed by the "Active merges" row appearing.
     isOn: (c) => String(c.querySelector('[data-testid="projects-active-merges"]') !== null),
+    onBefore: 'false',
+  },
+  {
+    // Its own panel rather than a control inside ProjectsSection: one panel owns
+    // one settings family and one state machine, which is the contract this file
+    // exists to hold. Sharing merges' machine would let a failed merge roll back
+    // an archive made in the same breath.
+    name: 'ProjectArchiveSection',
+    module: '../ProjectArchiveSection.js',
+    loadName: 'fetchProjectArchive',
+    writeName: 'updateProjectArchive',
+    loaded: { byRepo: {} },
+    unavailable: 'Worker unreachable. Archiving a project needs a running worker.',
+    readOnlyNote: "it can't archive projects",
+    control: (c) =>
+      [...c.querySelectorAll('[data-testid="project-archive-active"] button')].find((b) =>
+        b.textContent.includes('Archive'),
+      ),
+    // The optimistic archive shows up as the "archived" group appearing. It reads
+    // off the SETTINGS state, not the overview, which is what makes it a real
+    // read-back of the optimistic value rather than of the fixture.
+    isOn: (c) => String(c.querySelector('[data-testid="project-archive-archived"]') !== null),
     onBefore: 'false',
   },
 ];
@@ -186,7 +208,7 @@ describe.each(PANELS)('$name shares the settings state machine', (panel) => {
 
     expect(write).toHaveBeenCalledTimes(1);
     expect(panel.isOn(container)).toBe(panel.onBefore);
-    expect(container.textContent).toContain('Save failed — worker unreachable. Try again.');
+    expect(container.textContent).toContain('Save failed, worker unreachable. Try again.');
 
     unmount();
   });
@@ -243,8 +265,12 @@ describe.each(PANELS)('$name shares the settings state machine', (panel) => {
 });
 
 // The two panels that mirror their settings up to SettingsView (which counts
-// them for the tab summary) must report the revert, not just render it.
-describe.each(PANELS.filter((p) => p.name !== 'ProjectsSection'))(
+// them for the tab summary) must report the revert, not just render it. The two
+// PROJECT panels are excluded because neither feeds the tab summary: the tab
+// counts toggles that are on, and "3 merged" or "2 archived" is not that shape.
+describe.each(
+  PANELS.filter((p) => p.name !== 'ProjectsSection' && p.name !== 'ProjectArchiveSection'),
+)(
   '$name reports the rollback to its parent',
   (panel) => {
     it('passes the reverted settings to onSettingsChange', async () => {

@@ -417,12 +417,23 @@ function ProjectsWidget({ overview, capture }: WidgetBodyProps) {
                     {p.activeSessions.toLocaleString()}
                   </span>
                 ) : (
-                  <span className={styles.projectsEmptyNum}>—</span>
+                  // A measured zero: the board was read and nothing is running here.
+                  <span className={styles.projectsEmptyNum}>none</span>
                 )}
               </span>
 
               <span className={styles.projectsActivityCell}>
-                {recency ?? <span className={styles.projectsEmptyNum}>—</span>}
+                {recency ?? (
+                  // `lastEventAt` is a required timestamp on every rollup, so a null
+                  // here is a row that carried nothing readable in it, not a project
+                  // whose activity fell outside the window.
+                  <span
+                    className={styles.projectsEmptyNum}
+                    title="This project's row carried no readable last-event time."
+                  >
+                    not reported
+                  </span>
+                )}
               </span>
 
               <span className={styles.projectsViewButton}>View</span>

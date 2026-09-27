@@ -40,6 +40,13 @@ export type LocalPlaneRoute =
     }
   | {
       readonly authority: "api";
+      readonly route: "resolve";
+      readonly scope: "sessions:read";
+      readonly routeClass: "read";
+      readonly url: URL;
+    }
+  | {
+      readonly authority: "api";
       readonly route: "outcome";
       readonly sessionRef: string;
       readonly scope: IntegrationScope;
@@ -217,6 +224,18 @@ export function classifyLocalPlaneRequestTarget(
       return methodRoute(method, "GET", {
         authority: "api",
         route: "sessions",
+        scope: "sessions:read",
+        routeClass: "read",
+        url,
+      });
+    }
+    // POST, so the agent's native session id travels in the body and never in a
+    // URL (ADR 007). Checked before OUTCOME, whose ses_ pattern it cannot match.
+    if (path === "/api/v1/sessions/resolve") {
+      if (url.search !== "") return refusal(404, url);
+      return methodRoute(method, "POST", {
+        authority: "api",
+        route: "resolve",
         scope: "sessions:read",
         routeClass: "read",
         url,

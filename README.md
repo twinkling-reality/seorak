@@ -9,9 +9,10 @@ account, no key, no Seorak service connection, and no product-data upload.
 
 This repository is the **public core**, Apache-2.0. It is the whole local
 product: capture, the permanent local history, the primary dashboard, the
-terminal, reports, replay, export, and local intervention. Seorak also sells a
-managed remote service, and that service is built in a private repository and is
-not here. What is where, and why:
+terminal, reports, replay, export, and local intervention. A managed remote
+service is planned alongside it, to be sold only once managed operations and an
+approved payment path are proven; that service is built in a private repository
+and is not here. What is where, and why:
 [`docs/adr/005`](docs/adr/005-open-core-repository-and-free-ui-packaging.md).
 
 **Set it up from npm** with one temporary package run and no global install:

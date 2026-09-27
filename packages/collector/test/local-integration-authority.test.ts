@@ -110,6 +110,7 @@ describe("local integration authority foundation", () => {
       DROP TABLE local_integration_credential_scope;
       DROP TABLE local_integration_credential;
       DROP TABLE local_integration_clock;
+      DROP TABLE local_session_launcher;
       PRAGMA user_version = 4;
     `);
     legacy.close();
@@ -134,6 +135,77 @@ describe("local integration authority foundation", () => {
     expect(statSync(join(migratedDir, "history.sqlite")).mode & 0o777).toBe(
       0o600,
     );
+  });
+
+  it("upgrades v7 to v8 in place, keeping every audit row and matching a fresh schema", () => {
+    const freshDir = directory();
+    const migratedDir = directory();
+    openLocalHistory(freshDir).close();
+    const legacy = openLocalHistory(migratedDir);
+    // Rebuild the v7 shape: the four-operation audit CHECK and no launcher table.
+    legacy.exec(`
+      DROP TABLE local_session_launcher;
+      DROP TABLE local_integration_query_audit;
+      CREATE TABLE local_integration_query_audit (
+        audit_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        credential_id TEXT NOT NULL,
+        operation TEXT NOT NULL CHECK (
+          operation IN ('period_summary', 'list_sessions', 'get_session_outcome', 'replay_lens')
+        ),
+        result TEXT NOT NULL CHECK (
+          result IN ('ok', 'unavailable', 'refused', 'protocol_error', 'internal_error', 'oversized')
+        ),
+        http_status INTEGER NOT NULL CHECK (http_status BETWEEN 100 AND 599),
+        returned_count INTEGER CHECK (returned_count IS NULL OR returned_count >= 0),
+        response_bytes INTEGER CHECK (response_bytes IS NULL OR response_bytes >= 0),
+        at TEXT NOT NULL
+      ) STRICT;
+      INSERT INTO local_integration_query_audit (
+        credential_id, operation, result, http_status, returned_count, response_bytes, at
+      ) VALUES ('${"a".repeat(32)}', 'list_sessions', 'ok', 200, 3, 512, '2026-09-01T00:00:00.000Z');
+      PRAGMA user_version = 7;
+    `);
+    expect(() =>
+      legacy.exec(`INSERT INTO local_integration_query_audit (
+        credential_id, operation, result, http_status, at
+      ) VALUES ('x', 'resolve_session', 'ok', 200, 'now')`),
+    ).toThrow();
+    legacy.close();
+
+    const upgraded = openLocalHistory(migratedDir);
+    try {
+      expect(upgraded.prepare("PRAGMA user_version").get()).toEqual({
+        user_version: LOCAL_HISTORY_SCHEMA_VERSION,
+      });
+      expect(
+        upgraded
+          .prepare("SELECT audit_id, operation, returned_count FROM local_integration_query_audit")
+          .all(),
+      ).toEqual([{ audit_id: 1, operation: "list_sessions", returned_count: 3 }]);
+      upgraded.exec(`INSERT INTO local_integration_query_audit (
+        credential_id, operation, result, http_status, at
+      ) VALUES ('${"a".repeat(32)}', 'resolve_session', 'ok', 200, '2026-09-02T00:00:00.000Z')`);
+    } finally {
+      upgraded.close();
+    }
+
+    const signature = (dir: string) => {
+      const database = openLocalHistory(dir);
+      try {
+        return database
+          .prepare(
+            `SELECT type, name, sql FROM sqlite_master
+            WHERE name LIKE 'local_integration_query_audit%'
+               OR name LIKE 'idx_local_integration_query_audit%'
+               OR name = 'local_session_launcher'
+            ORDER BY type, name`,
+          )
+          .all();
+      } finally {
+        database.close();
+      }
+    };
+    expect(signature(migratedDir)).toEqual(signature(freshDir));
   });
 
   it("migrates v5 and persists only hashes for secrets and cursors", () => {

@@ -24,7 +24,7 @@ describe('buildAgentsMatrix', () => {
     expect(m.agents.map((a) => a.id)).toEqual(['claude-code', 'codex']);
     const cost = m.rows.find((r) => r.id === 'cost')!;
     expect(cost.cells[0].empty).toBe(false);
-    expect(cost.cells[1]).toEqual({ text: '—', empty: true });
+    expect(cost.cells[1]).toEqual({ text: 'unpriced', empty: true });
     const tokens = m.rows.find((r) => r.id === 'tokens')!;
     expect(tokens.cells[1].empty).toBe(true);
   });
@@ -62,8 +62,9 @@ describe('buildAgentsMatrix', () => {
       }),
     ]);
     const errors = m.rows.find((r) => r.id === 'tool-errors')!;
-    expect(errors.cells[0]).toEqual({ text: '—', empty: true }); // no field at all
-    expect(errors.cells[1]).toEqual({ text: '—', empty: true }); // ran calls, reported none
+    // Both are honest-empty, and both say WHICH absence rather than sharing a dash.
+    expect(errors.cells[0]).toEqual({ text: 'none reported', empty: true }); // no field at all
+    expect(errors.cells[1]).toEqual({ text: 'none reported', empty: true }); // ran calls, reported none
   });
 
   it('a REAL but tiny error rate never rounds down to a fabricated 0%', () => {

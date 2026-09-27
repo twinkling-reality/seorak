@@ -2,6 +2,10 @@
 
 Monorepo layout and trust boundaries. Product narrative: [VISION.md](./VISION.md).
 
+Reviewed at `4ce3bdd7` on 2026-08-22: the publication and extraction claims
+were re-checked against the registry; nothing else in this file was
+re-measured, so read a section's own dates before trusting it.
+
 ---
 
 ## Packages and apps
@@ -18,13 +22,15 @@ Monorepo layout and trust boundaries. Product narrative: [VISION.md](./VISION.md
 | `packages/public-directory/` | Public-only immutable publication versions, current projections, channel-filtered web/API/search/MCP; no owner-data binding |
 | `packages/push/` | Node APNs dispatcher (HTTP/2 session Worker can't hold) |
 | `apps/mobile/` | Expo iOS — Live Activity, push, settings |
+| `Glasses/` | Optional native Meta Ray-Ban Display companion; owns its Meta SDK and reads the scoped private API without a workspace import edge |
 
 **Which of these is public and which is private is recorded once**, in
 [`reference/open-core-ownership.json`](./reference/open-core-ownership.json), and
-two gates read it: `npm run boundaries:check` and `npm run open-core:check`. It
-is a decision, not a description of today, because nothing has been extracted or
-published. The decision, its rejected alternatives, the reasoning behind each
-placement, and the migration sequence are
+two gates read it: `npm run boundaries:check` and `npm run open-core:check`. The
+extraction has since run: the public repository exists, and the releases
+`@seorak/types@0.1.0`, `@seorak/dashboard@0.1.0` and `seorak@0.2.0` are published to npm with provenance attesting to it. The map stays the one
+place a placement is recorded. The decision, its rejected alternatives, the
+reasoning behind each placement, and the migration sequence are
 [ADR 005](./adr/005-open-core-repository-and-free-ui-packaging.md).
 
 `@mobile-surfaces/*` (MIT) is permitted in `types`, `push`, and `mobile`.
@@ -551,6 +557,19 @@ public data-lifecycle route in the contract.
 
 Depend on `@seorak/types`, build URLs from `seorakRoutes`, send `bearerHeader(token)`, and pick a validation posture from the table above. Do not copy an existing client. `packages/worker/test/route-contract.test.ts` uses an exhaustive builder/method invocation map independent of the Worker policy and pins it against the real router in both directions, so either an undeclared handler or a declaration with no handler fails CI. Authorization intent has its own exhaustive literal `id -> access` census in `auth.test.ts`; bearer behavior is driven from that independent oracle rather than from the policy it audits.
 
+`Glasses/` is a standalone native iPhone companion rather than a fourth monorepo
+workspace. Its phone app owns Meta registration and display lifecycle, keeps an
+expiring exact-audience `period:read` credential in its own Keychain, and reads
+the existing versioned private period API over routable HTTPS. The Meta SDK and
+duplicated Swift wire DTO stay inside the directory; no current workspace imports
+it, and the operator credential never enters it. The product gate remains
+physical-display evidence that the glance serves away oversight; token novelty
+alone repeats the removed menu-bar bet. It stays a read-only glance: no approve,
+deny, or stop action, because Seorak does not control agents
+([ADR 008](./adr/008-seorak-observes-and-does-not-control-agents.md)). Removing the experiment means deleting
+the directory and its inventory/documentation entries here, in `CLAUDE.md`, and
+in the open-core ownership map.
+
 ---
 
 ## Open-source split
@@ -595,9 +614,11 @@ retired after every supported local ledger reached its current version; missing,
 retired, and future versions now fail closed instead of becoming public package
 contracts.
 `publish:beta` authenticates through an ephemeral npm config, re-runs the full
-publication check, and publishes types before collector. The packages have not
-received their first registry release because registry scope authority was not
-supplied.
+publication check, and publishes types before collector. All three packages
+have since had their first registry release, each with provenance attesting to
+the public repository.
+`@seorak/types@0.1.0` and `@seorak/dashboard@0.1.0` published to npm 2026-08-10.
+`seorak@0.2.0` published to npm on 2026-08-16.
 
 **Two of those three claims do not survive contact with the shipped artifact.**
 Nothing packages `packages/web/dist-dashboard` into the collector, and

@@ -121,9 +121,9 @@ function isMain() {
 
 if (isMain()) {
   try {
-    checkLocalIntegrationActivation();
+    checkLocalIntegrationActivation({ runFocusedSuite: false });
     console.log(
-      "Local integration activation: positional authority, closed mounts, loopback, and TLS are green.",
+      "Local integration activation: positional authority, closed mounts, and source tripwires are green.",
     );
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));

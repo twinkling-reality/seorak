@@ -37,7 +37,11 @@ import {
   writeLocalSettings,
 } from "../src/local-plane.ts";
 import { admitRequestPosition, LOOPBACK_BINDING } from "../src/plane-binding.ts";
-import { liveFixture, localHistoryFixture } from "./support/local-history-fixture.ts";
+import {
+  FIXTURE_NOW,
+  liveFixture,
+  localHistoryFixture,
+} from "./support/local-history-fixture.ts";
 
 const temporary: string[] = [];
 const servers: Server[] = [];
@@ -277,6 +281,22 @@ describe("route contract", () => {
   });
 
   it("answers /developer-model from local rows, with the window it was asked for", async () => {
+    // The fixture is anchored at FIXTURE_NOW and the route reads the wall clock
+    // (`options.nowMs ?? Date.now()`), so this asserted a 30-day window over
+    // rows that fell out of it on 2026-09-01 and the test went red on a date
+    // rather than on a change. Pinning `Date.now` is what makes the window
+    // cover the fixture forever. Only `Date.now` is faked, not timers, because
+    // the assertion runs over a real HTTP server in this process.
+    const realNow = Date.now;
+    Date.now = () => FIXTURE_NOW;
+    try {
+      await developerModelWindowAssertions();
+    } finally {
+      Date.now = realNow;
+    }
+  });
+
+  async function developerModelWindowAssertions(): Promise<void> {
     const base = await listen(seeded(), null);
     const res = await fetch(`${base}/developer-model?days=30`);
     expect(res.status).toBe(200);
@@ -286,7 +306,7 @@ describe("route contract", () => {
     // A repo scope narrows the same read rather than opening a second one.
     const scoped = await fetch(`${base}/developer-model?days=30&repoId=${"b".repeat(64)}`);
     expect((await scoped.json()).scope.repoId).toBe("b".repeat(64));
-  });
+  }
 
   it("answers /sessions/:id/outcome from local rows", async () => {
     const base = await listen(seeded(), null);

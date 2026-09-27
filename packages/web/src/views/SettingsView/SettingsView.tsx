@@ -32,6 +32,7 @@ import DeliveryHealthSection from './DeliveryHealthSection.js';
 import ManagedPlanSection from './ManagedPlanSection.js';
 import PrivateIntegrationsSection from './PrivateIntegrationsSection.js';
 import PublicPresenceSection from './PublicPresenceSection.js';
+import ProjectArchiveSection from './ProjectArchiveSection.js';
 import ProjectsSection from './ProjectsSection.js';
 import {
   CAPTURE_TOGGLE_KEYS,
@@ -435,13 +436,19 @@ export default function SettingsView() {
                 </DetailSection>
               </div>
 
-              <div className={styles.profileRow}>
+              {/* alignStart because Plan's content is several stacked rows and
+                * the grid centres by default, which left the word "Plan" floating
+                * halfway down beside it. */}
+              <div className={clsx(styles.profileRow, styles.profileRowAlignStart)}>
                 <ManagedPlanSection className={styles.profileRowSection} />
               </div>
 
               {servesIntegrations ? (
                 <div className={clsx(styles.profileRow, styles.profileRowAlignStart)}>
-                  <PrivateIntegrationsSection operator={integrationOperator} />
+                  <PrivateIntegrationsSection
+                    operator={integrationOperator}
+                    className={styles.profileRowSection}
+                  />
                 </div>
               ) : null}
 
@@ -502,7 +509,12 @@ export default function SettingsView() {
             </>
           ) : null}
 
-          {activeTab === 'projects' ? <ProjectsSection /> : null}
+          {activeTab === 'projects' ? (
+            <>
+              <ProjectsSection />
+              <ProjectArchiveSection />
+            </>
+          ) : null}
         </div>
       </div>
     </div>

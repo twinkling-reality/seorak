@@ -13,15 +13,20 @@ import {
   type PrivatePeriodDto,
   type PrivateReplayLensDto,
   type PrivateReplayLensName,
+  type PrivateSessionDto,
   type PrivateSessionPageDto,
+  type PrivateSessionResolveInput,
   type PrivateSessionSummaryDto,
   type SessionCapabilities,
 } from "@seorak/types";
 import {
   assertLocalIntegrationPersonalAuthority,
   ensureLocalIntegrationProjectRefIn,
+  ensureLocalIntegrationSessionRefIn,
   listLocalIntegrationSessionPage,
   localIntegrationObservedWindowIn,
+  readLocalDeclaredCapabilitiesIn,
+  readLocalIntegrationSessionByNativeIn,
   readLocalIntegrationSessionIn,
   resolveLocalIntegrationSessionRefIn,
   type LocalIntegrationPrincipal,
@@ -29,12 +34,16 @@ import {
 } from "./local-integration-store.ts";
 import { buildLocalIntegrationReplayLens } from "./local-integration-replay-lenses.ts";
 import {
-  buildLocalOverviewOn,
+  buildLocalOverviewProjectionOn,
   buildLocalReplayOnDatabase,
   buildLocalSessionOutcomeOnDatabase,
   localSessionRowToSummary,
 } from "./local-projection.ts";
-import { openLocalHistory, type LocalSessionRow } from "./local-store.ts";
+import {
+  openLocalHistory,
+  readLocalSessionLaunchersIn,
+  type LocalSessionRow,
+} from "./local-store.ts";
 
 const DAY_MS = 24 * 60 * 60 * 1_000;
 const FRESHNESS_MS = 5 * 60_000;
@@ -56,12 +65,56 @@ function queryNow(principal: LocalIntegrationPrincipal, proposed: Date | undefin
   ));
 }
 
-function querySnapshot<T>(
+type LocalDatabase = import("node:sqlite").DatabaseSync;
+
+/**
+ * One connection for the whole query, opened and closed exactly once.
+ *
+ * Split out of `querySnapshot` so a query that must WRITE something before it
+ * reads can do both on the same connection without opening a second one. See
+ * `queryLocalPrivatePeriod` for the only query that does.
+ */
+function withQueryConnection<T>(
   directory: string | undefined,
-  operation: (database: import("node:sqlite").DatabaseSync) => T,
+  operation: (database: LocalDatabase) => T,
 ): T {
   const database = openLocalHistory(directory);
-  database.exec("BEGIN IMMEDIATE");
+  try {
+    return operation(database);
+  } finally {
+    database.close();
+  }
+}
+
+/**
+ * A READ transaction, and deliberately not the write transaction this used to
+ * open.
+ *
+ * `BEGIN IMMEDIATE` takes SQLite's write lock at the first statement and holds
+ * it until COMMIT. That was invisible while these callbacks were short, and it
+ * stopped being invisible when `queryLocalPrivatePeriod` folded the whole
+ * overview inside one: measured on the author's 345,764-row history on
+ * 2026-09-09, `buildLocalOverviewProjectionOn` takes 2,312 ms at 90 days and
+ * 2,568 ms at 30, so an API read held the write lock for two and a half seconds.
+ * The collector's own capture appends queue behind that lock and start failing
+ * once the 5,000 ms `busy_timeout` in `openLocalHistory` expires. A read that
+ * can cost the user their capture is a correctness defect wearing a performance
+ * defect's clothes.
+ *
+ * `BEGIN DEFERRED` takes a READ snapshot at the first read and holds THAT, which
+ * is the property these callbacks actually need: every row a query folds comes
+ * from one instant, so a page and its metadata cannot disagree. In WAL mode a
+ * reader does not block a writer at all, so capture keeps appending underneath.
+ *
+ * The provenance assertion stays INSIDE the snapshot, because what it certifies
+ * is the shape of the rows being read, not the shape of the file at some other
+ * moment.
+ */
+function querySnapshotOn<T>(
+  database: LocalDatabase,
+  operation: (database: LocalDatabase) => T,
+): T {
+  database.exec("BEGIN DEFERRED");
   try {
     assertLocalIntegrationPersonalAuthority(database);
     const result = operation(database);
@@ -74,9 +127,51 @@ function querySnapshot<T>(
       // Preserve the query/provenance failure.
     }
     throw error;
-  } finally {
-    database.close();
   }
+}
+
+/**
+ * The short write transaction, held for one statement rather than across a fold.
+ *
+ * `ensureLocalIntegrationProjectRefIn` is the only write reached through THESE
+ * helpers, which is a narrower claim than it first looks and is the one that
+ * matters: it is an `INSERT OR IGNORE` plus a `SELECT`, so giving it its own
+ * transaction is what lets the read above stop being one. The private query
+ * layer does write elsewhere. `listLocalIntegrationSessionPage` opens its own
+ * connection and its own `BEGIN IMMEDIATE` around a cursor clock update and
+ * per-row reference inserts, and it never passes through here.
+ *
+ * This is the fifth two-line copy of the same helper in this package
+ * (`local-store.ts`, `local-sync-store.ts`, `local-integration-store.ts` and
+ * `session-cursors.ts` hold the others, all module-private). Folding the five
+ * into one is a change of its own; it is not this one.
+ */
+function queryWriteStepOn<T>(
+  database: LocalDatabase,
+  operation: (database: LocalDatabase) => T,
+): T {
+  database.exec("BEGIN IMMEDIATE");
+  try {
+    const result = operation(database);
+    database.exec("COMMIT");
+    return result;
+  } catch (error) {
+    try {
+      database.exec("ROLLBACK");
+    } catch {
+      // Preserve the write failure.
+    }
+    throw error;
+  }
+}
+
+function querySnapshot<T>(
+  directory: string | undefined,
+  operation: (database: LocalDatabase) => T,
+): T {
+  return withQueryConnection(directory, (database) =>
+    querySnapshotOn(database, operation),
+  );
 }
 
 function isoDate(value: string): string {
@@ -167,6 +262,7 @@ function sessionSummary(
   projectRef: ExternalProjectRef,
   nowMs: number,
   declaredCapabilities: SessionCapabilities | undefined,
+  launcher: string | null,
 ): PrivateSessionSummaryDto {
   const summary = localSessionRowToSummary(row, nowMs, null, declaredCapabilities);
   return {
@@ -180,6 +276,7 @@ function sessionSummary(
     toolCallCount: summary.toolCallCount,
     promptCount: null,
     costUsd: summary.costUsd,
+    launcher,
   };
 }
 
@@ -209,14 +306,35 @@ export function queryLocalPrivatePeriod(
 ): PrivatePeriodDto {
   const now = queryNow(principal, options.now);
   const boundary = boundaryFor(principal, now, rangeDays);
-  return querySnapshot(options.directory, (database) => {
-    const projectRef = principal.restrictions.repoId === null
+  return withQueryConnection(options.directory, (database) => {
+    // Provenance FIRST, and outside both transactions, so a history whose
+    // authority shape has changed is refused before this query writes anything.
+    // That ordering is what it was inside the single write transaction, and the
+    // suite pins it: "reasserts Personal authority at every canonical query
+    // entrypoint" expects the throw from this entry point too.
+    assertLocalIntegrationPersonalAuthority(database);
+    // The project reference is an allocation, not a measurement: an
+    // `INSERT OR IGNORE` plus a `SELECT`, idempotent per repo. It takes the
+    // write lock on its own and gives it straight back, which is the whole
+    // point of separating it from the fold below.
+    //
+    // Separating it also makes the allocation DURABLE across a failed fold,
+    // where the single transaction used to roll it back. That is deliberate and
+    // harmless: the reference is an idempotent per-repo identifier, not a
+    // measurement, so a committed one that no response ever carried is simply
+    // the id the next call will be handed.
+    const restrictedRepoId = principal.restrictions.repoId;
+    const projectRef = restrictedRepoId === null
       ? null
-      : ensureLocalIntegrationProjectRefIn(
-          database,
-          principal.restrictions.repoId,
-          now.toISOString(),
+      : queryWriteStepOn(database, (writable) =>
+          ensureLocalIntegrationProjectRefIn(
+            writable,
+            restrictedRepoId,
+            now.toISOString(),
+          ),
         );
+    // A restricted credential reads nothing, so it opens no snapshot. The
+    // answer is the boundary and the reference, both already in hand.
     if (boundary.restricted) {
       return {
         ...metadata(boundary, now, {
@@ -232,64 +350,72 @@ export function queryLocalPrivatePeriod(
       };
     }
 
-    const snapshot = buildLocalOverviewOn(database, {
-      rangeDays,
-      nowMs: now.getTime(),
-    });
-    const observed = localIntegrationObservedWindowIn(
-      database,
-      boundary,
-      now.getTime(),
-    );
-    const project = principal.restrictions.repoId === null
-      ? undefined
-      : snapshot.usage.projects.find(
-          (candidate) => candidate.repoId === principal.restrictions.repoId,
-        );
-    const metrics = project !== undefined
-      ? {
-          sessionCount: project.sessions,
-          completedSessionCount: Math.max(0, project.sessions - project.activeSessions),
-          toolCallCount: project.toolCalls,
-          promptCount: null,
-          inputTokens: null,
-          outputTokens: null,
-          costUsd: project.costUsd,
-          shippedChangeRate: project.shipRate,
-        }
-      : principal.restrictions.repoId !== null
+    return querySnapshotOn(database, () => {
+      const projection = buildLocalOverviewProjectionOn(database, {
+        rangeDays,
+        nowMs: now.getTime(),
+      });
+      const snapshot = projection.snapshot;
+      const observed = localIntegrationObservedWindowIn(
+        database,
+        boundary,
+        now.getTime(),
+      );
+      const project = principal.restrictions.repoId === null
+        ? undefined
+        : snapshot.usage.projects.find(
+            (candidate) => candidate.repoId === principal.restrictions.repoId,
+          );
+      const periodTokens = principal.restrictions.repoId === null
+        ? projection.periodTokens
+        : project === undefined
+          ? null
+          : projection.periodTokensByRepo.get(project.repoId) ?? null;
+      const metrics = project !== undefined
         ? {
-            sessionCount: 0,
-            completedSessionCount: 0,
-            toolCallCount: 0,
+            sessionCount: project.sessions,
+            completedSessionCount: Math.max(0, project.sessions - project.activeSessions),
+            toolCallCount: project.toolCalls,
             promptCount: null,
-            inputTokens: null,
-            outputTokens: null,
-            costUsd: null,
-            shippedChangeRate: null,
+            inputTokens: periodTokens?.inputTokens ?? null,
+            outputTokens: periodTokens?.outputTokens ?? null,
+            costUsd: project.costUsd,
+            shippedChangeRate: project.shipRate,
           }
-        : {
-            sessionCount: snapshot.usage.totals.sessions,
-            completedSessionCount: snapshot.outcomes.endedCount,
-            toolCallCount: snapshot.usage.totals.toolCalls,
-            promptCount: null,
-            inputTokens: null,
-            outputTokens: null,
-            costUsd: snapshot.usage.cost.totalUsd,
-            shippedChangeRate: snapshot.outcomes.shipRate,
-          };
-    return {
-      ...metadata(boundary, now, {
-        matched: observed.count,
-        included: observed.count,
-        observedFrom: observed.first,
-        observedThrough: observed.last,
-        dataThrough: observed.last,
-      }),
-      period: dateRange(boundary.requestedSince, boundary.requestedUntil),
-      projectRef,
-      metrics,
-    };
+        : principal.restrictions.repoId !== null
+          ? {
+              sessionCount: 0,
+              completedSessionCount: 0,
+              toolCallCount: 0,
+              promptCount: null,
+              inputTokens: null,
+              outputTokens: null,
+              costUsd: null,
+              shippedChangeRate: null,
+            }
+          : {
+              sessionCount: snapshot.usage.totals.sessions,
+              completedSessionCount: snapshot.outcomes.endedCount,
+              toolCallCount: snapshot.usage.totals.toolCalls,
+              promptCount: null,
+              inputTokens: periodTokens?.inputTokens ?? null,
+              outputTokens: periodTokens?.outputTokens ?? null,
+              costUsd: snapshot.usage.cost.totalUsd,
+              shippedChangeRate: snapshot.outcomes.shipRate,
+            };
+      return {
+        ...metadata(boundary, now, {
+          matched: observed.count,
+          included: observed.count,
+          observedFrom: observed.first,
+          observedThrough: observed.last,
+          dataThrough: observed.last,
+        }),
+        period: dateRange(boundary.requestedSince, boundary.requestedUntil),
+        projectRef,
+        metrics,
+      };
+    });
   });
 }
 
@@ -324,6 +450,7 @@ export function queryLocalPrivateSessions(
         row.projectRef,
         generatedAt.getTime(),
         row.declaredCapabilities,
+        row.launcher,
       )),
     nextCursor: page.nextCursor,
   };
@@ -334,7 +461,7 @@ type Lookup =
   | {
       visible: false;
       boundary: LocalBoundary;
-      cause: "not-retained" | "outside-credential-restriction";
+      cause: "not-captured" | "not-retained" | "outside-credential-restriction";
     };
 
 function visibleSessionOn(
@@ -349,6 +476,19 @@ function visibleSessionOn(
     ? null
     : readLocalIntegrationSessionIn(database, sessionId);
   if (session === null) return { visible: false, boundary, cause: "not-retained" };
+  return visibilityOf(session, boundary, now);
+}
+
+/**
+ * The credential's restrictions applied to one found session. Shared by the
+ * sessionRef lookup and the native-identity resolve, so both refuse exactly the
+ * same sessions for exactly the same reasons.
+ */
+function visibilityOf(
+  session: LocalSessionRow,
+  boundary: LocalBoundary,
+  now: Date,
+): Lookup {
   if (boundary.repoId !== null && session.repoId !== boundary.repoId) {
     return { visible: false, boundary, cause: "outside-credential-restriction" };
   }
@@ -430,6 +570,86 @@ export function queryLocalPrivateOutcome(
   });
 }
 
+/**
+ * Resolve a session the caller already knows by its agent's own identity (ADR 007).
+ *
+ * The caller brings the native id; this answers with the same content-free summary
+ * `list_sessions` would have shown for that session, including its opaque
+ * `sessionRef`, under exactly the visibility rules every sessionRef read uses. The
+ * native id is a lookup key and nothing more: it is not echoed, stored, audited, or
+ * written into any reference.
+ *
+ * A miss is `unavailable: not-captured`. This history holds no session under that
+ * identity, and it cannot say why: the agent may not have reached a hook yet, the
+ * launching program may have switched capture off, or the id was never a session
+ * here. A caller that launched the session moments ago should retry; `freshness`
+ * says how current the answer is.
+ */
+export function queryLocalPrivateResolveSession(
+  principal: LocalIntegrationPrincipal,
+  input: PrivateSessionResolveInput,
+  options: LocalPrivateQueryOptions = {},
+): PrivateSessionDto {
+  const now = queryNow(principal, options.now);
+  return withQueryConnection(options.directory, (database) => {
+    const found = querySnapshotOn(database, (snapshot) => {
+      const boundary = boundaryFor(principal, now);
+      const session = readLocalIntegrationSessionByNativeIn(
+        snapshot,
+        input.agent,
+        input.nativeSessionId,
+      );
+      if (session === null) {
+        return { visible: false, boundary, cause: "not-captured" } as const;
+      }
+      const lookup = visibilityOf(session, boundary, now);
+      if (!lookup.visible) return lookup;
+      return {
+        ...lookup,
+        declared: readLocalDeclaredCapabilitiesIn(snapshot, [session.sessionId])
+          .get(session.sessionId),
+        launcher: readLocalSessionLaunchersIn(snapshot, [session.sessionId])
+          .get(session.sessionId) ?? null,
+      };
+    });
+    if (!found.visible) {
+      return {
+        ...metadata(found.boundary, now, {
+          matched: 0,
+          included: 0,
+          observedFrom: null,
+          observedThrough: null,
+          unavailable: found.cause,
+        }),
+        session: null,
+      };
+    }
+    // Minting on read has precedent: a session page mints the references it
+    // returns. This is the same pair of INSERT OR IGNOREs, for one session.
+    const at = now.toISOString();
+    const refs = queryWriteStepOn(database, (writer) => ({
+      sessionRef: ensureLocalIntegrationSessionRefIn(writer, found.session.sessionId, at),
+      projectRef: ensureLocalIntegrationProjectRefIn(writer, found.session.repoId, at),
+    }));
+    return {
+      ...metadata(found.boundary, now, {
+        matched: 1,
+        included: 1,
+        observedFrom: found.session.lastEventAt,
+        observedThrough: found.session.lastEventAt,
+      }),
+      session: sessionSummary(
+        found.session,
+        refs.sessionRef,
+        refs.projectRef,
+        now.getTime(),
+        found.declared,
+        found.launcher,
+      ),
+    };
+  });
+}
+
 export function queryLocalPrivateReplayLens(
   principal: LocalIntegrationPrincipal,
   sessionRef: ExternalSessionRef,
@@ -454,7 +674,13 @@ export function queryLocalPrivateReplayLens(
         result: null,
       };
     }
+    // `kinds: "replay"` in so many words. A credentialed third party reads the
+    // hosted lens, `REPLAY_KIND_PREDICATE` and nothing else, which is narrower
+    // than the first-party all-event sequence the plane serves. It used to be
+    // implied by passing a row budget; implying it meant the plane could not
+    // bound its own read without also changing the answer.
     const replay = buildLocalReplayOnDatabase(database, lookup.session.sessionId, {
+      kinds: "replay",
       nowMs: now.getTime(),
       rowBudget: LOCAL_PRIVATE_REPLAY_ROW_BUDGET,
       window: {

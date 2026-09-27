@@ -66,7 +66,7 @@ export function buildAgentsCoverage(byAgent: AgentRollup[]): CoverageRow[] {
     {
       id: 'cache-split',
       label: 'Cache split',
-      hint: 'Cache-read tokens reported separately — what the cache reuse stat needs.',
+      hint: 'Cache-read tokens reported separately, what the cache reuse stat needs.',
       cells: agents.map((a) =>
         cell(a, (c) => (c.hasCacheTokens ? can('reported') : cannot('not reported'))),
       ),

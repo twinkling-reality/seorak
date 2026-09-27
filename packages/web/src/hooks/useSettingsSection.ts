@@ -60,7 +60,7 @@ export interface SettingsSectionChange<T> {
   demoNote?: string | null;
 }
 
-const WRITE_FAILED_NOTE = 'Save failed — worker unreachable. Try again.';
+const WRITE_FAILED_NOTE = 'Save failed, worker unreachable. Try again.';
 
 export interface SettingsSection<T> {
   state: SettingsSectionState<T>;

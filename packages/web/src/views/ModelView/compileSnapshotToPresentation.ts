@@ -74,7 +74,7 @@ export function compileSnapshotToPresentation(
   const heroProse = formingContent?.prose ?? applyIdentityLead(prose, options.displayName);
 
   if (import.meta.env?.MODE !== 'production' && proseHasDigits(heroProse)) {
-    console.warn('[seorak] Model compiler produced digits in hero prose — review templates');
+    console.warn('[seorak] Model compiler produced digits in hero prose: review templates');
   }
 
   return {

@@ -105,11 +105,12 @@ record alongside the projects it describes.
 
 | Bet | Why parked |
 |-----|------------|
-| **Away control plane** | Approve/deny, multi-session phone cockpit, richer next actions, Live Activity as an actionable card. Commodity if it is approve-only; interesting only as Seorak’s multi-project/multi-agent context beside the decision. |
+| **Multi-session phone cockpit** | Read-only: many sessions at a glance, with Seorak's multi-project and multi-agent context. Acting on a session from Seorak (approve, deny, stop, steer, an actionable Live Activity) is out of scope, not parked: Seorak observes and the program that hosts a session controls it ([ADR 008](./adr/008-seorak-observes-and-does-not-control-agents.md)). |
 | **Paid Pro** | Planned at $12/month or $120/year for Seorak-operated sync, remote continuity, and intervention delivery. The same capabilities are reachable on Free through a compatible service the developer operates, so Pro sells operation, not features. Billing is not live. |
 
 Intervention **nudges** (tell you) stay in scope. Intervention **enforcement**
-(act for you) stays parked with the away control plane. Automatic adaptation of
+(act for you) is out of scope: Seorak never answers a prompt or stops an agent
+([ADR 008](./adr/008-seorak-observes-and-does-not-control-agents.md)). Automatic adaptation of
 intervention settings or future agent behavior is not part of the product loop.
 
 ---

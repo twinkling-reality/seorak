@@ -110,6 +110,22 @@
   letter-spacing: var(--display-spacing);
   line-height: var(--display-line);
   padding-block-end: 0;
+  /* `.value` clips horizontally to drive its ellipsis, and it pays for that with
+   * glyph-containing leading (1.2) plus a padding floor. This class overrides
+   * BOTH of those back down — `--display-line` is 0.96, deliberately, so that
+   * successive display baselines land in the same place — and the descender then
+   * falls outside a 43px line box at 44.8px type and gets cut. "Projects" lost
+   * the tail of its j.
+   *
+   * Unclipping is the fix that keeps the tuned baseline rhythm; adding leading or
+   * padding back would move the baseline, which is the one thing app.css says was
+   * measured rather than assumed. `--display-line-value` is NOT the answer here
+   * either: it was bisected against numeric strings, and digits have no
+   * descenders.
+   *
+   * Safe because these are section TITLES, a fixed short set (Profile, Capture,
+   * Alerts, Projects), so the ellipsis this gives up never had anything to do. */
+  overflow: visible;
 }
 
 /* Period-comparison annotation. Small mono caption beneath the value;

@@ -40,15 +40,19 @@ import {
   SESSION_OUTCOME_MAX_ROWS,
   type IntegrationCredentialIssueResult,
 } from "@seorak/types";
+import { LOCAL_PRIVATE_REPLAY_ROW_BUDGET } from "../src/local-private-queries.ts";
 import { appendLocalEvent, openLocalHistory } from "../src/local-store.ts";
 import {
+  buildLocalReplay,
   buildLocalSessionOutcome,
+  LocalReplayTooLargeError,
   LocalSessionOutcomeTooLargeError,
 } from "../src/local-projection.ts";
 import {
   createLocalPlaneServer,
   readLocalSettings,
   selfHostedDataPlaneStatus,
+  SESSION_REPLAY_MAX_ROWS,
   startSelfHostedPlane,
   type StartedLocalPlane,
 } from "../src/local-plane.ts";
@@ -316,6 +320,89 @@ const ABSENT_SURFACE_ROUTES: ReadonlyArray<[DataPlaneSurface, string]> = [
   ["deliveryHealth", "/delivery-health"],
   ["publication", "/public-presence/manifest"],
 ];
+
+/**
+ * A session with `rows` `tool.call` events.
+ *
+ * `tool.call` is counted by BOTH per-session preflights, the outcome one and
+ * the replay one (`REPLAY_KIND_PREDICATE`), so one fixture serves both budgets
+ * and the two routes are compared on the same shape of session.
+ *
+ * Inserted through one prepared statement in a single transaction rather than
+ * through `appendLocalEvent`, because ten thousand hook-shaped appends would
+ * dominate this file's runtime and the projection under test reads
+ * `local_event` directly. The `session.start` still goes through the real
+ * append so the `local_session` row, and with it the displayability gate, is
+ * built the way the product builds it.
+ */
+function seededWithToolCallRows(rows: number): string {
+  const dir = directory();
+  appendLocalEvent(
+    {
+      kind: "session.start",
+      eventId: "big-start",
+      sessionId: "big-session",
+      at: "2026-08-01T10:00:00.000Z",
+      repoId: REPO_A,
+      repoLabel: "seorak",
+      agent: "claude-code",
+      agentVersion: "1.0.0",
+    },
+    dir,
+  );
+  const database = openLocalHistory(dir);
+  try {
+    database.exec("BEGIN");
+    const insert = database.prepare(
+      `INSERT INTO local_event
+         (event_id, session_id, kind, at, payload_json, captured_at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+    );
+    for (let index = 0; index < rows; index += 1) {
+      const at = "2026-08-01T10:00:01.000Z";
+      insert.run(
+        `big-call-${index}`,
+        "big-session",
+        "tool.call",
+        at,
+        JSON.stringify({
+          kind: "tool.call",
+          eventId: `big-call-${index}`,
+          sessionId: "big-session",
+          at,
+          toolName: "Edit",
+          errored: false,
+        }),
+        at,
+      );
+    }
+    database.exec("COMMIT");
+  } finally {
+    database.close();
+  }
+  return dir;
+}
+
+/** A loopback listener, so the two bindings are compared on one oversized
+ *  session rather than on two different fixtures. */
+async function listenLoopback(directoryPath: string): Promise<string> {
+  const server = createLocalPlaneServer({
+    directory: directoryPath,
+    assetsDirectory: null,
+  });
+  planes.push({
+    server,
+    url: "",
+    dashboardUrl: null,
+    close: () => new Promise<void>((done) => server.close(() => done())),
+  });
+  await new Promise<void>((ready) => server.listen(0, "127.0.0.1", ready));
+  const address = server.address();
+  if (address === null || typeof address === "string") {
+    throw new Error("loopback plane did not bind");
+  }
+  return `http://127.0.0.1:${address.port}`;
+}
 
 describe("the credential gate", () => {
   it("requires operator authority on ordinary and owner-management routes", async () => {
@@ -967,91 +1054,13 @@ describe("binding refuses rather than degrading", () => {
 
 
 describe("the per-session outcome row budget", () => {
-  /**
-   * A session with `rows` outcome-kind events.
-   *
-   * Inserted through one prepared statement in a single transaction rather than
-   * through `appendLocalEvent`, because ten thousand hook-shaped appends would
-   * dominate this file's runtime and the projection under test reads
-   * `local_event` directly. The `session.start` still goes through the real
-   * append so the `local_session` row, and with it the displayability gate, is
-   * built the way the product builds it.
-   */
-  function seededWithOutcomeRows(rows: number): string {
-    const dir = directory();
-    appendLocalEvent(
-      {
-        kind: "session.start",
-        eventId: "big-start",
-        sessionId: "big-session",
-        at: "2026-08-01T10:00:00.000Z",
-        repoId: REPO_A,
-        repoLabel: "seorak",
-        agent: "claude-code",
-        agentVersion: "1.0.0",
-      },
-      dir,
-    );
-    const database = openLocalHistory(dir);
-    try {
-      database.exec("BEGIN");
-      const insert = database.prepare(
-        `INSERT INTO local_event
-           (event_id, session_id, kind, at, payload_json, captured_at)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-      );
-      for (let index = 0; index < rows; index += 1) {
-        const at = "2026-08-01T10:00:01.000Z";
-        insert.run(
-          `big-call-${index}`,
-          "big-session",
-          "tool.call",
-          at,
-          JSON.stringify({
-            kind: "tool.call",
-            eventId: `big-call-${index}`,
-            sessionId: "big-session",
-            at,
-            toolName: "Edit",
-            errored: false,
-          }),
-          at,
-        );
-      }
-      database.exec("COMMIT");
-    } finally {
-      database.close();
-    }
-    return dir;
-  }
-
-  /** A loopback listener, so the two bindings are compared on one oversized
-   *  session rather than on two different fixtures. */
-  async function listenLoopback(directoryPath: string): Promise<string> {
-    const server = createLocalPlaneServer({
-      directory: directoryPath,
-      assetsDirectory: null,
-    });
-    planes.push({
-      server,
-      url: "",
-      dashboardUrl: null,
-      close: () => new Promise<void>((done) => server.close(() => done())),
-    });
-    await new Promise<void>((ready) => server.listen(0, "127.0.0.1", ready));
-    const address = server.address();
-    if (address === null || typeof address === "string") {
-      throw new Error("loopback plane did not bind");
-    }
-    return `http://127.0.0.1:${address.port}`;
-  }
 
   it("refuses an oversized outcome on the routable binding", async () => {
     // Stage A4 waived this refusal because the caller owns the file it reads.
     // On a routable socket the caller is whoever holds the credential, the scan
     // is unbounded per session, and the response is a fixed handful of counts
     // either way, so a cheap request buys arbitrary work on the host.
-    const dir = seededWithOutcomeRows(SESSION_OUTCOME_MAX_ROWS + 1);
+    const dir = seededWithToolCallRows(SESSION_OUTCOME_MAX_ROWS + 1);
     const { binding, credential } = await serve(dir);
     const res = await ask(binding, "/sessions/big-session/outcome", {
       headers: bearer(credential),
@@ -1072,7 +1081,7 @@ describe("the per-session outcome row budget", () => {
     // caller is the person at the keyboard, so the budget must not follow the
     // plane, only the binding. A refusal here would withhold the user's own
     // history from them on their own machine.
-    const dir = seededWithOutcomeRows(SESSION_OUTCOME_MAX_ROWS + 1);
+    const dir = seededWithToolCallRows(SESSION_OUTCOME_MAX_ROWS + 1);
     const base = await listenLoopback(dir);
     const res = await fetch(`${base}/sessions/big-session/outcome`);
     expect(res.status).toBe(200);
@@ -1083,7 +1092,7 @@ describe("the per-session outcome row budget", () => {
     // The preflight is bounded at budget + 1, so "is this too big?" never costs
     // the read it exists to refuse. Asserted at the projection so the numbers on
     // the wire are the numbers measured.
-    const dir = seededWithOutcomeRows(12);
+    const dir = seededWithToolCallRows(12);
     let thrown: unknown;
     try {
       buildLocalSessionOutcome("big-session", { directory: dir, rowBudget: 5 });
@@ -1098,20 +1107,110 @@ describe("the per-session outcome row budget", () => {
   });
 
   it("answers a session at exactly the budget rather than refusing it", () => {
-    const dir = seededWithOutcomeRows(8);
+    const dir = seededWithToolCallRows(8);
     expect(
       buildLocalSessionOutcome("big-session", { directory: dir, rowBudget: 8 }),
     ).toMatchObject({ sessionId: "big-session" });
   });
 
   it("defaults to no budget, which is what the loopback caller gets", () => {
-    const dir = seededWithOutcomeRows(20);
+    const dir = seededWithToolCallRows(20);
     expect(
       buildLocalSessionOutcome("big-session", { directory: dir }),
     ).toMatchObject({ sessionId: "big-session" });
   });
 });
 
+
+describe("the per-session replay row budget", () => {
+  /**
+   * The gap this closes was not a weaker bound, it was NO bound.
+   *
+   * `/replay/:id` passed no `rowBudget` at all, so `buildLocalReplay`'s default
+   * applied and both bindings read every row of a session with no window. The
+   * outcome route directly above it in `local-plane.ts` refuses exactly that
+   * shape on a routable socket and its comment gives the reason: the caller is
+   * whoever holds the credential, the scan is unbounded per session, and the
+   * request is cheap while the work is not. None of that was ever specific to
+   * outcomes, and replay reads MORE kinds than the outcome preflight does.
+   */
+  it("agrees with the other two budgets for the same read", () => {
+    // 10,000 is written three times for this one read: here, as
+    // LOCAL_PRIVATE_REPLAY_ROW_BUDGET for the integration API, and as
+    // REPLAY_EVENT_ROW_BUDGET in the worker. Nothing mechanically holds the
+    // three together, and the four tests below use the constant only relative to
+    // itself, so any value would keep them green. This is the anchor.
+    //
+    // The worker's copy cannot be imported here: CLAUDE.md rule 1 forbids the
+    // collector depending on the worker, and a test that reached across would
+    // fail `boundaries:check`. So its value is asserted as the literal the two
+    // reachable ones must equal, and the third is named rather than read.
+    expect(SESSION_REPLAY_MAX_ROWS).toBe(10_000);
+    expect(LOCAL_PRIVATE_REPLAY_ROW_BUDGET).toBe(SESSION_REPLAY_MAX_ROWS);
+  });
+
+  it("refuses an oversized replay on the routable binding", async () => {
+    const dir = seededWithToolCallRows(SESSION_REPLAY_MAX_ROWS + 1);
+    const { binding, credential } = await serve(dir);
+    const res = await ask(binding, "/replay/big-session", {
+      headers: bearer(credential),
+    });
+    expect(res.status).toBe(413);
+    // The WORKER's replay refusal, field for field. It carries no `code`,
+    // unlike the outcome refusal, because the hosted route answers a plain body
+    // there is no `WorkerErrorCode` for; matching it exactly is what keeps this
+    // from becoming a second dialect.
+    expect(JSON.parse(res.body)).toMatchObject({
+      error: "replay too large",
+      detail:
+        "This session has too many events for one honest replay. No partial timeline was returned.",
+      maxRows: SESSION_REPLAY_MAX_ROWS,
+      projectedRows: SESSION_REPLAY_MAX_ROWS + 1,
+    });
+  });
+
+  it("serves that SAME session in full on loopback", async () => {
+    // The half that must not change. Stage A4's argument is about POSITION
+    // proving the caller is the person at the keyboard, and it holds here for
+    // the same reason it holds for the outcome route: refusing would withhold
+    // the user's own history from them on their own machine. Measured on the
+    // author's real history on 2026-09-09, the largest session is 10,316 rows
+    // and answering it costs 97 ms warm, so there is no latency argument on
+    // this binding either.
+    const dir = seededWithToolCallRows(SESSION_REPLAY_MAX_ROWS + 1);
+    const base = await listenLoopback(dir);
+    const res = await fetch(`${base}/replay/big-session`);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ sessionId: "big-session" });
+  });
+
+  it("counts to the budget without paying for the scan it avoids", () => {
+    // Same preflight discipline as the outcome route: bounded at budget + 1, so
+    // "is this too big?" never costs the read it exists to refuse.
+    const dir = seededWithToolCallRows(12);
+    let thrown: unknown;
+    try {
+      buildLocalReplay("big-session", { directory: dir, rowBudget: 5 });
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toBeInstanceOf(LocalReplayTooLargeError);
+    const refusal = thrown as LocalReplayTooLargeError;
+    expect(refusal.rowBudget).toBe(5);
+    // Six, not thirteen: the count stopped one past the budget. Thirteen is
+    // what an unbounded count would report here, because the `session.start`
+    // row is a replay kind too and the twelve tool.calls sit on top of it.
+    expect(refusal.projectedRows).toBe(6);
+  });
+
+  it("answers a session at exactly the budget rather than refusing it", () => {
+    // Eight tool.calls plus the session.start is nine replay-kind rows.
+    const dir = seededWithToolCallRows(8);
+    expect(
+      buildLocalReplay("big-session", { directory: dir, rowBudget: 9 }),
+    ).toMatchObject({ sessionId: "big-session" });
+  });
+});
 
 describe("what a credentialed remote caller CANNOT reach", () => {
   const planeSource = readFileSync(

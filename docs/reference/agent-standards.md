@@ -93,8 +93,10 @@ Three jobs ([VISION.md](../VISION.md)): period clarity, developer model, away ov
   sequence or explicit activation. The API/MCP and public-directory backend
   foundation is now active; do not turn that into a UI, hosted-availability, or
   automatic-publication claim before the remaining trust and rollout gates are
-  operated. Do not build parked bets (away control plane or paid Pro) to invent a
-  tier.
+  operated. Do not build parked bets (a read-only multi-session cockpit or paid
+  Pro) to invent a tier. Agent control is out of scope, not parked
+  ([ADR 008](../adr/008-seorak-observes-and-does-not-control-agents.md)): no
+  blocking hooks, no approve, deny, or stop.
 - Capture-only fields (`branchWorkType`, `repo.toolchain`) get projections or stay deferred in specs.
 
 ### 7. No indefinite legacy paths
@@ -138,8 +140,23 @@ Follow repo history (`git log --oneline`). **Only commit when requested** — se
 | **Conventional prefix** | `feat(scope):`, `fix(scope):`, `refactor(scope):`, `docs(scope):`, `style(scope):`, `test(scope):` |
 | **No em dash** | Use commas, "and", or rephrase — not `—` or `--` in the subject |
 | **No co-author trailer** | Never append `Co-authored-by:` or similar |
-| **`Overlay-Drift-Ok:` is the one permitted trailer** | `npm run overlay:check` fails a commit that edits one half of a split file without the other, and accepts `Overlay-Drift-Ok: <reason>` with a real reason. A commit carrying it is correct, not a violation of the row above. A bare flag with no reason is not an escape, and it must not be used to avoid writing the public half of a change that belongs in both |
+| **`Overlay-Drift-Ok:` is the one permitted trailer** | `npm run overlay:check` fails a commit that edits one half of a split file without the other, and accepts `Overlay-Drift-Ok: <reason>` with a real reason. A commit carrying it is correct, not a violation of the row above. A bare flag with no reason is not an escape, and it must not be used to avoid writing the public half of a change that belongs in both. Mid-edit, before a commit exists, use the env knob in [Local gate environment knobs](#local-gate-environment-knobs) rather than inventing a second trailer. |
+
 | **Scope matches touch area** | `worker`, `web`, `collector`, `mobile`, `push`, `docs`, `replay`, etc. |
+
+### Local gate environment knobs
+
+These are the only `SEORAK_*` variables the local gate runner and pre-push hook
+honour. Same names in `scripts/run-gates.mjs`, `scripts/install-git-hooks.mjs`,
+and `scripts/check-overlay-drift.mjs`.
+
+| Variable | What it does | What it is not |
+|----------|--------------|----------------|
+| `SEORAK_SKIP_GATES=1` | Pre-push and `npm run gates` become a no-op that says so. Visible in shell history on purpose; prefer this over `--no-verify`. | Not a way to silence a single gate. Not an overlay escape. |
+| `SEORAK_OVERLAY_ALLOW_REASON=<text>` | Mid-edit escape for `npm run overlay:check` when the working tree is dirty and one half of a split file has been edited without the other. Same meaning as `--allow-reason=<text>` on that command, and the same meaning as an `Overlay-Drift-Ok:` trailer once the change is committed. Empty or missing text is refused. | Not a push skip. Not a standing exemption. Unset it after the commit that carries `Overlay-Drift-Ok:`; a cheap-tier run with this set can mask other one-sided edits. |
+
+`npm run gates -- --list` shows which tier each step belongs to. Pushing `main`
+runs `--tier=full` (cheap + costly); every other push runs cheap.
 | **Why over what** | `fix(collector): align daemon settings sync with read key fallback` not `update capture-settings.ts` |
 
 Good: `feat(worker): add D1 event retention cron with 400 day window`

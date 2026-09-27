@@ -11,19 +11,24 @@
 import { createHash } from "node:crypto";
 import {
   chmodSync,
+  closeSync,
   existsSync,
   lstatSync,
   mkdirSync,
+  openSync,
   readFileSync,
+  readSync,
+  statSync,
 } from "node:fs";
-import { dirname } from "node:path";
+import { dirname, join } from "node:path";
 import { DatabaseSync, type StatementResultingChanges } from "node:sqlite";
 import type { SessionEvent } from "@seorak/types";
 import { priceModels } from "@seorak/types";
 import { parseSessionEvent } from "@seorak/types/event-validation";
 import { localHistoryDatabasePath } from "./paths.ts";
+import { applyWalJournal } from "./sqlite-journal.ts";
 
-export const LOCAL_HISTORY_SCHEMA_VERSION = 5;
+export const LOCAL_HISTORY_SCHEMA_VERSION = 8;
 export const LOCAL_SESSION_SYNC_CADENCE_MS = 5 * 60 * 1000;
 const SQLITE_BUSY_TIMEOUT_MS = 5_000;
 
@@ -371,6 +376,190 @@ const UPGRADE_TO_V5 = `
     ON local_integration_cursor (expires_at);
 `;
 
+/**
+ * v5 -> v6: resume the events.jsonl reconciliation instead of replaying it.
+ *
+ * The import identified its work by a SHA-256 of the WHOLE log. Hooks append to
+ * that log continuously, so the digest never matched at startup and every daemon
+ * start re-read the file, re-parsed every line and re-attempted an insert for
+ * each one, virtually all of them duplicates the UNIQUE on `event_id` then
+ * rejected. Measured on a 10MB log: 4.1s of main-thread work before the local
+ * plane could bind, growing with the log rather than with what was new.
+ *
+ * `generation` plus `bytes` replaces that with a resume point. Within one
+ * generation the log is strictly append-only (a compaction renames it away and
+ * bumps the generation, `compactEventLog` in event-log.ts), so bytes below the
+ * recorded offset cannot have changed and only the tail can hold anything
+ * unimported. A generation change, or a log shorter than the offset, falls back
+ * to a full re-read, which keeps the reconciliation honest in exactly the cases
+ * where the append-only assumption does not hold.
+ *
+ * `generation` defaults to -1, which matches no real generation, so the first
+ * run after this migration re-reads once and adopts a resume point rather than
+ * trusting a byte count recorded under the old meaning.
+ */
+const LOCAL_IMPORT_STATE_V6 = `
+  CREATE TABLE local_import_state (
+    source TEXT PRIMARY KEY CHECK (source = 'events.jsonl'),
+    digest TEXT NOT NULL,
+    imported_at TEXT NOT NULL,
+    accepted INTEGER NOT NULL CHECK (accepted >= 0),
+    rejected INTEGER NOT NULL CHECK (rejected >= 0),
+    generation INTEGER NOT NULL DEFAULT -1,
+    bytes INTEGER NOT NULL DEFAULT 0
+  ) STRICT, WITHOUT ROWID;
+`;
+
+/**
+ * Apply v6 to whichever shape this database actually has.
+ *
+ * Three shapes reach here and SQL alone cannot express the difference, because
+ * SQLite has no `ADD COLUMN IF NOT EXISTS`:
+ *
+ *   - No table at all. `local_import_state` was only ever created by the fresh
+ *     v0 path; no upgrade block adds it, so a database that started at v1 and
+ *     migrated forward never had one. The old import read it unconditionally and
+ *     would have thrown `no such table` there, so creating it here also closes a
+ *     pre-existing hole rather than only serving this migration.
+ *   - The v5 shape, which needs the two new columns.
+ *   - Already the v6 shape, if a partially applied migration is re-run. Adding a
+ *     column that exists is an error, so each is added only when absent.
+ */
+function upgradeImportStateToV6(database: DatabaseSync): void {
+  const present = database
+    .prepare(
+      `SELECT 1 FROM sqlite_master
+        WHERE type = 'table' AND name = 'local_import_state'`,
+    )
+    .get();
+  if (present === undefined) {
+    database.exec(LOCAL_IMPORT_STATE_V6);
+    return;
+  }
+  const columns = new Set(
+    database
+      .prepare("PRAGMA table_info(local_import_state)")
+      .all()
+      .map((row) => String((row as { name?: unknown }).name)),
+  );
+  if (!columns.has("generation")) {
+    database.exec(
+      "ALTER TABLE local_import_state ADD COLUMN generation INTEGER NOT NULL DEFAULT -1",
+    );
+  }
+  if (!columns.has("bytes")) {
+    database.exec(
+      "ALTER TABLE local_import_state ADD COLUMN bytes INTEGER NOT NULL DEFAULT 0",
+    );
+  }
+}
+
+/**
+ * v6 -> v7: an ordering index on `local_session`.
+ *
+ * `local_session` carried only its primary key and a sync-due index, so every
+ * read that asks for recent sessions was a full `SCAN local_session` plus a
+ * temp b-tree for the sort, whatever LIMIT it then applied. Measured on a
+ * synthetic 50,591-row table (2026-09-09): the session page went from 6.5ms to
+ * 0.4ms, and `EXPLAIN QUERY PLAN` from `SCAN ... USE TEMP B-TREE FOR ORDER BY`
+ * to an ordered index scan.
+ *
+ * The column order matches the ORDER BY that every one of those reads uses
+ * (`last_event_at DESC, session_id`), so the index supplies the sort rather than
+ * only the filter. Range predicates on `last_event_at` alone still use it.
+ *
+ * It is deliberately NOT partial on `ended_at IS NULL`. That would serve the
+ * live read alone, and the live read is not sort-bound: it returns every live
+ * session with no LIMIT, so at 45,005 of them it measured 240ms with the index
+ * and 240ms without. Its cost is the rows it materialises, which an index cannot
+ * remove; a second index would add write cost on every session update and buy
+ * nothing.
+ */
+const UPGRADE_TO_V7 = `
+  CREATE INDEX IF NOT EXISTS idx_local_session_recent
+    ON local_session (last_event_at DESC, session_id);
+`;
+
+/**
+ * v7 -> v8: launcher labels, and `resolve_session` in the query audit (ADR 007).
+ *
+ * `local_session_launcher` holds the one label a launching program declared for a
+ * session through `SEORAK_LAUNCHER`. It is a side table rather than a
+ * `local_session` column for three reasons. The label is not an event: putting it
+ * on `session.start` would ship it to an owner cell whose strict ingest parser
+ * rejects unknown keys, which is an event-protocol change with its own release
+ * order (docs/reference/event-ingest-compatibility.md), not a local one. A new
+ * `local_session` column would also trip the Personal-authority provenance check,
+ * which is meant to fire on authority changes, not attribution. And a label is
+ * attribution the owner can lose without losing a measurement: a history rebuilt
+ * from events.jsonl comes back unlabeled, which reads as null (unknown), never as
+ * a wrong label. No row is deleted from `local_session`, so no cascade is needed.
+ *
+ * SQLite cannot widen a CHECK in place, so the query audit is rebuilt with the
+ * same columns, rows, index, and bounding trigger, plus the one new operation.
+ */
+const LOCAL_SESSION_LAUNCHER_V8 = `
+  CREATE TABLE local_session_launcher (
+    session_id TEXT PRIMARY KEY CHECK (length(session_id) BETWEEN 1 AND 256),
+    launcher TEXT NOT NULL CHECK (
+      length(launcher) BETWEEN 1 AND 64
+      AND launcher NOT GLOB '*[^a-z0-9._-]*'
+      AND substr(launcher, 1, 1) NOT GLOB '[._-]'
+    ),
+    recorded_at TEXT NOT NULL
+  ) STRICT, WITHOUT ROWID;
+`;
+
+const LOCAL_QUERY_AUDIT_V8 = `
+  CREATE TABLE local_integration_query_audit_v8 (
+    audit_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    credential_id TEXT NOT NULL,
+    operation TEXT NOT NULL CHECK (
+      operation IN (
+        'period_summary', 'list_sessions', 'get_session_outcome', 'replay_lens',
+        'resolve_session'
+      )
+    ),
+    result TEXT NOT NULL CHECK (
+      result IN ('ok', 'unavailable', 'refused', 'protocol_error', 'internal_error', 'oversized')
+    ),
+    http_status INTEGER NOT NULL CHECK (http_status BETWEEN 100 AND 599),
+    returned_count INTEGER CHECK (returned_count IS NULL OR returned_count >= 0),
+    response_bytes INTEGER CHECK (response_bytes IS NULL OR response_bytes >= 0),
+    at TEXT NOT NULL
+  ) STRICT;
+  INSERT INTO local_integration_query_audit_v8 (
+    audit_id, credential_id, operation, result, http_status,
+    returned_count, response_bytes, at
+  )
+  SELECT audit_id, credential_id, operation, result, http_status,
+         returned_count, response_bytes, at
+    FROM local_integration_query_audit;
+  DROP TABLE local_integration_query_audit;
+  ALTER TABLE local_integration_query_audit_v8
+    RENAME TO local_integration_query_audit;
+
+  CREATE INDEX idx_local_integration_query_audit_credential
+    ON local_integration_query_audit (credential_id, at DESC);
+
+  CREATE TRIGGER local_integration_query_audit_bound
+  AFTER INSERT ON local_integration_query_audit
+  BEGIN
+    DELETE FROM local_integration_query_audit
+     WHERE credential_id = NEW.credential_id
+       AND audit_id NOT IN (
+         SELECT audit_id FROM local_integration_query_audit
+          WHERE credential_id = NEW.credential_id
+          ORDER BY audit_id DESC
+          LIMIT 500
+       );
+    DELETE FROM local_integration_query_audit
+     WHERE audit_id <= NEW.audit_id - 5000;
+  END;
+`;
+
+const UPGRADE_TO_V8 = `${LOCAL_QUERY_AUDIT_V8}\n${LOCAL_SESSION_LAUNCHER_V8}`;
+
 const LOCAL_INTEGRATION_EPOCH_TRIGGERS = `
   CREATE TRIGGER local_integration_epoch_insert
   AFTER INSERT ON local_session
@@ -399,21 +588,39 @@ function ensureSchema(database: DatabaseSync): void {
     )?.user_version,
   );
   if (version === LOCAL_HISTORY_SCHEMA_VERSION) return;
-  if (version === 1 || version === 2 || version === 3 || version === 4) {
+  if (
+    version === 1 || version === 2 || version === 3 || version === 4 ||
+    version === 5 || version === 6 || version === 7
+  ) {
     transaction(database, () => {
       database.exec(`
         ${version === 1 ? UPGRADE_TO_V2 : ""}
         ${version === 1 || version === 2 ? UPGRADE_TO_V3 : ""}
         ${version === 1 || version === 2 || version === 3 ? UPGRADE_TO_V4 : ""}
-        ${UPGRADE_TO_V5}
+        ${version === 5 || version === 6 || version === 7 ? "" : UPGRADE_TO_V5}
       `);
-      const hasSessions = database
-        .prepare(
-          "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'local_session'",
-        )
-        .get();
-      if (hasSessions !== undefined)
+      if (version !== 6 && version !== 7) upgradeImportStateToV6(database);
+      // Two separate questions, previously one. `local_session` is created only
+      // by the fresh v0 path, so a database that started at v1 may not have it
+      // at all, and anything hanging off it has to check.
+      const hasSessions =
+        database
+          .prepare(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'local_session'",
+          )
+          .get() !== undefined;
+      // The triggers ship WITH v5, so a database already at v5 or later has them
+      // and re-creating one is an error rather than a no-op. Only a database
+      // coming from below v5 needs them.
+      if (hasSessions && version !== 5 && version !== 6 && version !== 7) {
         database.exec(LOCAL_INTEGRATION_EPOCH_TRIGGERS);
+      }
+      // v7's index, by contrast, is wanted at every origin version that has the
+      // table, including v5 and v6 which are exactly the ones that lack it.
+      if (hasSessions) database.exec(UPGRADE_TO_V7);
+      // Every origin version has the v5 query audit by now (created just above
+      // when it was missing), so v8's rebuild and new table apply to all of them.
+      database.exec(UPGRADE_TO_V8);
       database.exec(`PRAGMA user_version = ${LOCAL_HISTORY_SCHEMA_VERSION}`);
     });
     return;
@@ -487,6 +694,9 @@ function ensureSchema(database: DatabaseSync): void {
       ) STRICT, WITHOUT ROWID;
       CREATE INDEX idx_local_session_sync_due
         ON local_session (dirty, next_sync_at_ms, session_id);
+      -- See UPGRADE_TO_V7 for why this shape and why it is not partial.
+      CREATE INDEX idx_local_session_recent
+        ON local_session (last_event_at DESC, session_id);
 
       CREATE TABLE local_hour (
         bucket TEXT NOT NULL,
@@ -527,7 +737,11 @@ function ensureSchema(database: DatabaseSync): void {
         digest TEXT NOT NULL,
         imported_at TEXT NOT NULL,
         accepted INTEGER NOT NULL CHECK (accepted >= 0),
-        rejected INTEGER NOT NULL CHECK (rejected >= 0)
+        rejected INTEGER NOT NULL CHECK (rejected >= 0),
+        -- The resume point. See UPGRADE_TO_V6 for why a byte offset within a
+        -- generation replaces a digest of the whole log.
+        generation INTEGER NOT NULL DEFAULT -1,
+        bytes INTEGER NOT NULL DEFAULT 0
       ) STRICT, WITHOUT ROWID;
 
       CREATE TABLE local_archive_checkpoint (
@@ -573,6 +787,8 @@ function ensureSchema(database: DatabaseSync): void {
 
       ${UPGRADE_TO_V5}
 
+      ${UPGRADE_TO_V8}
+
       ${LOCAL_INTEGRATION_EPOCH_TRIGGERS}
 
       PRAGMA user_version = ${LOCAL_HISTORY_SCHEMA_VERSION};
@@ -592,9 +808,9 @@ export function openLocalHistory(directory?: string): DatabaseSync {
   }
   const database = new DatabaseSync(path);
   try {
+    database.exec(`PRAGMA busy_timeout = ${SQLITE_BUSY_TIMEOUT_MS};`);
+    applyWalJournal(database);
     database.exec(`
-      PRAGMA busy_timeout = ${SQLITE_BUSY_TIMEOUT_MS};
-      PRAGMA journal_mode = DELETE;
       PRAGMA synchronous = FULL;
       PRAGMA foreign_keys = ON;
     `);
@@ -1011,6 +1227,58 @@ export function appendLocalEvent(
   }
 }
 
+/**
+ * The shape a launcher label must have, after `hookLauncherLabel` lowercases it. The
+ * same rule is the `local_session_launcher` CHECK, so the table cannot hold a label
+ * this code would have refused.
+ */
+export const LAUNCHER_LABEL_PATTERN = /^[a-z0-9][a-z0-9._-]{0,63}$/;
+
+/**
+ * Record the label a launching program declared for one session. The first label
+ * wins: a resume inside another program's environment does not relabel a session,
+ * because the label names what started the work. Returns whether a row was written.
+ */
+export function recordLocalSessionLauncher(
+  sessionId: string,
+  launcher: string,
+  directory?: string,
+  nowMs: number = Date.now(),
+): boolean {
+  if (sessionId.length < 1 || sessionId.length > 256) return false;
+  if (!LAUNCHER_LABEL_PATTERN.test(launcher)) return false;
+  const database = openLocalHistory(directory);
+  try {
+    const result = database
+      .prepare(
+        `INSERT OR IGNORE INTO local_session_launcher (session_id, launcher, recorded_at)
+         VALUES (?, ?, ?)`,
+      )
+      .run(sessionId, launcher, new Date(nowMs).toISOString());
+    return Number(result.changes) > 0;
+  } finally {
+    database.close();
+  }
+}
+
+/** The recorded launcher label for each of `sessionIds` that has one. */
+export function readLocalSessionLaunchersIn(
+  database: DatabaseSync,
+  sessionIds: readonly string[],
+): Map<string, string> {
+  const launchers = new Map<string, string>();
+  if (sessionIds.length === 0) return launchers;
+  const placeholders = sessionIds.map(() => "?").join(", ");
+  const rows = database
+    .prepare(
+      `SELECT session_id, launcher FROM local_session_launcher
+        WHERE session_id IN (${placeholders})`,
+    )
+    .all(...sessionIds) as Array<{ session_id?: unknown; launcher?: unknown }>;
+  for (const row of rows) launchers.set(String(row.session_id), String(row.launcher));
+  return launchers;
+}
+
 export interface LegacyHistoryImport {
   accepted: number;
   rejected: number;
@@ -1022,6 +1290,43 @@ export interface LegacyHistoryImport {
  * Import the bounded compatibility JSONL before it can be reclaimed. Inserts
  * are event-id idempotent, so an interrupted upgrade can safely restart.
  */
+/**
+ * The event log's generation, read synchronously and beside the log itself.
+ *
+ * Derived from the PASSED log path rather than from `SEORAK_DIR`, so a caller
+ * that points this at another directory (a test, an embedder) gets that
+ * directory's generation rather than the ambient one. An unreadable or
+ * unparseable file reads as 0, matching `readEventLogGeneration`, and a wrong
+ * generation only ever costs a full re-read.
+ */
+function readEventLogGenerationSync(eventLogPath: string): number {
+  try {
+    const value = Number(
+      readFileSync(join(dirname(eventLogPath), "events.generation"), "utf8").trim(),
+    );
+    return Number.isSafeInteger(value) && value >= 0 ? value : 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** Exactly `length` bytes from `offset`, or fewer if the file ends first. Bytes
+ *  rather than a decoded string: the resume point is a byte offset, and decoding
+ *  first would let an invalid sequence re-encode to a different length and drift
+ *  it. */
+function readByteRange(path: string, offset: number, length: number): Buffer {
+  if (length <= 0) return Buffer.alloc(0);
+  const buffer = Buffer.alloc(length);
+  const fd = openSync(path, "r");
+  let read = 0;
+  try {
+    read = readSync(fd, buffer, 0, length, offset);
+  } finally {
+    closeSync(fd);
+  }
+  return buffer.subarray(0, read);
+}
+
 export function importLegacyEventLog(
   eventLogPath: string,
   directory?: string,
@@ -1029,18 +1334,63 @@ export function importLegacyEventLog(
   if (!existsSync(eventLogPath)) {
     return { accepted: 0, rejected: 0, skipped: true, digest: null };
   }
-  const raw = readFileSync(eventLogPath, "utf8");
-  const digest = createHash("sha256").update(raw).digest("hex");
+  const size = statSync(eventLogPath).size;
+  const generation = readEventLogGenerationSync(eventLogPath);
   const database = openLocalHistory(directory);
   try {
     const prior = database
       .prepare(
-        "SELECT digest FROM local_import_state WHERE source = 'events.jsonl'",
+        `SELECT digest, generation, bytes FROM local_import_state
+          WHERE source = 'events.jsonl'`,
       )
-      .get() as { digest?: unknown } | undefined;
-    if (prior?.digest === digest) {
-      return { accepted: 0, rejected: 0, skipped: true, digest };
+      .get() as
+      | { digest?: unknown; generation?: unknown; bytes?: unknown }
+      | undefined;
+
+    // Resume only where the append-only assumption actually holds: same
+    // generation, and a log that has not shrunk below what was already read.
+    // Anything else re-reads from zero, because then the bytes below the offset
+    // are not guaranteed to be the bytes that were read.
+    const priorGeneration = Number(prior?.generation);
+    const priorBytes = Number(prior?.bytes);
+    const resumable =
+      prior !== undefined &&
+      Number.isSafeInteger(priorGeneration) &&
+      priorGeneration === generation &&
+      Number.isSafeInteger(priorBytes) &&
+      priorBytes >= 0 &&
+      priorBytes <= size;
+    const start = resumable ? priorBytes : 0;
+    if (start === size) {
+      return {
+        accepted: 0,
+        rejected: 0,
+        skipped: true,
+        digest: typeof prior?.digest === "string" ? prior.digest : null,
+      };
     }
+
+    // Only COMPLETE lines are consumed. A hook appending right now can leave a
+    // partial trailing line, and recording it as read would drop that event
+    // forever; the remainder is left for the next run, which is the same
+    // discipline the codex tailer and log reader use.
+    const chunk = readByteRange(eventLogPath, start, size - start);
+    const lastNewline = chunk.lastIndexOf("\n");
+    if (lastNewline === -1) {
+      return {
+        accepted: 0,
+        rejected: 0,
+        skipped: true,
+        digest: typeof prior?.digest === "string" ? prior.digest : null,
+      };
+    }
+    const consumed = chunk.subarray(0, lastNewline + 1);
+    const nextBytes = start + consumed.byteLength;
+    const raw = consumed.toString("utf8");
+    // Kept as a diagnostic of what was last read, not as the resume key. The
+    // whole-log digest is what made this O(log) on every start.
+    const digest = createHash("sha256").update(consumed).digest("hex");
+
     return transaction(database, () => {
       let accepted = 0;
       let rejected = 0;
@@ -1065,16 +1415,25 @@ export function importLegacyEventLog(
         .prepare(
           `
           INSERT INTO local_import_state (
-            source, digest, imported_at, accepted, rejected
-          ) VALUES ('events.jsonl', ?, ?, ?, ?)
+            source, digest, imported_at, accepted, rejected, generation, bytes
+          ) VALUES ('events.jsonl', ?, ?, ?, ?, ?, ?)
           ON CONFLICT (source) DO UPDATE SET
             digest = excluded.digest,
             imported_at = excluded.imported_at,
             accepted = local_import_state.accepted + excluded.accepted,
-            rejected = local_import_state.rejected + excluded.rejected
+            rejected = local_import_state.rejected + excluded.rejected,
+            generation = excluded.generation,
+            bytes = excluded.bytes
         `,
         )
-        .run(digest, new Date().toISOString(), accepted, rejected);
+        .run(
+          digest,
+          new Date().toISOString(),
+          accepted,
+          rejected,
+          generation,
+          nextBytes,
+        );
       return { accepted, rejected, skipped: false, digest };
     });
   } finally {
@@ -1110,6 +1469,30 @@ export const DISPLAYABLE_SESSION_SQL =
 export function isDisplayableLocalSession(repoId: string): boolean {
   return /^[0-9a-f]{64}$/.test(repoId);
 }
+
+/**
+ * The SQL form of "this session MEASURED something".
+ *
+ * Deliberately NOT folded into `DISPLAYABLE_SESSION_SQL`. That constant is the
+ * refusal of a row nobody ever ran, and it governs the reaper and the
+ * intervention engine as well as the read models: a session that measured
+ * nothing is still a real row to reap and a real session to intervene on, and
+ * `localHistoryCounts` must keep reporting the true row count because it
+ * describes the database rather than the work. This one governs COUNTS only.
+ *
+ * What it refuses is a session that opened and did nothing. Claude Desktop
+ * spawns short-lived Claude Code processes, so a `session.start` with no
+ * `tool.call` between it and its `session.end` is an ordinary, frequent shape:
+ * on one machine 93% of a day's sessions had it, and `usage.totals.sessions`
+ * read 2930 over a week where 1202 sessions had measured anything.
+ *
+ * ONE LEG, because no column on this table holds the other. Codex reports money
+ * at SESSION scope, so a carrier-priced session with zero tool calls is real
+ * spend and must still count — the CALLER unions those ids in from the carrier
+ * it already holds. `sessionMeasuredWork` (@seorak/types) states the whole rule,
+ * both legs, and is what the worker applies to the same question.
+ */
+export const MEASURED_SESSION_SQL = "tool_call_count > 0";
 
 /** The ONE place a `local_session` row becomes a typed row. Exported so the
  *  local read models project from the same mapping the store's own queries do,

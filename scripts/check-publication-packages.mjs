@@ -142,8 +142,12 @@ function assertPublishDryRun(relativePackage) {
       stdio: ["ignore", "pipe", "pipe"],
     },
   );
+  // With `--json`, npm reports the refusal on stdout as `{"error":{...}}`, and
+  // whether it ALSO logs it to stderr depends on the inherited log level: nested
+  // under `npm test` or `npm run -s`, stderr is empty. Read both.
   const alreadyPublished =
-    result.status !== 0 && ALREADY_PUBLISHED.test(result.stderr);
+    result.status !== 0 &&
+    (ALREADY_PUBLISHED.test(result.stderr) || ALREADY_PUBLISHED.test(result.stdout));
   if (result.status !== 0 && !alreadyPublished) {
     fail(
       `${relativePackage} npm publish dry run failed: ${result.stderr.trim()}`,
@@ -588,7 +592,10 @@ try {
       fail(`${name} does not declare the supported Node floor`);
     }
   }
-  if (collectorManifest.dependencies?.["@seorak/types"] !== "^0.1.0") {
+  // The CLI publishes after, and against, the types release in this same tree,
+  // so its caret range names that exact version. Deriving it keeps a types bump
+  // from shipping a CLI that still resolves the previous types minor.
+  if (collectorManifest.dependencies?.["@seorak/types"] !== `^${typesManifest.version}`) {
     fail("collector does not pin its publishable types dependency");
   }
   if (

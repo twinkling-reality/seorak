@@ -1,15 +1,124 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "auditReportVersion": 2,
-  "measuredAt": "2026-08-08",
+  "measuredAt": "2026-09-10",
+  "derivedWith": {
+    "npm": "11.12.1"
+  },
   "vulnerabilities": {
     "info": 0,
     "low": 0,
-    "moderate": 0,
+    "moderate": 3,
     "high": 0,
     "critical": 0,
-    "total": 0
+    "total": 3
   },
-  "entries": [],
-  "graphSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  "entries": [
+    {
+      "name": "@vitest/coverage-v8",
+      "severity": "moderate",
+      "direct": true,
+      "range": "2.1.0-beta.1 - 4.1.10",
+      "via": [
+        {
+          "kind": "package",
+          "name": "vitest"
+        }
+      ],
+      "nodes": [
+        "node_modules/@vitest/coverage-v8"
+      ],
+      "informational": {
+        "effects": [
+          "vitest"
+        ],
+        "fixAvailable": {
+          "name": "vitest",
+          "version": "4.1.11",
+          "isSemVerMajor": false
+        }
+      }
+    },
+    {
+      "name": "@vitest/mocker",
+      "severity": "moderate",
+      "direct": false,
+      "range": "2.1.0 - 4.1.10",
+      "via": [
+        {
+          "kind": "advisory",
+          "ghsa": "GHSA-82FW-GWWQ-J7X9",
+          "name": "@vitest/mocker",
+          "dependency": "@vitest/mocker",
+          "severity": "moderate",
+          "range": ">=2.1.0 <4.1.11",
+          "cwe": [
+            "CWE-22"
+          ],
+          "cvss": {
+            "score": 5.9,
+            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N"
+          }
+        }
+      ],
+      "nodes": [
+        "node_modules/vitest/node_modules/@vitest/mocker"
+      ],
+      "informational": {
+        "effects": [
+          "vitest"
+        ],
+        "fixAvailable": {
+          "name": "vitest",
+          "version": "4.1.11",
+          "isSemVerMajor": false
+        }
+      }
+    },
+    {
+      "name": "vitest",
+      "severity": "moderate",
+      "direct": true,
+      "range": "2.1.0-beta.1 - 4.1.10",
+      "via": [
+        {
+          "kind": "advisory",
+          "ghsa": "GHSA-82FW-GWWQ-J7X9",
+          "name": "vitest",
+          "dependency": "vitest",
+          "severity": "moderate",
+          "range": ">=2.1.0 <4.1.11",
+          "cwe": [
+            "CWE-22"
+          ],
+          "cvss": {
+            "score": 5.9,
+            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N"
+          }
+        },
+        {
+          "kind": "package",
+          "name": "@vitest/coverage-v8"
+        },
+        {
+          "kind": "package",
+          "name": "@vitest/mocker"
+        }
+      ],
+      "nodes": [
+        "node_modules/vitest"
+      ],
+      "informational": {
+        "effects": [
+          "@vitest/coverage-v8"
+        ],
+        "fixAvailable": {
+          "name": "vitest",
+          "version": "4.1.11",
+          "isSemVerMajor": false
+        }
+      }
+    }
+  ],
+  "graphSha256": "bfec3a0e028d514254b962f653d51b5368082f4e5e8bd658794f7b29d282a7f9"
 }

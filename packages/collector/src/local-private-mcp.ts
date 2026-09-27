@@ -13,6 +13,7 @@ import {
   type PrivateMcpListSessionsInput,
   type PrivateMcpPeriodSummaryInput,
   type PrivateMcpReplayLensInput,
+  type PrivateMcpResolveSessionInput,
   type PrivateMcpSessionOutcomeInput,
   type PrivateMcpToolName,
 } from "@seorak/types";
@@ -27,6 +28,7 @@ import {
   queryLocalPrivateOutcome,
   queryLocalPrivatePeriod,
   queryLocalPrivateReplayLens,
+  queryLocalPrivateResolveSession,
   queryLocalPrivateSessions,
 } from "./local-private-queries.ts";
 import {
@@ -43,6 +45,9 @@ export interface LocalPrivateMcpToolHandlers {
     input: PrivateMcpSessionOutcomeInput,
   ): JSONObject | Promise<JSONObject>;
   replay_lens(input: PrivateMcpReplayLensInput): JSONObject | Promise<JSONObject>;
+  resolve_session(
+    input: PrivateMcpResolveSessionInput,
+  ): JSONObject | Promise<JSONObject>;
 }
 
 export type LocalPrivateMcpToolHandlerFactory = (
@@ -81,6 +86,7 @@ export function signalLocalPrivateMcpQueryRefusals(
     get_session_outcome: (input) =>
       run(() => handlers.get_session_outcome(input)),
     replay_lens: (input) => run(() => handlers.replay_lens(input)),
+    resolve_session: (input) => run(() => handlers.resolve_session(input)),
   };
 }
 
@@ -134,6 +140,14 @@ export function createLocalPrivateMcpQueryHandlers(
           queryOptions(options),
         ),
       ),
+    resolve_session: (input) =>
+      jsonObject(
+        queryLocalPrivateResolveSession(
+          principal,
+          { agent: input.agent, nativeSessionId: input.nativeSessionId },
+          queryOptions(options),
+        ),
+      ),
   };
 }
 
@@ -168,6 +182,7 @@ function buildLocalPrivateMcpServer(
   const listSessions = toolDefinition("list_sessions");
   const sessionOutcome = toolDefinition("get_session_outcome");
   const replayLens = toolDefinition("replay_lens");
+  const resolveSession = toolDefinition("resolve_session");
 
   server.registerTool(
     periodSummary.name,
@@ -217,6 +232,18 @@ function buildLocalPrivateMcpServer(
     },
     async (input) => encodedResult(await handlers.replay_lens(input)),
   );
+  server.registerTool(
+    resolveSession.name,
+    {
+      description: resolveSession.description,
+      inputSchema: fromJsonSchema<PrivateMcpResolveSessionInput>(
+        resolveSession.inputSchema as JsonSchemaType,
+      ),
+      outputSchema,
+      annotations: resolveSession.annotations,
+    },
+    async (input) => encodedResult(await handlers.resolve_session(input)),
+  );
 
   return server;
 }
@@ -252,6 +279,7 @@ export function createLocalPrivateMcpValidationHandler(): McpHttpHandler {
         list_sessions: empty,
         get_session_outcome: empty,
         replay_lens: empty,
+        resolve_session: empty,
       }),
     { legacy: "reject", responseMode: "json" },
   );

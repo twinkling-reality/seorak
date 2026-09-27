@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import clsx from 'clsx';
 import { useShallow } from 'zustand/react/shallow';
 import type { WorkspaceContext } from '@seorak/types';
@@ -15,6 +15,7 @@ import { useWorkspaceContext } from '../../lib/workspaceContext.js';
 import ProjectSquircle, { projectSquircleKey } from '../ProjectSquircle/ProjectSquircle.js';
 import { BrandMark } from '../../brand/brand.js';
 import Tooltip, { type TooltipChild } from '../Tooltip/Tooltip.js';
+import listFade from '../../styles/listFade.module.css';
 import styles from './Sidebar.module.css';
 
 /* Collapsed rail: the labels are width-clipped away, so each control names
@@ -69,11 +70,16 @@ function WorkspaceBadge({ workspace }: { workspace: WorkspaceContext }): ReactNo
           </svg>
         )}
       </span>
+      {/* The second line appears only when it changes what you would believe.
+        * "Shared workspace" earns it: it says these sessions are other people's
+        * too, under member-bound capture. "Private history" did not — it was
+        * the default state restating the product's premise in permanent chrome,
+        * and Settings already makes that claim where it belongs ("This
+        * dashboard reads your own computer. No account, and nothing is
+        * uploaded."). */}
       <span className={styles.workspaceCopy}>
         <strong>{workspace.workspaceName ?? 'Personal'}</strong>
-        <span>
-          {workspace.mode === 'workspace' ? 'Shared workspace' : 'Private history'}
-        </span>
+        {workspace.mode === 'workspace' ? <span>Shared workspace</span> : null}
       </span>
     </>
   );
@@ -91,8 +97,14 @@ export default function Sidebar({ activeView, collapsed = false, onToggle }: Pro
   // workspace, derived from the overview snapshot's per-repo rollups.
   const overview = usePollingStore(useShallow((s) => s.overviewData));
   const projectRollups = overview?.usage.projects ?? [];
+  // Archived projects keep their rollup (Settings needs the label to offer a
+  // restore) but leave the navigation list, which is the whole point of
+  // archiving one.
   const projects = useMemo(
-    () => projectRollups.map((p) => ({ project: p.project, repoId: p.repoId })),
+    () =>
+      projectRollups
+        .filter((p) => !p.archived)
+        .map((p) => ({ project: p.project, repoId: p.repoId })),
     [projectRollups],
   );
   const overviewActive = activeView === 'overview';
@@ -107,6 +119,36 @@ export default function Sidebar({ activeView, collapsed = false, onToggle }: Pro
   const workspace = useWorkspaceContext();
   const workspaceName = workspace?.workspaceName ?? 'Personal';
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
+
+  /* Scroll-edge fade for the project list, the same read the widget catalog and
+   * the Replay customize panel use. `none` while the list fits, because a fade
+   * with nothing behind it claims there is more to see. */
+  const projectListRef = useRef<HTMLDivElement>(null);
+  const [projectFade, setProjectFade] = useState<'none' | 'top' | 'bottom' | 'both'>('none');
+
+  const updateProjectFade = useCallback(() => {
+    const el = projectListRef.current;
+    if (!el) return;
+    const canUp = el.scrollTop > 0;
+    const canDown = el.scrollTop + el.clientHeight < el.scrollHeight - 1;
+    setProjectFade(canUp && canDown ? 'both' : canUp ? 'top' : canDown ? 'bottom' : 'none');
+  }, []);
+
+  /* Unlike the catalog and the customize panel, this list is not a fixed set
+   * opened on demand: projects arrive and leave with each overview poll, and
+   * collapsing the rail changes the row height. Both resize the scroller
+   * without ever firing a scroll event, so measuring on scroll alone would
+   * leave a stale fade (or none at all on first paint). */
+  useEffect(() => {
+    const el = projectListRef.current;
+    if (!el) return;
+    updateProjectFade();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(updateProjectFade);
+    observer.observe(el);
+    for (const child of el.children) observer.observe(child);
+    return () => observer.disconnect();
+  }, [updateProjectFade, projects, collapsed]);
 
   const go = (view: DashboardView, projectId?: string) => () => {
     if (projectId !== undefined) {
@@ -383,7 +425,16 @@ export default function Sidebar({ activeView, collapsed = false, onToggle }: Pro
 
           <div className={styles.sidebarSection}>
             <span className={styles.sectionHeader}>Projects</span>
-            <div className={styles.projectList}>
+            <div
+              ref={projectListRef}
+              onScroll={updateProjectFade}
+              className={clsx(
+                styles.projectList,
+                projectFade === 'top' && listFade.fadeTop,
+                projectFade === 'bottom' && listFade.fadeBottom,
+                projectFade === 'both' && listFade.fadeBoth,
+              )}
+            >
               {projects.length > 0 ? (
                 projects.map((project) => (
                   <RailTip key={project.repoId} label={project.project} when={collapsed}>

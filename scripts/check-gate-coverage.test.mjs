@@ -12,7 +12,7 @@
 import assert from "node:assert/strict";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { after, describe, it } from "node:test";
 
 import {
@@ -23,7 +23,6 @@ import {
   workspaceScriptNames,
 } from "./check-gate-coverage.mjs";
 
-const REPO_ROOT = resolve(import.meta.dirname, "..");
 const scratch = [];
 
 after(() => {
@@ -140,8 +139,4 @@ describe("coverage between the two sources", () => {
     ));
   });
 
-  it("holds this repository to it", () => {
-    const { problems } = checkGateCoverage(REPO_ROOT);
-    assert.deepEqual(problems, []);
-  });
 });

@@ -197,6 +197,52 @@ function metric(
 }
 
 describe("local private canonical queries", () => {
+  it("keeps private period token legs window-accurate for a resident straddling session", () => {
+    const dir = directory();
+    const preWindow = new Date(NOW - 8 * 24 * 60 * 60_000).toISOString();
+    const inWindow = new Date(NOW - 24 * 60 * 60_000).toISOString();
+    append(dir, [
+      start("straddling-token-period", preWindow),
+      call("straddling-token-period", new Date(Date.parse(preWindow) + 1_000).toISOString(), {
+        inputTokens: 900,
+        outputTokens: 90,
+        models: [{
+          model: "claude-opus-4-5",
+          inputTokens: 900,
+          outputTokens: 90,
+          cacheReadTokens: 0,
+          cacheWriteTokens: 0,
+          costUsd: 0,
+        }],
+      }),
+      call("straddling-token-period", inWindow, {
+        inputTokens: 10,
+        outputTokens: 2,
+        models: [{
+          model: "claude-opus-4-5",
+          inputTokens: 10,
+          outputTokens: 2,
+          cacheReadTokens: 0,
+          cacheWriteTokens: 0,
+          costUsd: 0,
+        }],
+      }),
+      end(
+        "straddling-token-period",
+        new Date(Date.parse(inWindow) + 1_000).toISOString(),
+      ),
+    ]);
+
+    const period = queryLocalPrivatePeriod(issue(dir, "period:read"), 7, {
+      directory: dir,
+      now: new Date(NOW),
+    });
+    expect(period.metrics).toMatchObject({
+      inputTokens: 10,
+      outputTokens: 2,
+    });
+  });
+
   it("returns all four versioned DTO families with opaque references", () => {
     const dir = directory();
     append(dir, localHistoryFixture());
@@ -722,6 +768,11 @@ describe("local private canonical queries", () => {
   });
 
   it("counts only the seven replay kinds under a bounded external row budget", () => {
+    // `kinds: "replay"` is the EXTERNAL lens and is now said rather than
+    // implied. It used to ride along with `rowBudget` being non-null, which
+    // meant the first-party plane could not bound its own read without also
+    // narrowing what a replay contains. The 9,999 `session.linesurvival` rows
+    // below are exactly the rows that separate the two answers.
     const dir = directory();
     const startedAt = "2026-08-09T07:00:00.000Z";
     append(dir, [
@@ -751,6 +802,7 @@ describe("local private canonical queries", () => {
     try {
       expect(
         buildLocalReplayOnDatabase(database, "budget", {
+          kinds: "replay",
           rowBudget: 3,
           integrationMeasurements: true,
           window: {
@@ -761,6 +813,7 @@ describe("local private canonical queries", () => {
       ).toBe(2);
       expect(() =>
         buildLocalReplayOnDatabase(database, "budget", {
+          kinds: "replay",
           rowBudget: 2,
           integrationMeasurements: true,
           window: {
@@ -771,6 +824,7 @@ describe("local private canonical queries", () => {
       ).toThrow(LocalReplayTooLargeError);
       expect(() =>
         buildLocalSessionOutcomeOnDatabase(database, "budget", {
+          kinds: "replay",
           rowBudget: 1,
           window: {
             startedAt,
@@ -809,6 +863,79 @@ describe("local private canonical queries", () => {
         (moment) => moment.seq,
       ),
     ).toEqual([2, 4]);
+  });
+
+  it("folds the period window WITHOUT holding the write lock", () => {
+    // The whole of offender 1, as a behavioural assertion rather than a comment.
+    //
+    // `querySnapshot` used to wrap both the project-reference allocation and the
+    // overview fold in ONE `BEGIN IMMEDIATE`, so a read held SQLite's write lock
+    // for the length of the fold: measured at 2,312 ms over the author's
+    // 345,764-row history, against the 5,000 ms `busy_timeout` the collector's
+    // own capture appends are waiting on.
+    //
+    // Here a second connection holds the write lock for the duration. Under the
+    // old shape this call could not begin: it would block on BEGIN IMMEDIATE and
+    // throw SQLITE_BUSY after five seconds. Under the split it is a
+    // `BEGIN DEFERRED` read snapshot, which in WAL mode does not contend with a
+    // writer at all, and an unrestricted principal allocates nothing so it never
+    // asks for the lock.
+    const dir = directory();
+    append(dir, [
+      start("lockheld", "2026-08-09T05:00:00.000Z"),
+      end("lockheld", "2026-08-09T05:01:00.000Z"),
+    ]);
+    const principal = issue(dir, "period:read");
+    expect(principal.restrictions.repoId).toBeNull();
+
+    const writer = openLocalHistory(dir);
+    try {
+      writer.exec("BEGIN IMMEDIATE");
+      const period = queryLocalPrivatePeriod(principal, 7, {
+        directory: dir,
+        now: new Date(NOW),
+      });
+      expect(period.metrics).not.toBeNull();
+      writer.exec("ROLLBACK");
+    } finally {
+      writer.close();
+    }
+  });
+
+  it("refuses a changed authority shape BEFORE it allocates anything", () => {
+    // The ordering the split had to preserve. With one transaction the
+    // provenance assertion ran first and a failure rolled the allocation back;
+    // with two, the assertion is hoisted out of both so nothing is written on a
+    // history whose authority shape has changed. Asserting the throw alone would
+    // not pin that, because the throw came from a different statement.
+    const dir = directory();
+    append(dir, [
+      start("restricted", "2026-08-09T05:00:00.000Z"),
+      end("restricted", "2026-08-09T05:01:00.000Z"),
+    ]);
+    const unrestricted = issue(dir, "period:read");
+    const principal = {
+      ...unrestricted,
+      restrictions: { ...unrestricted.restrictions, repoId: REPO_A },
+    };
+
+    const altered = openLocalHistory(dir);
+    altered.exec("ALTER TABLE local_session ADD COLUMN member_id TEXT");
+    altered.close();
+
+    expect(() =>
+      queryLocalPrivatePeriod(principal, 7, { directory: dir, now: new Date(NOW) }),
+    ).toThrow(LocalIntegrationAuthorityChangedError);
+
+    const database = openLocalHistory(dir);
+    try {
+      const allocated = database
+        .prepare("SELECT COUNT(*) AS n FROM local_integration_project_ref")
+        .get() as { n?: unknown };
+      expect(Number(allocated?.n ?? -1)).toBe(0);
+    } finally {
+      database.close();
+    }
   });
 
   it("reasserts Personal authority at every canonical query entrypoint", () => {

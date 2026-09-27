@@ -234,31 +234,20 @@
   }
 }
 
+/* The masks themselves live in listFade.module.css, because the sidebar's
+ * project list needs the same three and a fourth copy would have been the point
+ * where they started drifting. These names stay so the widget catalog and the
+ * Replay customize panel keep their existing imports. */
 .listFadeTop {
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16px);
-  mask-image: linear-gradient(to bottom, transparent 0, #000 16px);
+  composes: fadeTop from './listFade.module.css';
 }
 
 .listFadeBottom {
-  -webkit-mask-image: linear-gradient(to top, transparent 0, #000 16px);
-  mask-image: linear-gradient(to top, transparent 0, #000 16px);
+  composes: fadeBottom from './listFade.module.css';
 }
 
 .listFadeBoth {
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    #000 16px,
-    #000 calc(100% - 16px),
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    #000 16px,
-    #000 calc(100% - 16px),
-    transparent 100%
-  );
+  composes: fadeBoth from './listFade.module.css';
 }
 
 @media (max-width: 640px) {

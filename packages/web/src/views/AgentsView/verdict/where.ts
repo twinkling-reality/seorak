@@ -7,14 +7,15 @@ import type { ProjectRollup } from '../../../lib/apiSchemas.js';
 import { getToolMeta } from '../../../lib/toolMeta.js';
 import { count, fmtCount } from '../../../lib/voice/index.js';
 
-import { dash, text, type MatrixCell } from './cells.js';
+import { blank, text, type MatrixCell } from './cells.js';
 import { agentEditVolume } from './metrics.js';
 
 export interface WhereProjectRow {
   repoId: string;
   project: string;
   agentLabels: string;
-  /** Per-agent edit volume strings aligned to matrix agent order, or — */
+  /** Per-agent edit volume strings aligned to matrix agent order, or an
+   *  honest-empty cell when that agent did nothing in this project. */
   cells: MatrixCell[];
   multi: boolean;
 }
@@ -28,10 +29,10 @@ export function buildAgentsWhere(
     .map((p) => {
       const cells = agentOrder.map((agentId) => {
         const row = p.byAgent.find((a) => a.agent === agentId);
-        if (!row) return dash();
+        if (!row) return blank('none here');
         const vol = agentEditVolume(row);
         if (vol == null) {
-          return row.sessions > 0 ? text(count(row.sessions, 'session')) : dash();
+          return row.sessions > 0 ? text(count(row.sessions, 'session')) : blank('none here');
         }
         return text(`+${fmtCount(row.lines!.added)} / −${fmtCount(row.lines!.removed)}`);
       });

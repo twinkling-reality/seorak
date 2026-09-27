@@ -40,8 +40,15 @@ function date(value: string | null): string {
 
 export default function PrivateIntegrationsSection({
   operator,
+  /** The profile grid's opt-in modifier (`profileRowSection`, `display: contents`).
+   *  Without it this section stayed a flex column INSIDE a grid cell, so its
+   *  label sat above its content instead of in the left column, and it missed
+   *  the `--text-xl` label size every other row gets. Every sibling row passes
+   *  it; this one had no prop to pass it through. */
+  className,
 }: {
   operator: DataPlaneOperator | null;
+  className?: string;
 }) {
   const staticMcpAvailable = operator === 'local-machine' || operator === 'self-hosted';
   const [target, setTarget] = useState<CredentialTarget>('api');
@@ -173,8 +180,11 @@ export default function PrivateIntegrationsSection({
     return credential.audience.endsWith('/mcp/private') ? 'mcp' : 'api';
   }
 
+  // "Private integration access" wrapped mid-phrase in the section rail, and the
+  // third word carried no meaning the first two did not: the panel issues
+  // credentials, which IS access.
   return (
-    <DetailSection label="Private integration access">
+    <DetailSection label="Private integrations" className={className}>
       <div className={styles.section}>
         <p className={styles.copy}>
           Create a separate, expiring read-only credential for scripts or an MCP client.

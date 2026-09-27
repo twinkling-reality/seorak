@@ -1,6 +1,6 @@
 {
   "name": "seorak",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": "Twinkling Reality",
   "license": "Apache-2.0",
   "files": [
@@ -42,7 +42,7 @@
   "dependencies": {
     "@modelcontextprotocol/server": "2.0.0",
     "@seorak/dashboard": "0.1.0",
-    "@seorak/types": "^0.1.0"
+    "@seorak/types": "^0.2.0"
   },
   "devDependencies": {
     "@modelcontextprotocol/client": "2.0.0",

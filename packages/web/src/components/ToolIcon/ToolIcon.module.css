@@ -21,12 +21,9 @@
   filter: grayscale(1) contrast(1.05) opacity(0.88);
 }
 
-.fallback {
-  color: var(--on-accent);
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
+/* `.fallback` lived here: the brand-filled disc holding the label's first
+ * letter. Removed with the branch that used it on 2026-08-17 (see ToolIcon.tsx
+ * for why). Nothing replaces it; a tool with no mark renders no mark. */
 
 /* Inline-in-prose identity — mirrors ProjectSquircle's .inline treatment so a
  * tool named in a sentence carries the same mark its table columns do. */

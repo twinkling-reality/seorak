@@ -204,6 +204,38 @@ export const SIGNAL_CATALOG: Record<SignalId, SignalMeta> = {
  *  UI, the coerce defaults, and the "what we watch" panel walk. */
 export const SIGNAL_IDS = Object.keys(SIGNAL_CATALOG) as SignalId[];
 
+/**
+ * Signals the engine evaluates for the ACCOUNT, not for a repo.
+ *
+ * This is engine fact, not UI taste. `daily_cost_cap` sums spend across every
+ * project and the sweep reads `settings.signals.daily_cost_cap.enabled`
+ * directly rather than through the per-(repo, signal) resolution, so a
+ * per-project override of it is accepted by the coerce and then never read by
+ * anything. Offering one would be a control that does nothing.
+ *
+ * It lives here, beside the catalog it is a property of, because it was
+ * previously a bare `id !== "daily_cost_cap"` inside a filter in one surface's
+ * UI code — invisible to the other surface, and to anyone adding the next
+ * account-scoped watch.
+ *
+ * The fuller form of this is a `scope` field on every `SignalMeta`. That is a
+ * required field on eight entries and on every consumer's type, and this list
+ * closes the drift it exists to close; the field is the better shape if a
+ * second account-scoped signal ever arrives.
+ */
+export const ACCOUNT_SCOPED_SIGNAL_IDS: readonly SignalId[] = ["daily_cost_cap"];
+
+/**
+ * Signals worth offering a PER-PROJECT override for: repo-scoped, and carrying
+ * at least one threshold to tune. `session_ended` and `first_error` carry none,
+ * so a per-project row for them would hold a toggle and nothing else.
+ */
+export const PROJECT_TUNABLE_SIGNAL_IDS: readonly SignalId[] = SIGNAL_IDS.filter(
+  (id) =>
+    SIGNAL_CATALOG[id].thresholds.length > 0 &&
+    !ACCOUNT_SCOPED_SIGNAL_IDS.includes(id),
+);
+
 /** Whether `id` is a known signal — guards a stored/stale key before it indexes
  *  the catalog (a removed signal in an old stored row must not crash a consumer). */
 export function isSignalId(id: unknown): id is SignalId {

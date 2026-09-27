@@ -70,7 +70,11 @@ developer's private record. They are not a scorecard.
 
 **In scope (human, stubbed):** grounded stat chat over the owner's own snapshot — not a general assistant.
 
-**Parked (see VISION):** away control plane beyond nudges. The API/MCP and public
+**Out of scope:** acting on an agent, meaning approving, denying, stopping, or
+steering it. Seorak observes; the program that hosts a session controls it
+([ADR 008](../adr/008-seorak-observes-and-does-not-control-agents.md)).
+
+**Parked (see VISION):** a read-only multi-session phone cockpit. The API/MCP and public
 profile roadmap now has a backend foundation, but no UI or hosted availability
 claim until its remaining trust and deployment boundaries are operated.
 

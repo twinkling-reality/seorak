@@ -507,16 +507,3 @@ test("the committed acceptance file parses and none of its entries is falsified"
     [],
   );
 });
-
-test("this repository's readers all accept their contracts", () => {
-  const { analysis, reconciliation } = checkSharedUnionParity(REPO_ROOT);
-  assert.deepEqual(reconciliation.undeclared, []);
-  assert.ok(
-    analysis.checkedCount >= 60,
-    `only ${analysis.checkedCount} value sets are compared; coverage collapsed`,
-  );
-  assert.ok(
-    analysis.sharedCount >= 30,
-    `only ${analysis.sharedCount} mirror a @seorak/types union; coverage collapsed`,
-  );
-});

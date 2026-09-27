@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-09-09",
+  "measuredAtCommit": "d1fe5473",
+  "definition": [
+    "scripts/check-plane-work.mjs"
+  ],
+  "note": "The local plane's responsiveness rules, and every place the tree does not satisfy them today. THIS FILE IS THE ONLY ESCAPE HATCH. A finding not listed in `entries` is undeclared: the gate prints it and EXITS NON-ZERO. An entry that no longer matches a finding is itself falsified, printed as stale, and also exits non-zero, so the file cannot outlive the thing it excuses. An `unbounded-read` key carries the SHAPE of the omission, so a call site that regresses from `nullable` to `absent` arrives as a new finding rather than matching a standing entry. `ticks` is the declared half of rule 3: the re-entrancy guard is mechanical and required of every tick, and whether a tick's work needs a TIME budget is a judgement recorded here, so a new tick nobody has thought about fails rather than passing quietly. `--strict` ignores `entries` and fails on every finding, which is how the next attempt at these measures its own work.",
+  "ticks": [
+    {
+      "key": "SETTINGS_SYNC_MS",
+      "timeBudget": "not-needed",
+      "why": "One HTTP GET, awaited, whose bound is the AbortSignal the daemon already hands it: `heartbeatAbort.signal` aborts at shutdown, and the tick does no local work after the response beyond one `writeFileSync` and a `renameSync`. A deadline checked at a cheap/expensive boundary has no boundary to sit at here. This tick went without a re-entrancy guard until 2026-09-09. The hazard it now refuses is RESPONSE REORDERING, not a torn file: `writeFileSync(tmp)` and `renameSync(tmp, path)` are adjacent synchronous calls with no await between them, so two in-flight ticks cannot interleave inside the write and rename pair and no partial file can be renamed into place. What they can do is finish out of order, and then the older response's capture toggles are the ones left on disk, silently reverting whatever the user most recently changed. Each overlap is also a duplicate request to a provider that is by hypothesis already slow.",
+      "falsifiedWhen": "the tick does local work whose cost grows with the history, or stops being handed a shutdown signal, or the write stops being a synchronous write-then-rename pair."
+    },
+    {
+      "key": "COMPACT_SYNC_MS",
+      "timeBudget": "not-needed",
+      "why": "`flush` drains the delivery queue over the network, and both the overlap refusal and the pacing live in `EventDeliveryLoop`, which holds `#running` and `#queued` for exactly this. Its local half is bounded by the queue it drains rather than by the history it reads.",
+      "falsifiedWhen": "`EventDeliveryLoop` stops serialising, or the drain grows a local fold over `local_event`."
+    },
+    {
+      "key": "MOMENTUM_SWEEP_MS",
+      "timeBudget": "present",
+      "why": "The one tick that needs a deadline and has one. It spawns a git subprocess per registered repo and then an on-branch blame per matured session, so its cost is unbounded in the number of things it finds rather than in the interval. `survivalBlameBudgetMs()` in `survival.ts` is the budget, and it is checked at the cheap/expensive boundary inside `sweepAttributedSurvival` rather than around the whole tick, so a slow sweep costs latency and never correctness.",
+      "falsifiedWhen": "`survivalBlameBudgetMs` is removed, or the blame walk stops consulting a deadline."
+    },
+    {
+      "key": "INTERVENTION_SWEEP_MS",
+      "timeBudget": "not-needed",
+      "why": "It reads the live board and evaluates the owner's configured watches against it, with no subprocess and no window fold. The live board is bounded by its own 30-minute silence horizon rather than by the history: measured on the author's 345,764-row history on 2026-09-09 that horizon holds four sessions and `buildLocalLive` answers in 0.6 ms warm. The tick is guarded, and it deliberately never throws, because a watch engine that could take down the sweep that ships events would cost the user their history to tell them about a cost spike.",
+      "falsifiedWhen": "the sweep reads a window rather than the live board, or the live board stops being horizon-bounded."
+    },
+    {
+      "key": "CODEX_POLL_MS",
+      "timeBudget": "not-needed",
+      "why": "A filesystem tail, not a fold. It already carries a row cap, a bounded read window, and a re-entrancy guard. The numbers behind that judgement are the handoff document's own measurement on 2026-09-09, restated rather than re-taken here: the recursive walk over 358 rollout files is 4 ms warm, 358 `statSync` calls are 1 ms, and a full sweep against the real live state is 7 to 12 ms. That tick was suspected of being the plane's bottleneck on the strength of a stack sample showing filesystem frames, which is not evidence about WHICH filesystem work.",
+      "falsifiedWhen": "the tail loses its row cap or its bounded read window, or a sweep is measured past one interval."
+    }
+  ],
+  "entries": [
+    {
+      "check": "plane-work",
+      "key": "inline-fold::local-private-queries.ts::buildLocalOverviewProjectionOn",
+      "acceptedOn": "2026-09-09",
+      "owner": "the local plane responsiveness handoff, offender 1",
+      "why": "The private period read still folds a 90-day window on the thread that answers requests. HALF of this was fixed on 2026-09-09 and it was the half that could lose data: the fold used to run inside `BEGIN IMMEDIATE`, so an API read held SQLite's write lock for the whole 2,312 ms and the collector's own capture appends queued behind it against a 5,000 ms `busy_timeout`. Measured with a concurrent writer in a tight loop, worst single-append wait went from 3,456 ms to 653 ms once the allocation got its own short write transaction and the fold got a `BEGIN DEFERRED` read snapshot. WHAT REMAINS IS THE EVENT-LOOP BLOCK, and it is recorded rather than fixed because the fix is not the one line the handoff estimated. `queryLocalPrivatePeriod` is synchronous and `serveProjection` returns a promise, so routing the fold through the worker thread makes the function async and every caller with it, including `scripts/check-private-query-parity.mjs`, which calls it without `await` and would silently compare a Promise against the worker's object. That ripple, not the exposure, is the reason this is deferred: the route is credential-gated and no credential has been issued on this machine, but that is a fact about one install and not about the product, and nothing mechanical holds it true.",
+      "falsifiedWhen": "`queryLocalPrivatePeriod` routes the fold through `serveProjection`, or the period DTO stops needing a whole-overview fold to answer the eight numbers it reads, or the parity gate learns to await so the async ripple stops being the blocker."
+    },
+    {
+      "check": "plane-work",
+      "key": "unbounded-read::local-plane.ts::buildLocalSessionOutcome::nullable",
+      "acceptedOn": "2026-09-09",
+      "owner": "stage A4",
+      "why": "The outcome route passes `rowBudget: null` on the LOOPBACK binding only, and that is a decision rather than an omission: loopback position proves the caller is the person at the keyboard, reading a file they already own, so a refusal would withhold their own history from them on their own machine. The routable binding carries `SESSION_OUTCOME_MAX_ROWS` and refuses in the shared `SessionOutcomeRefusal` wire form. The latency argument does not overturn it: measured on the author's history on 2026-09-09, the largest session of 5,605 holds 10,316 event rows and answers an outcome in 25 to 40 ms over eleven warm runs on an idle machine.",
+      "falsifiedWhen": "the loopback binding stops proving position, or an outcome read on a real history is measured past a few hundred milliseconds."
+    },
+    {
+      "check": "plane-work",
+      "key": "unbounded-read::local-plane.ts::buildLocalReplay::nullable",
+      "acceptedOn": "2026-09-09",
+      "owner": "stage A4, extended to replay on 2026-09-09",
+      "why": "Same split as the outcome route, and it did not have one until 2026-09-09: the replay route passed no `rowBudget` property at all, so the builder's null default applied and BOTH bindings read every row of a session with no window. The routable binding now carries `SESSION_REPLAY_MAX_ROWS` and refuses with the worker's own replay body. Loopback stays unbounded on A4's reasoning and the measurement supports it: the largest session of 5,605 holds 10,316 rows and answers a replay in 47 to 88 ms over eleven warm runs on an idle machine, and it is the only session in the history over the routable budget. Note the budget counts ALL event kinds, because the first-party replay is the all-event sequence; the narrower `kinds: \"replay\"` lens the integration API reads tops out at 8,148 rows on the same session.",
+      "falsifiedWhen": "the loopback binding stops proving position, or a replay read on a real history is measured past a few hundred milliseconds, or the hosted replay refusal grows a `WorkerErrorCode` this one would then have to carry too."
+    },
+    {
+      "check": "plane-work",
+      "key": "unguarded-tick::COMPACT_SYNC_MS",
+      "acceptedOn": "2026-09-09",
+      "owner": "EventDeliveryLoop",
+      "why": "The guard is real and it is one level below the tick, in the callee that owns the resource. `flush` is `deliveryLoop.trigger()`, and `EventDeliveryLoop.#trigger` refuses a concurrent drain outright: `if (this.#running) { this.#queued = true; return this.#idle }`, which both declines to start a second drain and coalesces the request into one re-run of the first. A boolean in `daemon.ts` beside it would refuse the same overlap a second time and teach the next reader that the guard belongs at the timer rather than at the resource. The gate cannot see it because it does not follow a method call, which is stated in its own docblock, and this is the one place in the file where that blindness has a cost.",
+      "falsifiedWhen": "`EventDeliveryLoop` stops tracking `#running`, or the compact-sync tick calls something other than `deliveryLoop.trigger()`."
+    }
+  ]
+}

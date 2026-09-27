@@ -610,7 +610,7 @@ export default function PublicPresenceSection({
     return (
       <section className={styles.section} aria-labelledby="public-presence-title">
         <h2 id="public-presence-title">Public presence</h2>
-        <p>Loading private publication choices…</p>
+        <p className={styles.loading}>Loading private publication choices…</p>
       </section>
     );
   }
@@ -803,7 +803,7 @@ export default function PublicPresenceSection({
           />
           <span>
             <strong>Publish frozen activity</strong>
-            <small>Distinct active sessions only—never tokens, cost, or output volume.</small>
+            <small>Distinct active sessions only, never tokens, cost, or output volume.</small>
           </span>
         </label>
         {draft.activity ? (

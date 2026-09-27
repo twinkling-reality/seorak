@@ -375,9 +375,43 @@ moving the DECLARATION rather than the module holding it — which it must be,
 since the point of the type edge is that no implementation is needed. So the
 closure is bounded, and this is the number the extraction is actually held to:
 
-**Value closure: 20 modules, 7,561 lines.** Seventeen scoped (6,243 lines — 4a's
-5,874 pure lines plus the 369-line D1 tail of `tools.ts`, `usage.ts`, and
+**Value closure: 20 modules, 7,693 lines.** Seventeen scoped (6,375 lines — 4a's
+6,006 pure lines plus the 369-line D1 tail of `tools.ts`, `usage.ts`, and
 `outcomes.ts` that a split leaves behind) plus three the slices never named:
+
+Restated 2026-08-21, from 7,557 and 6,239. The 136-line delta is five scoped
+modules, and all of it is one rule arriving in the places that were missing it:
+`usage.ts` +38, `overviewKvRollups.ts` +76, `activity.ts` +9,
+`overviewProjects.ts` +7, `intervention.ts` +6. `usage.totals.sessions` counted
+every session that opened, including the ones that measured nothing, so the
+member read as a count of processes while `toolCalls` and `cost.totalUsd` beside
+it counted work. The predicate itself is four lines in `@seorak/types`
+(`sessionMeasuredWork`, and `sessionHasActivity` for the silence watch); the
+weight here is threading one measured-session set through the four producers per
+engine that were each deriving the count their own way, plus the doc comments
+saying why a caller cannot skip it. The delegation target is an external package,
+so no module entered or left: still 20 by value, 17 scoped, 5 type-only, 36
+gate-visible. The addition is pure, so the D1 tail stays 369 and 4a's pure lines
+go 5,870 to 6,006.
+
+This one grew the closure rather than shrinking it, and the reason is worth
+recording: the parity gate could only catch the disagreement once BOTH engines
+applied the rule, and it did catch it, in both directions at once. The worker was
+excluding the measureless sessions from its end reasons while the collector was
+not, and the collector was excluding them from `tools.agentDaily` and the
+headline while the worker was not. Neither half was wrong on its own terms and
+neither would have noticed alone.
+
+Restated 2026-08-17, from 7,561 and 6,243. The 4-line delta is one scoped
+module: `intervention.ts`, where `resolveNotificationConfig` stopped restating
+the stored-layer precedence and started calling `resolveProjectSignal` in
+`@seorak/types`, keeping only the env-seed overlay that a publish-safe package
+cannot hold. The closure got smaller for once, and by removal rather than
+tightening: the same rule was written in three places, and two of them were UI
+code that could disagree with the engine without either being edited. The
+delegation target is an external package, so no module entered or left the
+closure — still 20 by value, 17 scoped, 5 type-only, 36 gate-visible. The
+removal is pure, so the D1 tail stays 369 and 4a's pure lines go 5,874 to 5,870.
 
 Restated 2026-08-16, from 7,548 and 6,230. The 13-line delta is one scoped
 module: `overviewWindow.ts`, where `resolveOverviewWindow` took an injected

@@ -22,7 +22,7 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
           "tone": "can",
         },
       ],
-      "hint": "Cache-read tokens reported separately — what the cache reuse stat needs.",
+      "hint": "Cache-read tokens reported separately, what the cache reuse stat needs.",
       "id": "cache-split",
       "label": "Cache split",
     },
@@ -242,7 +242,7 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "not reported",
           },
         ],
         "hint": "On-machine edit-tool line counts. The fairest cross-tool compare today.",
@@ -275,7 +275,7 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "unpriced",
           },
         ],
         "hint": "Derived estimate when the agent emits priced tokens. Never a fabricated $0.",
@@ -286,7 +286,7 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "not reported",
           },
         ],
         "hint": "Input + output when the agent emits tokens. Absent agents stay empty.",
@@ -297,7 +297,7 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "none reported",
           },
         ],
         "hint": "Errored calls over calls that reported a result. Both legs are counts, because a rate whose denominator you cannot see is not a measurement. A tool that reports on only some of its calls is disclosed under the table.",
@@ -392,7 +392,7 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
           "tone": "can",
         },
       ],
-      "hint": "Cache-read tokens reported separately — what the cache reuse stat needs.",
+      "hint": "Cache-read tokens reported separately, what the cache reuse stat needs.",
       "id": "cache-split",
       "label": "Cache split",
     },
@@ -734,11 +734,11 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "unpriced",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "unpriced",
           },
         ],
         "hint": "Derived estimate when the agent emits priced tokens. Never a fabricated $0.",
@@ -749,11 +749,11 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "not reported",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "not reported",
           },
         ],
         "hint": "Input + output when the agent emits tokens. Absent agents stay empty.",
@@ -764,11 +764,11 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "none reported",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "none reported",
           },
         ],
         "hint": "Errored calls over calls that reported a result. Both legs are counts, because a rate whose denominator you cannot see is not a measurement. A tool that reports on only some of its calls is disclosed under the table.",
@@ -1015,11 +1015,11 @@ You use them differently. ",
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "unpriced",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "unpriced",
           },
         ],
         "hint": "What you paid for work that lasted. Only a tool that reports priced tokens can fill this. A tool that reports no cost reads empty here, never a $0, because a $0 would say its work was free.",
@@ -1194,7 +1194,7 @@ You use them differently. ",
         },
         {
           "empty": true,
-          "text": "—",
+          "text": "none here",
         },
       ],
       "multi": false,
@@ -1235,7 +1235,7 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
           "tone": "can",
         },
       ],
-      "hint": "Cache-read tokens reported separately — what the cache reuse stat needs.",
+      "hint": "Cache-read tokens reported separately, what the cache reuse stat needs.",
       "id": "cache-split",
       "label": "Cache split",
     },
@@ -1523,11 +1523,11 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "not reported",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "not reported",
           },
         ],
         "hint": "On-machine edit-tool line counts. The fairest cross-tool compare today.",
@@ -1568,11 +1568,11 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "unpriced",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "unpriced",
           },
         ],
         "hint": "Derived estimate when the agent emits priced tokens. Never a fabricated $0.",
@@ -1583,11 +1583,11 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "not reported",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "not reported",
           },
         ],
         "hint": "Input + output when the agent emits tokens. Absent agents stay empty.",
@@ -1598,11 +1598,11 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "none reported",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "none reported",
           },
         ],
         "hint": "Errored calls over calls that reported a result. Both legs are counts, because a rate whose denominator you cannot see is not a measurement. A tool that reports on only some of its calls is disclosed under the table.",
@@ -1721,7 +1721,7 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "not matured yet",
           },
         ],
         "hint": "Committed lines this tool wrote that are still on the branch, over the committed lines it wrote. Both legs, because a survival percentage on its own hides how much work it is about.",
@@ -1736,7 +1736,7 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "not matured yet",
           },
         ],
         "hint": "Needs 500 attributed lines and 3 commits before a percentage means anything. A lower rate means more of that work was changed back later, which is not the same as worse.",
@@ -1751,7 +1751,7 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "not matured yet",
           },
         ],
         "hint": "Distinct commits this tool got work into. A tool can carry a lot of lines across very few commits, and a rate over few commits is a small sample however many lines it holds.",
@@ -1762,11 +1762,11 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "unpriced",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "not matured yet",
           },
         ],
         "hint": "What you paid for work that lasted. Only a tool that reports priced tokens can fill this. A tool that reports no cost reads empty here, never a $0, because a $0 would say its work was free.",
@@ -1781,7 +1781,7 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "not matured yet",
           },
         ],
         "hint": "Of every line in the commits this tool landed work in, how many Seorak could place with some tool. The rest are your own hand edits, script-written files, or a gap in capture. Two tools can only be compared when this number is close.",
@@ -1887,7 +1887,7 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
           "tone": "can",
         },
       ],
-      "hint": "Cache-read tokens reported separately — what the cache reuse stat needs.",
+      "hint": "Cache-read tokens reported separately, what the cache reuse stat needs.",
       "id": "cache-split",
       "label": "Cache split",
     },
@@ -2181,7 +2181,7 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "not reported",
           },
         ],
         "hint": "On-machine edit-tool line counts. The fairest cross-tool compare today.",
@@ -2222,11 +2222,11 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "unpriced",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "unpriced",
           },
         ],
         "hint": "Derived estimate when the agent emits priced tokens. Never a fabricated $0.",
@@ -2237,11 +2237,11 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "not reported",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "not reported",
           },
         ],
         "hint": "Input + output when the agent emits tokens. Absent agents stay empty.",
@@ -2256,7 +2256,7 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "none reported",
           },
         ],
         "hint": "Errored calls over calls that reported a result. Both legs are counts, because a rate whose denominator you cannot see is not a measurement. A tool that reports on only some of its calls is disclosed under the table.",
@@ -2481,7 +2481,7 @@ You use them differently. ",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "not matured yet",
           },
         ],
         "hint": "Committed lines this tool wrote that are still on the branch, over the committed lines it wrote. Both legs, because a survival percentage on its own hides how much work it is about.",
@@ -2496,7 +2496,7 @@ You use them differently. ",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "not matured yet",
           },
         ],
         "hint": "Needs 500 attributed lines and 3 commits before a percentage means anything. A lower rate means more of that work was changed back later, which is not the same as worse.",
@@ -2511,7 +2511,7 @@ You use them differently. ",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "not matured yet",
           },
         ],
         "hint": "Distinct commits this tool got work into. A tool can carry a lot of lines across very few commits, and a rate over few commits is a small sample however many lines it holds.",
@@ -2522,11 +2522,11 @@ You use them differently. ",
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "unpriced",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "not matured yet",
           },
         ],
         "hint": "What you paid for work that lasted. Only a tool that reports priced tokens can fill this. A tool that reports no cost reads empty here, never a $0, because a $0 would say its work was free.",
@@ -2541,7 +2541,7 @@ You use them differently. ",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "not matured yet",
           },
         ],
         "hint": "Of every line in the commits this tool landed work in, how many Seorak could place with some tool. The rest are your own hand edits, script-written files, or a gap in capture. Two tools can only be compared when this number is close.",
@@ -2716,7 +2716,7 @@ You use them differently. ",
         },
         {
           "empty": true,
-          "text": "—",
+          "text": "none here",
         },
       ],
       "multi": false,
@@ -2772,7 +2772,7 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
           "tone": "can",
         },
       ],
-      "hint": "Cache-read tokens reported separately — what the cache reuse stat needs.",
+      "hint": "Cache-read tokens reported separately, what the cache reuse stat needs.",
       "id": "cache-split",
       "label": "Cache split",
     },
@@ -3128,7 +3128,7 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "unpriced",
           },
         ],
         "hint": "Derived estimate when the agent emits priced tokens. Never a fabricated $0.",
@@ -3465,11 +3465,11 @@ You use them differently. ",
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "unpriced",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "unpriced",
           },
         ],
         "hint": "What you paid for work that lasted. Only a tool that reports priced tokens can fill this. A tool that reports no cost reads empty here, never a $0, because a $0 would say its work was free.",
@@ -3697,7 +3697,7 @@ You use them differently. ",
         },
         {
           "empty": true,
-          "text": "—",
+          "text": "none here",
         },
       ],
       "multi": false,
@@ -3738,7 +3738,7 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
           "tone": "can",
         },
       ],
-      "hint": "Cache-read tokens reported separately — what the cache reuse stat needs.",
+      "hint": "Cache-read tokens reported separately, what the cache reuse stat needs.",
       "id": "cache-split",
       "label": "Cache split",
     },
@@ -4071,11 +4071,11 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "unpriced",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "unpriced",
           },
         ],
         "hint": "Derived estimate when the agent emits priced tokens. Never a fabricated $0.",
@@ -4086,11 +4086,11 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "not reported",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "not reported",
           },
         ],
         "hint": "Input + output when the agent emits tokens. Absent agents stay empty.",
@@ -4101,11 +4101,11 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "none reported",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "none reported",
           },
         ],
         "hint": "Errored calls over calls that reported a result. Both legs are counts, because a rate whose denominator you cannot see is not a measurement. A tool that reports on only some of its calls is disclosed under the table.",
@@ -4320,11 +4320,11 @@ You use them differently. ",
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "unpriced",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "unpriced",
           },
         ],
         "hint": "What you paid for work that lasted. Only a tool that reports priced tokens can fill this. A tool that reports no cost reads empty here, never a $0, because a $0 would say its work was free.",
@@ -4501,7 +4501,7 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
           "tone": "cannot",
         },
       ],
-      "hint": "Cache-read tokens reported separately — what the cache reuse stat needs.",
+      "hint": "Cache-read tokens reported separately, what the cache reuse stat needs.",
       "id": "cache-split",
       "label": "Cache split",
     },
@@ -4914,15 +4914,15 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "unpriced",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "unpriced",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "unpriced",
           },
         ],
         "hint": "Derived estimate when the agent emits priced tokens. Never a fabricated $0.",
@@ -4933,15 +4933,15 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "not reported",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "not reported",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "not reported",
           },
         ],
         "hint": "Input + output when the agent emits tokens. Absent agents stay empty.",
@@ -4952,15 +4952,15 @@ exports[`agents verdict output, pinned over a fixture matrix > is unchanged for:
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "none reported",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "none reported",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "none reported",
           },
         ],
         "hint": "Errored calls over calls that reported a result. Both legs are counts, because a rate whose denominator you cannot see is not a measurement. A tool that reports on only some of its calls is disclosed under the table.",
@@ -5202,11 +5202,11 @@ You use them differently. ",
         "cells": [
           {
             "empty": true,
-            "text": "—",
+            "text": "unpriced",
           },
           {
             "empty": true,
-            "text": "—",
+            "text": "unpriced",
           },
           {
             "empty": true,
@@ -5374,7 +5374,7 @@ You use them differently. ",
         },
         {
           "empty": true,
-          "text": "—",
+          "text": "none here",
         },
       ],
       "multi": true,
@@ -5390,11 +5390,11 @@ You use them differently. ",
         },
         {
           "empty": true,
-          "text": "—",
+          "text": "none here",
         },
         {
           "empty": true,
-          "text": "—",
+          "text": "none here",
         },
       ],
       "multi": false,

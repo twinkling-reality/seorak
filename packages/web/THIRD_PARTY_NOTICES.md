@@ -1,8 +1,33 @@
 # Third-party notices (web assets)
 
-Seorak vendors the product typeface and semantic SVGs for dashboard display.
-Icons identify detected stack/toolchain values in Compare and related views —
-descriptive use, not product endorsement.
+Seorak vendors the product typeface, semantic SVGs for dashboard display, and
+the marketing site's ambient audio bed. Icons identify detected
+stack/toolchain values in Compare and related views — descriptive use, not
+product endorsement.
+
+## Ambient audio bed (marketing)
+
+**Source:** ["Agriculture Organic Farming Music"](https://pixabay.com/music/religious-theme-agriculture-organic-farming-music-570708/)
+by [monume](https://pixabay.com/users/monume-44679891/), Pixabay audio ID 570708
+**Version:** Pixabay audio 570708 by monume, downloaded 2026-08-20
+**License:** [Pixabay Content License](https://pixabay.com/service/terms/) —
+commercial use permitted, no attribution required; the audio may not be
+redistributed or sold as a standalone file. Download certificate at
+[`LICENSES/Pixabay-ambient-570708.txt`](LICENSES/Pixabay-ambient-570708.txt)
+**Downloaded:** 2026-08-20
+
+**Shipped as** `public/assets/audio/ambient.m4a` (AAC, tried first) and
+`ambient.mp3` (fallback), which `src/marketing/audio/engine.ts` names in
+`TRACK_SOURCES`. Neither is the source file: both are an 84-second seamless loop
+cut from the 3-minute original by `scripts/make-loop.mjs`, which finds the loop
+point by correlating the waveform rather than by trusting an estimated tempo.
+The 3-minute source is not vendored — like the hero figure's source art, the
+heavy original stays out of the repo.
+
+Re-cut after replacing the track:
+`node scripts/make-loop.mjs --in <track> --out loop.wav`, then the two ffmpeg
+lines in that script's header. The engine degrades honestly if the files are
+absent: the menu's sound row reads "No music" and interface ticks still work.
 
 ## Figtree (product sans and display)
 

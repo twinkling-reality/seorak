@@ -206,7 +206,7 @@ describe('useSettingsSection — optimistic rollback', () => {
     // The optimistic value was announced, then the revert was announced too.
     expect(onChange.mock.calls.map(([f]) => (f as Flags).a)).toEqual([true, false]);
     expect(probe(h.container).dataset.note).toBe(
-      'Save failed — worker unreachable. Try again.',
+      'Save failed, worker unreachable. Try again.',
     );
     expect(probe(h.container).dataset.readonly).toBe('false');
 

@@ -21,8 +21,8 @@ import styles from './MomentumWidgets.module.css';
  * row's shipped `baseline` (the repo's own one-window-ago reading) becomes a
  * signed files-touched delta under "vs prior Nd", and quiet repos carry
  * their days-dark in a dedicated "quiet for" column. `--` when the history is
- * too thin to compare (never a fabricated "steady"), `—` when a repo simply
- * isn't quiet. Anti-vanity: the head is breadth ("N of M repos moved"), never
+ * too thin to compare (never a fabricated "steady"), "none reported" when there
+ * is no quiet stretch to state. Anti-vanity: the head is breadth ("N of M repos moved"), never
  * "+X lines"; netLines is display-only and never a score.
  *
  * Honest-empty: portfolio.repos === [] renders the empty state, never a fake
@@ -155,7 +155,17 @@ function MomentumWidget({ overview, capture, openProject }: WidgetBodyProps) {
                   </span>
                   <span className={styles.momentumCell}>
                     {quietDays === null ? (
-                      <span className={styles.momentumCellEmpty}>—</span>
+                      // No quiet stretch to state: the repo is active, its recency is
+                      // unknown, or its history is too thin to have been judged at all.
+                      // The cell says only what is true of all three, and the tooltip
+                      // carries it, the way both sibling cells already do.
+                      <Tooltip
+                        label={`No quiet stretch reported for ${r.repoLabel}.`}
+                        placement="right"
+                        wrap
+                      >
+                        <span className={styles.momentumCellEmpty}>none reported</span>
+                      </Tooltip>
                     ) : (
                       <Tooltip
                         label={`No commits or file changes seen in ${r.repoLabel} for ${quietDays} ${

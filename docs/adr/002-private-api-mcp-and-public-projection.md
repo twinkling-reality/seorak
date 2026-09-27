@@ -1,7 +1,10 @@
 # ADR 002: Private integration queries and public publication are separate systems
 
 - **Status:** accepted; implemented in the collector's loopback/self-hosted
-  planes and in the owner cell; hosted private OAuth rollout pending
+  planes and in the owner cell; hosted private OAuth rollout pending. Section 3's
+  catalog is amended by
+  [ADR 007](./007-native-session-resolve-and-launcher-labels.md), which adds a
+  fifth tool and one HTTP read without changing section 1's identifier rule
 - **Date:** 2026-08-02
 - **Decision owners:** product and backend
 
@@ -92,7 +95,7 @@ back something no hosted service is providing. `managed-lifecycle.test.ts` pins
 the absence, because a missing rule and a forgotten rule look identical.
 
 `integrations` is one atomic `DataPlaneSurface`. The collector declares it only
-because owner management, all four HTTP reads, and the official MCP resource are
+because owner management, every HTTP read, and the official MCP resource are
 mounted on both loopback and self-hosted bindings. The dashboard shows static
 API/MCP credential targets only on those planes; a managed plane never offers a
 static MCP token. Repository completeness and activation gates hold the
@@ -119,12 +122,17 @@ clients are deliberately unsupported until the authorization and resource
 servers can enforce one complete exact-origin CORS policy; a resource-only
 hostname allowlist would advertise a flow the token endpoint cannot complete.
 
-The private catalog is limited to four question-shaped, read-only tools:
+The private catalog is limited to question-shaped, read-only tools, four at
+first and five since ADR 007:
 
 1. `period_summary`
 2. `list_sessions`
 3. `get_session_outcome`
 4. `replay_lens`
+5. `resolve_session`, added by
+   [ADR 007](./007-native-session-resolve-and-launcher-labels.md): a caller that
+   already holds a session's native identity gets its opaque summary. Native ids
+   are an input only and are never listed or returned.
 
 They return the same versioned DTO objects as HTTP in `structuredContent` and a
 JSON text block for older clients. Resources and prompts are omitted initially:

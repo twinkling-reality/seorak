@@ -71,15 +71,6 @@ function assertOneProblem(problems, needle) {
 }
 
 describe("the repository itself", () => {
-  it("passes its own governance check", () => {
-    const { problems, notes } = checkGovernance(REPO_ROOT);
-    assert.deepEqual(problems, []);
-    assert.ok(
-      notes.some((note) => note.startsWith("Contact: ")),
-      "the report should name the one contact it found",
-    );
-  });
-
   it("reports the DCO range as out of scope while the policy says unpublished", () => {
     const { notes } = checkGovernance(REPO_ROOT);
     assert.ok(

@@ -89,7 +89,7 @@ function SessionEndReasonsWidget({ overview, capture }: WidgetBodyProps) {
 
   const unlabeledEnds = endedCount > total ? endedCount - total : 0;
   const headHint = [
-    'When your Claude Code sessions stopped in this window — closed, continued from saved, signed out, and so on. Not whether the work was good.',
+    'When your Claude Code sessions stopped in this window: closed, continued from saved, signed out, and so on. Not whether the work was good.',
     unlabeledEnds > 0
       ? `${unlabeledEnds.toLocaleString()} ${unlabeledEnds === 1 ? 'session' : 'sessions'} had no stop reason recorded and are omitted.`
       : null,

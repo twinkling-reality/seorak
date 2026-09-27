@@ -127,7 +127,7 @@ export function computeCostConcentration(input: ReplayLensInput): ReplayLensResu
     .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
 
   const top = rows[0]!;
-  const headline = `${top.label} took ${top.display} of ${formatCost(total)} — ${sharePct(top.value, total)}% of measured cost.`;
+  const headline = `${top.label} took ${top.display} of ${formatCost(total)}, ${sharePct(top.value, total)}% of measured cost.`;
 
   return {
     id: 'cost-concentration',

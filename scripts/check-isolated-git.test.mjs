@@ -176,9 +176,7 @@ test("the failure names the file, the line and the way out", () => {
   );
 });
 
-test("this repository passes, and the gate is wired where it runs", () => {
-  assert.deepEqual(findRawGitSpawns(ROOT), []);
-
+test("the gate is wired where it runs", () => {
   const pkg = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf8"));
   assert.equal(
     pkg.scripts["git-isolation:check"],

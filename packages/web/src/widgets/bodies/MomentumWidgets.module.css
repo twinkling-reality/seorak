@@ -166,7 +166,7 @@
 }
 
 /* Cell with nothing to report: "--" = history too thin to compare yet
- * (accrual), "—" = the repo simply isn't quiet (real absence). */
+ * (accrual), "none reported" = no quiet stretch to state (real absence). */
 .momentumCellEmpty {
   font-family: var(--mono);
   font-size: var(--text-xs);

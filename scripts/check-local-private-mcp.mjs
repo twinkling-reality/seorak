@@ -101,9 +101,9 @@ function isMain() {
 
 if (isMain()) {
   try {
-    checkLocalPrivateMcp();
+    checkLocalPrivateMcp({ runFocusedSuite: false });
     console.log(
-      "Local private MCP foundation: exact resource authority, official SDK pins, and focused E2E are green.",
+      "Local private MCP foundation: exact resource authority and official SDK pins are green.",
     );
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));

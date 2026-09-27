@@ -5,25 +5,56 @@ import { dirname, extname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
 
+/**
+ * Every source root that composes something a person reads. `packages/dashboard`
+ * is absent because it holds no `src/`: it ships the built primary UI, whose
+ * source is `packages/web/src` and is already scanned here.
+ *
+ * The push dispatcher and the public directory were added on 2026-08-21, with
+ * the em-dash widening below. Both compose read copy (a notification body, an
+ * operated public page) and neither was scanned, so a rule with no root to run
+ * on is not a rule at all.
+ */
 const DEFAULT_SOURCE_ROOTS = [
   "packages/web/src",
   "packages/types/src",
   "packages/collector/src",
   "packages/control-plane/src",
   "packages/worker/src",
+  "packages/push/src",
+  "packages/public-directory/src",
   "apps/mobile/src",
   "apps/mobile/targets",
 ];
 
 const INTERNAL_VALUE_KEYS = new Set(["id", "slug", "key"]);
 
+const EM_DASH_MESSAGE =
+  'this copy joins clauses with a comma, "and", or a new sentence, never an em dash';
+
 /**
- * Surfaces that hold the em-dash rule: customer-facing pricing and plan copy,
- * plus the field journal.
+ * Surfaces where a hyphen pair is read as an em dash someone could not type:
+ * customer-facing pricing and plan copy, plus the field journal.
  *
- * The scope is explicit rather than repository-wide, because an em dash is
- * ordinary punctuation in internal comments, tests, and documentation, and
- * banning it there would be a house style edict rather than a copy contract.
+ * This used to be the scope of the WHOLE em-dash rule. It is now the scope of
+ * its second half only, because the two halves are not equally knowable.
+ *
+ * The character is knowable anywhere. The owner requires zero em dashes in the
+ * program, so it is banned across every scanned source root, exactly like the
+ * middot and the signal. The earlier narrow scope argued that an em dash is
+ * ordinary punctuation outside customer-facing copy and that banning it further
+ * would be a house style edict rather than a copy contract. It IS the house
+ * style, and the narrow scope was what let about sixty of them survive in
+ * shipped strings, the whole `seorak status` checklist included. Widened
+ * 2026-08-21.
+ *
+ * The stand-in is knowable only in prose. `plan--price` and `entry-main--task`
+ * are the same characters: one is a typist reaching for an em dash, the other
+ * is a BEM modifier, and no pattern can tell them apart. So is a spaced ` -- `,
+ * which is also how SQLite starts a comment inside a DDL template. Enforcing
+ * the stand-in repo-wide would fail on class names and schema comments, which
+ * are code and not copy at all, so the stand-in keeps the prose scope where it
+ * means something. The character carries the rule everywhere else.
  *
  * The journal was added on 2026-08-02. An earlier version of this comment
  * argued that an em dash is ordinary punctuation "in blog prose" and left the
@@ -31,16 +62,21 @@ const INTERNAL_VALUE_KEYS = new Set(["id", "slug", "key"]);
  * which has prohibited the em dash since the blog shipped, so the rule the
  * writing already follows is now the rule the build enforces. See
  * `docs/reference/editorial-system.md`.
+ *
+ * Both halves read string and template literals out of the TypeScript AST, so
+ * a line or block comment may still carry an em dash. That is the intended
+ * line: this gate governs what the program says to its reader, not what the
+ * source says to the next agent.
  */
-const EM_DASH_COPY_PATHS = [
+const EM_DASH_STAND_IN_PATHS = [
   "packages/web/src/marketing/pages/pricing/",
   "packages/control-plane/src/billingHtml.ts",
   "packages/web/src/marketing/blog/posts/",
   "packages/web/src/marketing/content/",
 ];
 
-function isEmDashScopedCopy(relativePath) {
-  return EM_DASH_COPY_PATHS.some(
+function isEmDashStandInCopy(relativePath) {
+  return EM_DASH_STAND_IN_PATHS.some(
     (path) => relativePath === path || relativePath.startsWith(path),
   );
 }
@@ -48,18 +84,18 @@ function isEmDashScopedCopy(relativePath) {
 const FORBIDDEN = [
   { kind: "middot", pattern: /·/, message: "replace the middot with plain punctuation or separate copy" },
   { kind: "signal", pattern: /\bsignals?\b/i, message: 'use "stat", "watch", "reading", or another contextual product term' },
+  { kind: "em-dash", pattern: /—/, message: EM_DASH_MESSAGE },
   {
     kind: "em-dash",
     /*
-     * The character itself, the spaced stand-in (` -- `), and the joined
-     * stand-in (`plan--price`). A CSS custom property (`var(--ink)`) and a CLI
-     * long flag (`--purge`) are neither, because both attach their hyphens
-     * directly to the identifier that follows.
+     * The spaced stand-in (` -- `) and the joined stand-in (`plan--price`). A
+     * CSS custom property (`var(--ink)`) and a CLI long flag (`--purge`) are
+     * neither, because both attach their hyphens directly to the identifier
+     * that follows.
      */
-    pattern: /—|\s--\s|[A-Za-z0-9)]--[A-Za-z0-9(]/,
-    message:
-      'this copy joins clauses with a comma, "and", or a new sentence, never an em dash',
-    appliesTo: isEmDashScopedCopy,
+    pattern: /\s--\s|[A-Za-z0-9)]--[A-Za-z0-9(]/,
+    message: EM_DASH_MESSAGE,
+    appliesTo: isEmDashStandInCopy,
   },
 ];
 
@@ -185,17 +221,35 @@ function isDocumentTitleMiddot(node, relativePath) {
   );
 }
 
+/**
+ * GLSL sources, which the AST cannot help reading as product copy.
+ *
+ * A shader is a template literal holding a whole program, so its own `//`
+ * comments arrive here as string content. They are the one place where source
+ * a person never reads is indistinguishable from copy, which is why the
+ * exemption is by DECLARATION rather than by file: everything else in these
+ * modules is ordinary TSX and stays governed.
+ *
+ * `FRAG` and its sibling `VERT` in `IridescentSquircle.tsx` joined on
+ * 2026-08-21, with the em-dash widening: the widened rule reaches shader
+ * comments, and those comments punctuate like the prose their author was
+ * writing at the time.
+ */
+const SHADER_LITERALS = new Map([
+  ["packages/web/src/marketing/scene/HeroFigure.tsx", new Set(["VERT"])],
+  [
+    "packages/web/src/marketing/scene/shaders/pointCloud.vert.ts",
+    new Set(["POINT_CLOUD_VERT"]),
+  ],
+  ["packages/web/src/marketing/IridescentSquircle.tsx", new Set(["VERT", "FRAG"])],
+]);
+
 function isShaderLiteral(node, relativePath) {
-  const allowed =
-    relativePath === "packages/web/src/marketing/scene/HeroFigure.tsx"
-      ? "VERT"
-      : relativePath === "packages/web/src/marketing/scene/shaders/pointCloud.vert.ts"
-        ? "POINT_CLOUD_VERT"
-        : null;
+  const allowed = SHADER_LITERALS.get(relativePath);
   if (!allowed) return false;
   const declaration = ancestor(node, ts.isVariableDeclaration);
   return Boolean(
-    declaration && ts.isIdentifier(declaration.name) && declaration.name.text === allowed,
+    declaration && ts.isIdentifier(declaration.name) && allowed.has(declaration.name.text),
   );
 }
 
@@ -246,7 +300,12 @@ function scanTypeScript(path, relativePath) {
         ) {
           continue;
         }
-        if (forbidden.kind === "signal" && isShaderLiteral(node, relativePath)) continue;
+        if (
+          (forbidden.kind === "signal" || forbidden.kind === "em-dash") &&
+          isShaderLiteral(node, relativePath)
+        ) {
+          continue;
+        }
         issues.push(
           issueFor(sourceFile, relativePath, forbidden.kind, forbidden.message, node),
         );

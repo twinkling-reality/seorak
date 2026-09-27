@@ -113,7 +113,12 @@ export function useProjectOptions(rangeDays: number): readonly ProjectOption[] {
   return useMemo(
     () =>
       projects
-        ? projects.map((p) => ({ repoId: p.repoId, project: p.project, sessions: p.sessions }))
+        ? // An archived project is out of every scope picker for the same
+          // reason it is out of the sidebar: it is still measured and still
+          // restorable, it just is not somewhere you are choosing to look.
+          projects
+            .filter((p) => !p.archived)
+            .map((p) => ({ repoId: p.repoId, project: p.project, sessions: p.sessions }))
         : NO_PROJECTS,
     [projects],
   );

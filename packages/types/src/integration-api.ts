@@ -194,6 +194,14 @@ export interface PrivateSessionSummaryDto {
   /** Session pages do not scan raw event rows merely to manufacture this leg. */
   promptCount: number | null;
   costUsd: number | null;
+  /**
+   * The label a launching program declared when it started this session (ADR 007),
+   * or null when none was recorded. Null is unknown, not "interactive": a program
+   * that declares nothing is indistinguishable from a person. An authority that does
+   * not receive labels (the owner cell, until the event protocol carries them)
+   * answers null for every session.
+   */
+  launcher: string | null;
 }
 
 export interface PrivateSessionPageDto extends IntegrationReadMetadata {
@@ -205,6 +213,57 @@ export interface PrivateSessionPageDto extends IntegrationReadMetadata {
 export interface PrivateSessionDto extends IntegrationReadMetadata {
   /** Null when `availability.state` is `unavailable`. */
   session: PrivateSessionSummaryDto | null;
+}
+
+/**
+ * The agents whose native session identity a caller may resolve. These are the
+ * `agent` values a session summary reports, so a caller resolves with the same
+ * spelling it reads back.
+ */
+export const INTEGRATION_RESOLVABLE_AGENTS = ["claude-code", "codex"] as const;
+export type PrivateResolvableAgent = (typeof INTEGRATION_RESOLVABLE_AGENTS)[number];
+
+/**
+ * The shape an agent's own session identifier must have to be resolved: a Claude
+ * Code `session_id` or a Codex thread id (both UUIDs today), with room for the
+ * other identifiers either agent has used. It is a request selector only. No
+ * response, cursor, log, or audit row ever carries it back (ADR 007).
+ */
+export const NATIVE_SESSION_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$/;
+
+/** Resolve a session the caller already knows by the agent's own identity. */
+export interface PrivateSessionResolveInput {
+  agent: PrivateResolvableAgent;
+  /** The agent's own session identifier, which the caller already holds. */
+  nativeSessionId: string;
+}
+
+/** Largest resolve request body either authority reads. */
+export const PRIVATE_SESSION_RESOLVE_MAX_BODY_BYTES = 1024;
+
+/**
+ * Strictly parse a resolve request. Any other key, a missing key, an unknown agent,
+ * or an identifier outside `NATIVE_SESSION_ID_PATTERN` is null, never a guess.
+ */
+export function parsePrivateSessionResolveInput(
+  value: unknown,
+): PrivateSessionResolveInput | null {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return null;
+  const keys = Object.keys(value);
+  if (keys.length !== 2 || !keys.includes("agent") || !keys.includes("nativeSessionId")) {
+    return null;
+  }
+  const { agent, nativeSessionId } = value as Record<string, unknown>;
+  if (
+    typeof agent !== "string" ||
+    !(INTEGRATION_RESOLVABLE_AGENTS as readonly string[]).includes(agent)
+  ) {
+    return null;
+  }
+  if (typeof nativeSessionId !== "string" || !NATIVE_SESSION_ID_PATTERN.test(nativeSessionId)) {
+    return null;
+  }
+  return { agent: agent as PrivateResolvableAgent, nativeSessionId };
 }
 
 export type PrivateSessionEndReason =
@@ -256,6 +315,7 @@ export const PRIVATE_MCP_TOOL_NAMES = [
   "list_sessions",
   "get_session_outcome",
   "replay_lens",
+  "resolve_session",
 ] as const;
 export type PrivateMcpToolName = (typeof PRIVATE_MCP_TOOL_NAMES)[number];
 
@@ -277,11 +337,14 @@ export interface PrivateMcpReplayLensInput {
   lens: PrivateReplayLensName;
 }
 
+export type PrivateMcpResolveSessionInput = PrivateSessionResolveInput;
+
 export const PRIVATE_MCP_TOOL_SCOPES = {
   period_summary: "period:read",
   list_sessions: "sessions:read",
   get_session_outcome: "sessions:read",
   replay_lens: "replay:read",
+  resolve_session: "sessions:read",
 } as const satisfies Record<PrivateMcpToolName, IntegrationScope>;
 
 export const PRIVATE_MCP_JSON_OBJECT_OUTPUT_SCHEMA = {
@@ -381,6 +444,30 @@ export const PRIVATE_MCP_TOOL_CATALOG = [
         },
       },
       required: ["sessionRef", "lens"],
+      additionalProperties: false,
+    },
+    annotations: PRIVATE_MCP_READ_ONLY_ANNOTATIONS,
+  },
+  {
+    name: "resolve_session",
+    description:
+      "Resolve a session the caller already knows by its agent and the agent's own session id to a content-free session summary with its opaque sessionRef. Never lists or returns native ids.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        agent: {
+          type: "string",
+          enum: INTEGRATION_RESOLVABLE_AGENTS,
+          description: "The agent that owns the native session id.",
+        },
+        nativeSessionId: {
+          type: "string",
+          pattern: NATIVE_SESSION_ID_PATTERN.source,
+          description:
+            "The agent's own session id (a Claude Code session_id or a Codex thread id) that the caller already holds.",
+        },
+      },
+      required: ["agent", "nativeSessionId"],
       additionalProperties: false,
     },
     annotations: PRIVATE_MCP_READ_ONLY_ANNOTATIONS,

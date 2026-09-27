@@ -75,11 +75,11 @@ function PlayheadNow({ now }: { now: ReplayNowModel }) {
           className={clsx(styles.heroValue, burn == null && styles.heroValueAbsent)}
           title={
             burn == null
-              ? 'No measured spend covers this point — the running sessions are unpriced or between activity buckets.'
+              ? 'No measured spend covers this point. The running sessions are unpriced or between activity buckets.'
               : undefined
           }
         >
-          {burn == null ? '—' : formatRate(burn)}
+          {burn == null ? 'unpriced' : formatRate(burn)}
         </span>
         <span className={styles.heroLabel}>Burn now</span>
       </div>
@@ -172,11 +172,11 @@ function PlayheadLedger({ now }: { now: ReplayNowModel }) {
       {now.captured.checks ? (
         <LedgerRow
           label="Checks failed"
-          // No check has run yet, so there is no ratio to report — a "0 of 0"
+          // No check has run yet, so there is no ratio to report: a "0 of 0"
           // would read as a clean run rather than as nothing measured.
           value={
             now.checkCount === 0
-              ? '—'
+              ? 'none run yet'
               : `${now.checkFailedCount.toLocaleString()} of ${now.checkCount.toLocaleString()}`
           }
           {...(now.checkFailedCount > 0 ? { tone: 'alert' as const } : {})}

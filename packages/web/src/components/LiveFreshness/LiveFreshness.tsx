@@ -31,7 +31,7 @@ export default function LiveFreshness() {
   return (
     <span
       className={clsx(styles.freshness, degraded && styles.degraded)}
-      title={degraded ? 'The live board may be stale — reconnecting.' : 'Live board freshness'}
+      title={degraded ? 'The live board may be stale. Reconnecting.' : 'Live board freshness'}
       aria-live="off"
     >
       <span className={styles.dot} aria-hidden="true" />

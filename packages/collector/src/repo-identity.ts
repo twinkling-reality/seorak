@@ -151,6 +151,38 @@ export function emptyRepoIdentityLedger(): RepoIdentityLedger {
   return { version: REPO_IDENTITY_LEDGER_VERSION, entries: [] };
 }
 
+/**
+ * The identities the ledger has NEVER seen carry git evidence — no root key and
+ * no origin, ever. Their anchor was the cwd itself, so they are directories an
+ * agent happened to run in, not projects: a home directory, `/tmp`, or a folder
+ * whose name is a prompt fragment. A surface folds these into ONE row rather
+ * than listing each as a project (see `NON_REPO_PROJECT_ID`).
+ *
+ * WHY BOTH ANCHORS, not just `rootKey`. Absence of a root key is ambiguous by
+ * this file's own contract: it is missing for a non-git dir AND for a real repo
+ * whose root could not be read (empty, shallow, iCloud-evicted). Measured on a
+ * real ledger of 36 entries, one project had no root key but did have an
+ * origin — a degraded read of a genuine repo. Keying on `rootKey` alone would
+ * have filed it as a non-project and hidden it.
+ *
+ * WHY THE LEDGER and not the registry: `registry.ts` PRUNES an entry whose path
+ * stops being a git repo, so a project you deleted last month would silently be
+ * reclassified and its history swept into the aggregate. The ledger keeps what
+ * was true when it was true, which is the question being asked.
+ *
+ * KNOWN LIMIT, accepted: a repo with no remote AND an unreadable root has
+ * neither anchor and would be folded in. That needs both conditions at once and
+ * is rare; the aggregate row is visible and reversible rather than a deletion,
+ * which is why this fails toward folding rather than toward discarding.
+ */
+export function neverRepoIdsIn(ledger: RepoIdentityLedger): Set<string> {
+  const out = new Set<string>();
+  for (const entry of ledger.entries) {
+    if (entry.rootKey === undefined && entry.origins.length === 0) out.add(entry.repoId);
+  }
+  return out;
+}
+
 function mint(salt: string, seed: string): string {
   return createHash("sha256").update(salt).update("\0").update(seed).digest("hex");
 }

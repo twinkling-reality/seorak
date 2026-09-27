@@ -117,8 +117,8 @@ export default function DemoCatalogView() {
     <div className={styles.view}>
       <ViewHeader eyebrow="demo" title="Scenario catalog" demo={demoOn} />
       <p className={styles.lede}>
-        Demo states that prove the product jobs — period clarity, away oversight, and
-        developer model — plus honest empties. Pick the scenario that matches the claim you
+        Demo states that prove the product jobs (period clarity, away oversight, and
+        developer model), plus honest empties. Pick the scenario that matches the claim you
         want to exercise. Activating a row turns demo data on and reroutes every hook to
         that fixture.
       </p>

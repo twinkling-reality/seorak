@@ -128,7 +128,7 @@ export function compileReplayClarity(
         facet: 'caveat',
         label: 'Tool errors',
         detail:
-          'Tool calls that reported an error, plus failed verification runs. An error is not a failure of the session — it is a place the run had to recover.',
+          'Tool calls that reported an error, plus failed verification runs. An error is not a failure of the session. It is a place the run had to recover.',
         citations: [`${count(scope.alertCount, 'error')} flagged`],
       });
       clauses.push([term('alerts', scope.alertCount.toLocaleString()), t(' from tool errors')]);
@@ -149,7 +149,7 @@ export function compileReplayClarity(
         facet: 'outcome',
         label: 'Commits',
         detail:
-          'Commit milestones from the session delta, counted by commits and files touched — never by lines of code.',
+          'Commit milestones from the session delta, counted by commits and files touched, never by lines of code.',
         citations: [`${count(scope.commitCount, 'commit milestone')}`],
       });
       clauses.push([term('commits', scope.commitCount.toLocaleString()), t(' from commits')]);
@@ -274,7 +274,7 @@ export function compileReplayClarity(
       facet: 'volume',
       label: 'Messages to the agent',
       detail:
-        'How many times you steered the run. Seorak counts the message envelopes only — never the prompt text.',
+        'How many times you steered the run. Seorak counts the message envelopes only, never the prompt text.',
       citations: [`${count(scope.promptCount, 'message')} sent`],
     });
     usage.push([
@@ -289,7 +289,7 @@ export function compileReplayClarity(
       facet: 'caveat',
       label: 'Uncommitted at session end',
       detail:
-        'Distinct files still uncommitted when the session closed, from the session delta. Not a judgement — sometimes that is exactly where you meant to stop.',
+        'Distinct files still uncommitted when the session closed, from the session delta. Not a judgement. Sometimes that is exactly where you meant to stop.',
       citations: [`${count(scope.filesTouchedUncommitted, 'file')} uncommitted`],
     });
     usage.push([

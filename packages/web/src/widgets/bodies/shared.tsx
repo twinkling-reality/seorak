@@ -154,23 +154,12 @@ export function InlineDelta({
   );
 }
 
-export function GhostStatRow({ labels }: { labels: string[] }) {
-  return (
-    <div className={styles.ghostStatRow}>
-      {labels.map((l) => (
-        <div key={l} className={styles.statBlock}>
-          <span className={styles.ghostStatValue}>—</span>
-          <span className={styles.statBlockLabel}>{l}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// (GhostBars / GhostRows deleted 2026-07-02: skeleton rows read as "loading"
-// where the true state is "no rows yet" — honest-empty is SectionEmpty. The
-// last user was model-mix's empty state, replaced in the strip-face
-// standardization pass.)
+// (GhostBars / GhostRows deleted 2026-07-02, GhostStatRow 2026-08-21: a skeleton
+// reads as "loading" where the true state is "no rows yet", and a skeleton whose
+// value is a punctuation mark says neither. Honest-empty is SectionEmpty or
+// ReadinessStatEmpty, which state what is true and what fills them. GhostBars and
+// GhostRows lost their last user in the strip-face standardization pass;
+// GhostStatRow had none left at all.)
 
 /** Inline coverage note for capability-gated widgets. Falls through to nothing
  *  when there is no disclosure to make. The data attribute is the stable

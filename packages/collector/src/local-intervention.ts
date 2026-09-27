@@ -24,7 +24,11 @@
  *     vocabulary makes runs of five identical calls near-certain and a cadence
  *     guess would page the user with a loop that is not there;
  *   - a fire held by quiet hours is still RECORDED. The history view and the
- *     delivery decision are different questions, and a held fire happened.
+ *     delivery decision are different questions, and a held fire happened;
+ *   - silence is only a measurement when something once made noise, so a session
+ *     carrying nothing but its own start never fires `went_cold`. The start hook
+ *     runs when the agent boots, before the developer has typed, so a bare start
+ *     is capture working rather than work happening (`sessionHasActivity`).
  *
  * WHAT THIS PLANE DOES NOT DO. It evaluates and records; it does not deliver.
  * Delivery is a separate concern with its own platform story, and recording a
@@ -37,6 +41,7 @@ import {
   buildSignalBody,
   coerceNotificationSettings,
   getSignalMeta,
+  sessionHasActivity,
   type Intervention,
   type InterventionThresholds,
   type NotificationSettings,
@@ -192,13 +197,15 @@ export function evaluateLocalScalars(
   return fires;
 }
 
-/** A still-live session that has gone silent past its threshold. */
+/** A still-live session that has gone silent past its threshold, and that once
+ *  made a noise to fall silent from (see `sessionHasActivity`). */
 export function evaluateLocalWentCold(
   summary: SessionSummary,
   wentColdMinutes: number,
   nowMs: number,
 ): Intervention | null {
   if (summary.status === "ended") return null;
+  if (!sessionHasActivity(summary)) return null;
   const silentMinutes = Math.floor(
     (nowMs - Date.parse(summary.lastEventAt)) / 60_000,
   );

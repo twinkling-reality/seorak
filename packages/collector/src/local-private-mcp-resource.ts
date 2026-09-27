@@ -227,7 +227,9 @@ function classifyRequest(body: JsonRecord): RequestClassification {
   return {
     tool,
     requiredScope: PRIVATE_MCP_TOOL_SCOPES[tool],
-    routeClass: tool === "list_sessions" ? "read" : "aggregate",
+    // The same class the HTTP route uses: a session page and a one-session
+    // resolve are row reads, everything else folds history into an aggregate.
+    routeClass: tool === "list_sessions" || tool === "resolve_session" ? "read" : "aggregate",
   };
 }
 

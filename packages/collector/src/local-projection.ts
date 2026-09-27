@@ -105,15 +105,19 @@ import {
   type ToolCallRollup,
   type UnpricedModel,
   type VerificationRollup,
+  NON_REPO_PROJECT_ID,
+  NON_REPO_PROJECT_LABEL,
 } from "@seorak/types";
 import { parseSessionEvent } from "@seorak/types/event-validation";
 import {
   DISPLAYABLE_SESSION_SQL,
   listLocalSessionPage,
+  MEASURED_SESSION_SQL,
   mapLocalSessionRow,
   openLocalHistory,
   type LocalSessionRow,
 } from "./local-store.ts";
+import { loadRepoIdentityLedger, neverRepoIdsIn } from "./repo-identity.ts";
 
 /**
  * THE MANIFEST. Every top-level `OverviewSnapshot` field, classified.
@@ -251,6 +255,71 @@ const WINDOW_SQL = `
    ORDER BY at, local_seq
 `;
 
+/** The carrier rows alone, for the measured-session set below. Read separately
+ *  from `WINDOW_SQL` because that set must be COMPLETE before the first
+ *  `session.start` is counted, and the carrier only reaches `carrierTokens`
+ *  partway through the window loop that does the counting. */
+const TOKENS_SQL = `
+  SELECT payload_json FROM local_event
+   WHERE kind = 'session.tokens' AND at >= ? AND at < ?
+   ORDER BY at, local_seq
+`;
+
+/**
+ * The sessions in `[priorStart, windowEnd)` that MEASURED something.
+ *
+ * BOTH LEGS of `sessionMeasuredWork` (@seorak/types), which is the rule the
+ * worker applies to the same question: `tool_call_count > 0`, OR the carrier
+ * priced it. The carrier leg is not optional, because Codex reports money at
+ * SESSION scope, so a carrier-priced session with no tool call is real spend.
+ *
+ * ONE builder, read by both the overview and the developer model, because the
+ * two answer the same question about the same sessions and a second copy of the
+ * rule is how the engines drifted apart the first time. The portrait needs it as
+ * much as the count does: rhythm, focus and accrual are all distributions over
+ * `session.start` rows, so a portrait built without this reads out when an agent
+ * process launched rather than when the developer worked.
+ *
+ * Bounded below at `priorStart` and NOT above: a session whose start falls in
+ * either window has `last_event_at >= priorStart` by construction, while its
+ * LAST event can be any later instant, so an upper bound would drop live
+ * sessions rather than narrow the set. An id neither window sees costs a set
+ * entry and nothing else.
+ */
+function measuredSessionIdsOn(
+  database: DatabaseSync,
+  priorStart: string,
+  windowEnd: string,
+): Set<string> {
+  const ids = new Set(
+    (
+      database
+        .prepare(
+          `SELECT session_id FROM local_session
+            WHERE last_event_at >= ? AND ${MEASURED_SESSION_SQL}`,
+        )
+        .all(priorStart) as Array<Record<string, unknown>>
+    ).map((raw) => String(raw.session_id)),
+  );
+  for (const event of streamEvents(database, TOKENS_SQL, priorStart, windowEnd)) {
+    if (event.kind !== "session.tokens") continue;
+    // A carrier snapshot reporting nothing is not a measurement. Tested on the
+    // cumulative figures rather than the row's mere existence, so this set and
+    // the resident pass's `carried !== undefined` agree about the same session:
+    // a session-costed tool that emitted an empty snapshot would otherwise be
+    // counted in `sessionsDelta` and not in the headline beside it.
+    const measured = event.models.some(
+      (model) =>
+        model.inputTokens > 0 ||
+        model.outputTokens > 0 ||
+        model.cacheReadTokens > 0 ||
+        model.cacheWriteTokens > 0,
+    );
+    if (measured) ids.add(event.sessionId);
+  }
+  return ids;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Session metadata                                                            */
 /* -------------------------------------------------------------------------- */
@@ -274,20 +343,42 @@ interface SessionMeta {
  *  session row; the declared capability set only exists on the `session.start`
  *  payload, so it is read from the raw log and resolved through the shared
  *  registry exactly as the worker resolves a stored row. */
-function sessionMetaReader(
+/**
+ * What the adapter DECLARED at `session.start`, cached per session.
+ *
+ * Split out of `sessionMetaReader` because three of that reader's callers want
+ * only this field, and the full reader charges them a `local_session` lookup to
+ * reach a value that does not come from `local_session` at all. On the live
+ * board and the session page the row is ALREADY IN HAND: both select it with
+ * `SELECT *` and then re-read it once per session anyway.
+ *
+ * Measured on the author's 345,764-row history on 2026-09-09. The figure that
+ * is realised on a request is the SESSION PAGE: a 200-row page went from 5.7 ms
+ * to 4.4 ms median. The live board's own saving is smaller than it looks,
+ * because `liveSessionsOn`'s horizon is 30 minutes of silence and on this
+ * machine that holds four sessions, so the board answers in well under a
+ * millisecond either way. The scaling figure, over the 1,003 unended sessions of
+ * a 90-day horizon, is 12.3 ms for the three-statement fan-out against 8.0 ms
+ * for the two-statement one: a third of the work was re-reading rows the caller
+ * was already holding, and that third is what grows with density.
+ *
+ * The cache is probed with `has` rather than `get`, because `undefined` is a
+ * real answer here and means "declared nothing", and treating it as a miss would
+ * re-run the scan for that session every time. It is not a hot path today: every
+ * displayable session on this machine has a `session.start`, so the undefined
+ * branch is currently unreachable from all three callers. The probe is there so
+ * a history that has lost start rows degrades to one scan per session rather
+ * than one per lookup.
+ */
+function declaredCapabilitiesReader(
   database: DatabaseSync,
-): (sessionId: string) => SessionMeta {
-  const cache = new Map<string, SessionMeta>();
-  const sessionRow = database.prepare(
-    "SELECT agent, repo_id, repo_label, started_at, ended_at FROM local_session WHERE session_id = ?",
-  );
+): (sessionId: string) => SessionCapabilities | undefined {
+  const cache = new Map<string, SessionCapabilities | undefined>();
   const startRow = database.prepare(
     "SELECT payload_json FROM local_event WHERE session_id = ? AND kind = 'session.start' ORDER BY local_seq LIMIT 1",
   );
-  return (sessionId: string): SessionMeta => {
-    const hit = cache.get(sessionId);
-    if (hit) return hit;
-    const row = sessionRow.get(sessionId) as Record<string, unknown> | undefined;
+  return (sessionId: string): SessionCapabilities | undefined => {
+    if (cache.has(sessionId)) return cache.get(sessionId);
     let declared: SessionEvent | null = null;
     const startPayload = startRow.get(sessionId) as
       | { payload_json?: unknown }
@@ -299,11 +390,34 @@ function sessionMetaReader(
         declared = null;
       }
     }
-    const agent = typeof row?.agent === "string" ? row.agent : "unknown";
     const declaredCapabilities =
       declared !== null && declared.kind === "session.start"
         ? declared.capabilities
         : undefined;
+    cache.set(sessionId, declaredCapabilities);
+    return declaredCapabilities;
+  };
+}
+
+function sessionMetaReader(
+  database: DatabaseSync,
+): (sessionId: string) => SessionMeta {
+  const cache = new Map<string, SessionMeta>();
+  const sessionRow = database.prepare(
+    "SELECT agent, repo_id, repo_label, started_at, ended_at FROM local_session WHERE session_id = ?",
+  );
+  // The narrow reader's own cache never serves a hit through this path, because
+  // the SessionMeta cache above short-circuits first and calls it at most once
+  // per session. Kept rather than special-cased: one Map of undefineds is
+  // cheaper than a second code path, and a caller holding both readers gets a
+  // shared answer instead of two scans.
+  const declaredFor = declaredCapabilitiesReader(database);
+  return (sessionId: string): SessionMeta => {
+    const hit = cache.get(sessionId);
+    if (hit) return hit;
+    const row = sessionRow.get(sessionId) as Record<string, unknown> | undefined;
+    const agent = typeof row?.agent === "string" ? row.agent : "unknown";
+    const declaredCapabilities = declaredFor(sessionId);
     const meta: SessionMeta = {
       agent,
       repoId: typeof row?.repo_id === "string" ? row.repo_id : "",
@@ -537,6 +651,8 @@ interface Aggregate {
   stuckSessionIds: string[];
   toolCalls: number;
   tokens: TokenAcc;
+  tokenCarrierSeen: boolean;
+  tokensComplete: boolean;
   costUsd: number;
   /** Every session the WINDOW measured money for. Backs `cost.delta`, whose two
    *  legs are both event-log windows. */
@@ -609,6 +725,8 @@ function newAggregate(): Aggregate {
     stuckSessionIds: [],
     toolCalls: 0,
     tokens: emptyTokens(),
+    tokenCarrierSeen: false,
+    tokensComplete: true,
     costUsd: 0,
     sessionsWithCost: new Set(),
     residentSessionsWithCost: new Set(),
@@ -792,6 +910,29 @@ function periodDelta(current: number, previous: number | null): PeriodDelta {
 
 export interface LocalOverviewOptions extends LocalReadOptions {
   rangeDays: number;
+  /**
+   * Identities that were never a git repo, folded onto `NON_REPO_PROJECT_ID`.
+   * Injected so this projection stays a pure function of (database, options)
+   * and the classifier can be tested without a ledger on disk. Omitted means
+   * READ THE LEDGER; an explicitly empty set means fold nothing.
+   */
+  neverRepoIds?: ReadonlySet<string>;
+  /**
+   * repoIds the owner archived. Stamped onto the rollup rather than dropped, so
+   * Settings can still name the project it is offering to restore.
+   */
+  archivedRepoIds?: ReadonlySet<string>;
+}
+
+export interface LocalPeriodTokens {
+  inputTokens: number;
+  outputTokens: number;
+}
+
+export interface LocalOverviewProjection {
+  snapshot: OverviewSnapshot;
+  periodTokens: LocalPeriodTokens | null;
+  periodTokensByRepo: Map<string, LocalPeriodTokens | null>;
 }
 
 export function buildLocalOverview(
@@ -809,6 +950,16 @@ export function buildLocalOverviewOn(
   database: DatabaseSync,
   options: LocalOverviewOptions,
 ): OverviewSnapshot {
+  return buildLocalOverviewProjectionOn(database, options).snapshot;
+}
+
+/** Canonical local overview plus private-only, window-accurate token legs from
+ * the same per-call and reconciled session-carrier fold. The wrapper above
+ * keeps them off the public wire. */
+export function buildLocalOverviewProjectionOn(
+  database: DatabaseSync,
+  options: LocalOverviewOptions,
+): LocalOverviewProjection {
   const nowMs = options.nowMs ?? Date.now();
   const rangeDays = options.rangeDays;
   const windowStart = new Date(nowMs - rangeDays * MS_PER_DAY).toISOString();
@@ -816,6 +967,10 @@ export function buildLocalOverviewOn(
   const priorStart = new Date(nowMs - 2 * rangeDays * MS_PER_DAY).toISOString();
 
   const meta = sessionMetaReader(database);
+  // Absent option → read the ledger. A ledger that is missing or unusable
+  // resolves to an empty set, so the failure mode is showing every directory as
+  // its own project (today's behaviour) rather than hiding a real one.
+  const neverRepo = options.neverRepoIds ?? neverRepoIdsIn(loadRepoIdentityLedger().ledger);
   const global = newAggregate();
   const repos = new Map<string, Aggregate>();
   const repoLabels = new Map<string, string>();
@@ -857,6 +1012,35 @@ export function buildLocalOverviewOn(
         .all(windowStart, windowEnd) as Array<Record<string, unknown>>
     ).map((raw) => String(raw.session_id)),
   );
+
+  /**
+   * Which sessions MEASURED WORK, across BOTH windows.
+   *
+   * `usage.totals.sessions` counted every session that opened, and a
+   * `session.start` with no `tool.call` between it and its `session.end` is an
+   * ordinary shape rather than an anomaly: Claude Desktop spawns short-lived
+   * Claude Code processes, and on one machine 93% of a day's sessions had it.
+   * A count that includes them answers "how many processes started", which is
+   * not the question any surface asks of it, and the Compare delta divides one
+   * such count by another.
+   *
+   * BOTH LEGS of `sessionMeasuredWork` (@seorak/types), which is the rule the
+   * worker applies to the same question: `tool_call_count > 0`, OR the carrier
+   * priced it. The carrier leg is not optional — Codex reports money at SESSION
+   * scope, so a carrier-priced session with no tool call is real spend, and
+   * dropping it would put `cost.sessionsWithCost` above `usage.totals.sessions`,
+   * an invariant a web surface renders as a sentence.
+   *
+   * Built HERE, before either event loop, because the current window's
+   * `session.start` rows are counted as they stream past and a set completed
+   * later would arrive after the rows it decides. Bounded below at `priorStart`
+   * and NOT above: a session whose start falls in either window has
+   * `last_event_at >= priorStart` by construction, while its LAST event can be
+   * any later instant — including one at or past `windowEnd` — so an upper bound
+   * would drop live sessions rather than narrow the set. An id neither window
+   * ever sees costs a set entry and nothing else.
+   */
+  const measuredSessionIds = measuredSessionIdsOn(database, priorStart, windowEnd);
 
   /** Cumulative `session.tokens` reconciliation state, per (window, session). */
   const snapshotApplied = new Map<string, Map<string, TokenAcc>>();
@@ -903,19 +1087,39 @@ export function buildLocalOverviewOn(
     return seeded;
   }
 
-  function aggregatesFor(repoId: string, project: string): Aggregate[] {
-    if (repoId === "") return [global];
+  /**
+   * Map an identity that was never a git repo onto the single non-repo row.
+   *
+   * Done HERE, at the one point every event is keyed, so the existing
+   * accumulators merge those directories for free — sessions, tokens, lines and
+   * trends all aggregate through the same code paths a real repo uses. Folding
+   * afterwards would mean hand-merging a dozen accumulator shapes and getting
+   * one of them subtly wrong.
+   */
+  function canonicalRepoId(repoId: string): string {
+    return neverRepo.has(repoId) ? NON_REPO_PROJECT_ID : repoId;
+  }
+
+  function aggregatesFor(rawRepoId: string, project: string): Aggregate[] {
+    if (rawRepoId === "") return [global];
+    const repoId = canonicalRepoId(rawRepoId);
     let repo = repos.get(repoId);
     if (!repo) {
       repo = newAggregate();
       repos.set(repoId, repo);
     }
-    if (project !== "") repoLabels.set(repoId, project);
+    // The fold's label is fixed. Taking the event's label would name the whole
+    // row after whichever stray directory was seen last.
+    if (repoId === NON_REPO_PROJECT_ID) repoLabels.set(repoId, NON_REPO_PROJECT_LABEL);
+    else if (project !== "") repoLabels.set(repoId, project);
     return [global, repo];
   }
 
-  function priorsFor(repoId: string): PriorAcc[] {
-    if (repoId === "") return [globalPrior];
+  function priorsFor(rawRepoId: string): PriorAcc[] {
+    if (rawRepoId === "") return [globalPrior];
+    // Same canonicalisation as the current window, or the delta pills would
+    // compare a folded row against an unfolded prior and report a false swing.
+    const repoId = canonicalRepoId(rawRepoId);
     let prior = repoPrior.get(repoId);
     if (!prior) {
       prior = newPrior();
@@ -929,7 +1133,13 @@ export function buildLocalOverviewOn(
     const session = meta(event.sessionId);
     const targets = priorsFor(session.repoId);
     if (event.kind === "session.start") {
-      for (const target of targets) target.sessionsStarted.add(event.sessionId);
+      // The PRIOR leg of `sessionsDelta`, filtered by the same rule as the
+      // current leg below. Filtering one leg only does not half-fix the count,
+      // it replaces an overstatement with a comparison between two different
+      // questions — a measured current window against a process-count baseline.
+      if (measuredSessionIds.has(event.sessionId)) {
+        for (const target of targets) target.sessionsStarted.add(event.sessionId);
+      }
       continue;
     }
     if (event.kind === "tool.call") {
@@ -1001,6 +1211,11 @@ export function buildLocalOverviewOn(
 
     switch (event.kind) {
       case "session.start": {
+        // The WHOLE branch, not `sessionsStarted` alone: this one block feeds
+        // the delta leg, the daily series, the day/hour heatmap and the
+        // per-agent day, and a surface that showed three of the four moving
+        // would be reporting the same sessions in two counts at once.
+        if (!measuredSessionIds.has(event.sessionId)) break;
         for (const target of targets) {
           target.sessionsStarted.add(event.sessionId);
           daily(target, day).sessions.add(event.sessionId);
@@ -1021,6 +1236,11 @@ export function buildLocalOverviewOn(
       }
 
       case "session.end": {
+        // The measureless sessions DO end, and with a reason. Counting them here
+        // while the session count beside them refuses them would let the ring
+        // report the exit code of processes nobody ran as the way work finishes:
+        // on one real machine "other" led the distribution for that reason alone.
+        if (!measuredSessionIds.has(event.sessionId)) break;
         for (const target of targets) {
           bump(target.endReasons, event.reason);
           let byDay = target.endReasonsByDay.get(day);
@@ -1191,6 +1411,11 @@ export function buildLocalOverviewOn(
             bucket.costMeasured = true;
           }
           if (perCall) {
+            if (event.models !== undefined && event.models.length > 0) {
+              target.tokenCarrierSeen = true;
+            } else {
+              target.tokensComplete = false;
+            }
             addTokens(target.tokens, priced.tokens);
             addTokens(agent.tokens, priced.tokens);
             addTokens(daily(target, day).tokens, priced.tokens);
@@ -1212,6 +1437,10 @@ export function buildLocalOverviewOn(
 
       case "session.tokens": {
         if (session.capabilities.costScope !== "session") break;
+        for (const target of targets) {
+          if (event.models.length > 0) target.tokenCarrierSeen = true;
+          else target.tokensComplete = false;
+        }
         const applied = appliedFor(event.sessionId, windowStart);
         const deltas: Array<{ model: string; tokens: TokenAcc }> = [];
         for (const model of event.models) {
@@ -1412,6 +1641,19 @@ export function buildLocalOverviewOn(
   for (const row of residentRows) {
     const session = meta(row.sessionId);
     const carried = carrierTokens.get(row.sessionId);
+    // `sessionMeasuredWork` (@seorak/types), applied HERE rather than in the
+    // query above, because the carrier leg only exists in this scope: no column
+    // on `local_session` records that a session-costed tool priced the session,
+    // and `carrierTokens` is the map that does.
+    //
+    // Skipping the row skips the whole partition with it — `resident.sessions`,
+    // the active/ended split, `outcomeRows` and `costPartial` all stop seeing a
+    // session the count no longer holds, which is what keeps
+    // "N sessions. X ended, Y still in flight" one sentence about one set. The
+    // flag in particular: `costPartial` claims a session that COULD price its
+    // work was dropped from the total, and a session that did no work has no
+    // dollars to drop.
+    if (row.toolCallCount === 0 && carried === undefined) continue;
     const ended =
       statusFromSilence(row.endedAt, row.lastEventAt, nowMs) === "ended";
     // A session the total DROPPED: it could price its work, and neither the
@@ -1504,15 +1746,20 @@ export function buildLocalOverviewOn(
     }
   }
 
+  const archived = options.archivedRepoIds;
   const projects: ProjectRollup[] = [...repos.entries()]
-    .map(([repoId, aggregate]) =>
-      projectRollup(
+    .map(([repoId, aggregate]) => {
+      const rollup = projectRollup(
         repoId,
         repoLabels.get(repoId) ?? "",
         aggregate,
         repoPrior.get(repoId) ?? newPrior(),
-      ),
-    )
+      );
+      // Absent, not `false`, when active: an optional flag that is only ever
+      // present when true keeps the honest-empty default and costs no bytes on
+      // the wire for the ordinary case.
+      return archived?.has(repoId) ? { ...rollup, archived: true } : rollup;
+    })
     .sort((a, b) => (a.lastEventAt < b.lastEventAt ? 1 : -1));
 
   const momentumRows = [...momentum.values()].sort((a, b) =>
@@ -1687,7 +1934,24 @@ export function buildLocalOverviewOn(
   };
   // `notificationAvailability` is OPTIONAL and absent means unknown, which is
   // exactly true here: the local plane does not evaluate watch applicability.
-  return snapshot;
+  const periodTokens = global.tokenCarrierSeen && global.tokensComplete
+    ? {
+        inputTokens: global.tokens.input,
+        outputTokens: global.tokens.output,
+      }
+    : null;
+  const periodTokensByRepo = new Map<string, LocalPeriodTokens | null>(
+    [...repos.entries()].map(([repoId, aggregate]) => [
+      repoId,
+      aggregate.tokenCarrierSeen && aggregate.tokensComplete
+        ? {
+            inputTokens: aggregate.tokens.input,
+            outputTokens: aggregate.tokens.output,
+          }
+        : null,
+    ]),
+  );
+  return { snapshot, periodTokens, periodTokensByRepo };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -2345,17 +2609,69 @@ function currentToolFor(
  * silent past `ABANDONED_THRESHOLD_MS` is not live (session.ts), so leaving it
  * on the board would show a dead session as in flight forever.
  */
+/**
+ * Raised instead of truncating the live board.
+ *
+ * Mirrors the worker's `SessionMaterializationTooLargeError` and the local
+ * outcome refusal: a partial board is a wrong answer wearing a right one's
+ * shape, and this product's rule is honest-empty or honest-refusal, never a
+ * silent subset. The caller renders the refusal; it does not get half a board.
+ */
+export class LocalLiveMaterializationTooLargeError extends Error {
+  // Assigned in the body, not as constructor PARAMETER PROPERTIES, for the
+  // reason spelled out on LocalSessionOutcomeTooLargeError: the collector runs
+  // under `node --experimental-strip-types`, which erases annotations without
+  // evaluating them and rejects that form at runtime. `tsc --noEmit` and vitest
+  // both transpile, so both pass; only spawning the real daemon catches it.
+  readonly projectedRows: number;
+  readonly rowBudget: number;
+
+  constructor(projectedRows: number, rowBudget: number) {
+    super(
+      `live board holds ${projectedRows} sessions, over the ${rowBudget} materialization budget`,
+    );
+    this.name = "LocalLiveMaterializationTooLargeError";
+    this.projectedRows = projectedRows;
+    this.rowBudget = rowBudget;
+  }
+}
+
+const LIVE_SESSION_SQL_TAIL = `FROM local_session
+        WHERE ended_at IS NULL AND last_event_at >= ?
+          AND ${DISPLAYABLE_SESSION_SQL}`;
+
+/**
+ * `rowBudget` is null for every INTERNAL caller (the overview fold, the developer
+ * model, the intervention sweep), which need the true set and are not on a
+ * request path. The plane passes a budget because `/live` is polled every 8s and
+ * this read is not sort-bound but MATERIALISATION-bound: it returns every live
+ * session and then runs two more statements and two JSON parses per session, so
+ * its cost is the rows it builds. Measured on a synthetic 45,005-session board
+ * (2026-09-09) it was 240ms with an index and 240ms without, which is why an
+ * index is not the answer and a bound is.
+ *
+ * The count runs first and is cheap on the v7 index, so a board over budget
+ * costs one aggregate rather than the fan-out it refuses.
+ */
 function liveSessionsOn(
   database: DatabaseSync,
   nowMs: number,
+  rowBudget: number | null = null,
 ): SessionSummary[] {
   const horizon = new Date(nowMs - ABANDONED_THRESHOLD_MS).toISOString();
-  const meta = sessionMetaReader(database);
+  const declaredFor = declaredCapabilitiesReader(database);
+  if (rowBudget !== null) {
+    const counted = database
+      .prepare(`SELECT COUNT(*) AS n ${LIVE_SESSION_SQL_TAIL}`)
+      .get(horizon) as { n?: unknown } | undefined;
+    const projected = Number(counted?.n ?? 0);
+    if (Number.isFinite(projected) && projected > rowBudget) {
+      throw new LocalLiveMaterializationTooLargeError(projected, rowBudget);
+    }
+  }
   return database
     .prepare(
-      `SELECT * FROM local_session
-        WHERE ended_at IS NULL AND last_event_at >= ?
-          AND ${DISPLAYABLE_SESSION_SQL}
+      `SELECT * ${LIVE_SESSION_SQL_TAIL}
         ORDER BY last_event_at DESC, session_id`,
     )
     .all(horizon)
@@ -2365,12 +2681,14 @@ function liveSessionsOn(
         row,
         nowMs,
         currentToolFor(database, row.sessionId),
-        meta(row.sessionId).declaredCapabilities,
+        declaredFor(row.sessionId),
       );
     });
 }
 
-export function buildLocalLive(options: LocalReadOptions = {}): {
+export function buildLocalLive(
+  options: LocalReadOptions & { rowBudget?: number | null } = {},
+): {
   generatedAt: string;
   live: SessionSummary[];
 } {
@@ -2379,7 +2697,7 @@ export function buildLocalLive(options: LocalReadOptions = {}): {
   try {
     return {
       generatedAt: new Date(nowMs).toISOString(),
-      live: liveSessionsOn(database, nowMs),
+      live: liveSessionsOn(database, nowMs, options.rowBudget ?? null),
     };
   } finally {
     database.close();
@@ -2469,13 +2787,13 @@ export function buildLocalSessionPage(
   });
   const database = openLocalHistory(options.directory);
   try {
-    const meta = sessionMetaReader(database);
+    const declaredFor = declaredCapabilitiesReader(database);
     return {
       // `currentTool` is deliberately null on a page: it is a LIVE glance, and
       // reading the latest tool.call for every row of a 200-row page would be
       // 200 scans to decorate history that has already stopped moving.
       sessions: page.sessions.map((row) =>
-        localSessionRowToSummary(row, nowMs, null, meta(row.sessionId).declaredCapabilities),
+        localSessionRowToSummary(row, nowMs, null, declaredFor(row.sessionId)),
       ),
       nextCursor: page.nextCursor,
     };
@@ -2503,7 +2821,7 @@ export function buildLocalSessionSummary(
       row,
       nowMs,
       row.endedAt === null ? currentToolFor(database, sessionId) : null,
-      sessionMetaReader(database)(sessionId).declaredCapabilities,
+      declaredCapabilitiesReader(database)(sessionId),
     );
   } finally {
     database.close();
@@ -2923,8 +3241,16 @@ export function buildLocalDeveloperModelOn(
 
   // ── the widened start scan: one record per session, the earliest ──────────
   const starts = new Map<string, StartRecord>();
+  // The portrait is a set of distributions over these rows: rhythm is when they
+  // land, focus is which repo they carry, accrual compares two windows of them.
+  // A session that measured nothing is an agent process starting, not a person
+  // showing up to work, so counting it would put "evening developer" and
+  // "Tuesdays are steadiest" on top of whenever something launched an agent.
+  // The same set the count uses, from the same builder, for the same reason.
+  const measuredSessionIds = measuredSessionIdsOn(database, priorStart, windowEnd);
   for (const event of streamEvents(database, START_SQL, priorStart, windowEnd)) {
     if (event.kind !== "session.start") continue;
+    if (!measuredSessionIds.has(event.sessionId)) continue;
     const existing = starts.get(event.sessionId);
     if (existing !== undefined && existing.at <= event.at) continue;
     starts.set(event.sessionId, {
@@ -3327,11 +3653,38 @@ export function buildLocalReplayOnDatabase(
   options: {
     nowMs?: number;
     rowBudget?: number | null;
+    /**
+     * WHICH ROWS a replay is made of, which is a different question from HOW
+     * MANY of them one caller may read, and the two used to be answered by the
+     * same parameter.
+     *
+     * `all` is the FIRST-PARTY replay: every event this session recorded, so a
+     * moment's `seq` counts the rows the session actually produced. The suite
+     * pins it as "preserves the first-party all-event replay sequence", and it
+     * is the reason a `session.linesurvival` between two tool calls makes the
+     * second one moment 4 rather than moment 3.
+     *
+     * `replay` is the INTEGRATION lens: only `REPLAY_KIND_PREDICATE`, matching
+     * what the hosted `extractKeyframes` reads and what a credentialed third
+     * party is entitled to.
+     *
+     * They were coupled to `rowBudget` being null, which meant "give this read
+     * a budget" silently also meant "and answer a different question". On
+     * 2026-09-09 that surfaced as two bindings of the same plane disagreeing
+     * about one session: 107 activity buckets against 34, shifted `seq` on
+     * every moment past the fourth, and a session with events but no
+     * replay-kind events answering 200-with-nothing on one socket and 404 on
+     * the other. Defaulting to `all` keeps every first-party caller where it
+     * was; the integration query asks for `replay` in so many words.
+     */
+    kinds?: "all" | "replay";
     window?: { startedAt: string; lastEventAt: string };
     integrationMeasurements?: boolean;
   } = {},
 ): ReplaySession | null {
   const rowBudget = options.rowBudget ?? null;
+  const kindClause =
+    (options.kinds ?? "all") === "replay" ? ` AND ${REPLAY_KIND_PREDICATE}` : "";
   const windowClause = options.window === undefined
     ? ""
     : " AND at >= ? AND at <= ?";
@@ -3355,8 +3708,7 @@ export function buildLocalReplayOnDatabase(
         `SELECT COUNT(*) AS replay_rows FROM (
            SELECT 1 FROM local_event
             WHERE session_id = ?
-              AND local_seq <= ?
-              AND ${REPLAY_KIND_PREDICATE}${windowClause}
+              AND local_seq <= ?${kindClause}${windowClause}
             LIMIT ?
          )`,
       )
@@ -3369,56 +3721,65 @@ export function buildLocalReplayOnDatabase(
   }
   const meta = sessionMetaReader(database);
   const session = meta(sessionId);
+  /**
+   * ONE read, where there used to be two arms that answered different questions.
+   *
+   * The budgeted arm filtered by `REPLAY_KIND_PREDICATE`, clamped to a
+   * high-water mark and stopped one row past its budget. The unbudgeted arm read
+   * EVERY kind through `streamEvents` with no clamp. Only the second difference
+   * is about the budget; the first is about what a replay IS, and it now lives
+   * in `options.kinds` where a caller has to say which it means.
+   *
+   * The coupling was invisible while each arm had exactly one caller, and it
+   * stopped being invisible when the plane's routable binding was given a
+   * budget: the same session answered differently depending on which socket
+   * asked. Measured on the author's history on 2026-09-09, on one 10,316-row
+   * session, the two arms returned 107 activity buckets against 34 and shifted
+   * `seq` on every moment past the fourth. A session with events but no
+   * replay-kind events was worse than different: one arm answered a replay with
+   * nothing in it, the other answered null, which the route turns into a 404.
+   *
+   * The read also stops SILENTLY DROPPING rows. `streamEvents` yields parsed
+   * events, so a row zod rejects used to vanish and the replay was short by one
+   * moment with nothing saying so. Keeping `storedKind` with a null event is the
+   * honest shape and is what the budgeted arm already did.
+   */
+  const boundedClause = rowBudget === null ? "" : " AND local_seq <= ?";
+  const boundedValues = rowBudget === null ? [] : [highWater];
+  const limitClause = rowBudget === null ? "" : "\n              LIMIT ?";
+  const limitValues = rowBudget === null ? [] : [rowBudget + 1];
+  const replayRows = database
+    .prepare(
+      `SELECT kind, at, payload_json FROM local_event
+        WHERE session_id = ?${boundedClause}
+${kindClause}${windowClause}
+        ORDER BY at, local_seq${limitClause}`,
+    )
+    .all(sessionId, ...boundedValues, ...windowValues, ...limitValues) as Array<{
+    kind?: unknown;
+    at?: unknown;
+    payload_json?: unknown;
+  }>;
+  if (rowBudget !== null && replayRows.length > rowBudget) {
+    throw new LocalReplayTooLargeError(replayRows.length, rowBudget);
+  }
   const replayInputs: Array<{
     storedKind: string;
     storedAt: string;
     event: SessionEvent | null;
-  }> = rowBudget === null
-    ? [
-        ...streamEvents(
-          database,
-          `SELECT payload_json FROM local_event
-            WHERE session_id = ?
-            ORDER BY at, local_seq`,
-          sessionId,
-        ),
-      ].map((event) => ({
-        storedKind: event.kind,
-        storedAt: event.at,
-        event,
-      }))
-    : (() => {
-        const rows = database
-          .prepare(
-            `SELECT kind, at, payload_json FROM local_event
-              WHERE session_id = ?
-                AND local_seq <= ?
-                AND ${REPLAY_KIND_PREDICATE}${windowClause}
-              ORDER BY at, local_seq
-              LIMIT ?`,
-          )
-          .all(sessionId, highWater, ...windowValues, rowBudget + 1) as Array<{
-          kind?: unknown;
-          at?: unknown;
-          payload_json?: unknown;
-        }>;
-        if (rows.length > rowBudget) {
-          throw new LocalReplayTooLargeError(rows.length, rowBudget);
-        }
-        return rows.map((raw) => {
-          const storedKind = String(raw.kind);
-          try {
-            const event = parseSessionEvent(JSON.parse(String(raw.payload_json)));
-            return {
-              storedKind,
-              storedAt: String(raw.at),
-              event: event?.kind === storedKind ? event : null,
-            };
-          } catch {
-            return { storedKind, storedAt: String(raw.at), event: null };
-          }
-        });
-      })();
+  }> = replayRows.map((raw) => {
+    const storedKind = String(raw.kind);
+    try {
+      const event = parseSessionEvent(JSON.parse(String(raw.payload_json)));
+      return {
+        storedKind,
+        storedAt: String(raw.at),
+        event: event?.kind === storedKind ? event : null,
+      };
+    } catch {
+      return { storedKind, storedAt: String(raw.at), event: null };
+    }
+  });
   if (replayInputs.length === 0) return null;
 
   const perCall = session.capabilities.costScope === "call";

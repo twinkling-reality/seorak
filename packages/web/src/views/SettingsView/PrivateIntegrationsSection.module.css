@@ -1,99 +1,192 @@
+/*
+ * This panel was authored against a design-token vocabulary this app does not
+ * have. `--text-secondary`, `--border-subtle` and `--surface-raised` are not
+ * defined anywhere in app.css, so every declaration using them was invalid at
+ * computed-value time and fell back: secondary copy rendered at FULL ink
+ * (measured rgb(18,19,23), identical to body text) and every 1px border
+ * resolved to currentColor, i.e. solid black boxes. That is the "not styled at
+ * all" — not missing CSS, but CSS addressed to the wrong palette.
+ *
+ * Rewritten in the vocabulary the rest of Settings speaks:
+ *   --soft / --ink / --muted   text
+ *   --hairline / --divider     separators
+ *   accent-tinted CHIPS        controls, borderless, matching
+ *                              .settingsBoundChip in SettingsView.module.css
+ *
+ * The house control idiom is a borderless chip on a 5% accent wash, not a
+ * bordered input. Bordered boxes are what made this section read as a different
+ * product bolted into the page.
+ */
+
 .section {
   display: grid;
-  gap: 20px;
+  gap: 18px;
 }
 
 .copy {
-  color: var(--text-secondary);
-  line-height: 1.55;
   margin: 0;
   max-width: 68ch;
+  color: var(--soft);
+  font-size: var(--text-sm);
+  line-height: 1.55;
 }
 
-.form,
-.scopeRow,
-.actions,
-.secretPanel,
-.credential {
-  display: flex;
-  gap: 12px;
+/* ── Form ── */
+
+.form {
+  display: grid;
+  gap: 14px;
+  justify-items: start;
 }
 
-.form,
-.secretPanel,
-.credential {
-  align-items: flex-start;
-  flex-direction: column;
-}
-
-.scopeRow,
-.actions,
-.restrictions {
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.restrictions {
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  display: flex;
-  gap: 12px;
-  margin: 0;
-  padding: 12px;
-}
-
-.restrictions label {
-  align-items: center;
+.form label {
   display: inline-flex;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
+  color: var(--soft);
+  font-size: var(--text-sm);
+}
+
+/* The control itself: same height, radius and accent wash as the alert
+ * threshold chips, so a select here and a threshold there read as one family. */
+.select {
+  height: 28px;
+  padding: 0 8px;
+  border: none;
+  border-radius: var(--radius-xs);
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  transition: background var(--motion-fast) var(--motion);
+}
+
+.select:hover,
+.select:focus-visible {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  outline: none;
+}
+
+/* ── Scopes ── */
+
+.scopeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
 }
 
 .scope {
-  align-items: center;
   display: inline-flex;
-  gap: 6px;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink);
+  font-size: var(--text-sm);
 }
 
-.select {
-  background: var(--surface-raised, transparent);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  color: inherit;
-  padding: 8px 10px;
+/* Native control, brand hue. A bespoke checkbox is a bigger commitment than
+ * this panel needs; `accent-color` is what stops the browser's default blue
+ * from being the loudest thing on the page. */
+.scope input[type='checkbox'] {
+  accent-color: var(--accent);
+  width: 14px;
+  height: 14px;
+  margin: 0;
 }
 
+/* ── Least-privilege limits ── */
+
+/* Grouped by a rule and a label rather than boxed. The bordered fieldset drew a
+ * hard rectangle around three optional fields and made them look like the most
+ * important thing here, which is backwards: they are the part you can skip. */
+.restrictions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  margin: 0;
+  padding: 12px 0 0;
+  border: none;
+  border-top: 1px solid var(--hairline);
+}
+
+.restrictions legend {
+  padding: 0;
+  color: var(--soft);
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-stat);
+  text-transform: uppercase;
+}
+
+.restrictions label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+/* ── The issued secret ── */
+
+/* Shown once and never again, so it gets the one tinted surface in the panel.
+ * Everything else stays flat; if two things are emphasised, neither is. */
 .secretPanel {
-  background: color-mix(in srgb, var(--accent, #7c8cff) 8%, transparent);
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
+  display: grid;
+  gap: 8px;
   padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--hairline));
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
 }
 
 .secret {
   max-width: 100%;
   overflow-wrap: anywhere;
   user-select: all;
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  color: var(--ink);
 }
+
+/* ── Credential inventory ── */
 
 .list {
   display: grid;
-  gap: 12px;
-  list-style: none;
+  gap: 0;
   margin: 0;
   padding: 0;
+  list-style: none;
 }
 
 .credential {
-  border-top: 1px solid var(--border-subtle);
-  padding-top: 12px;
+  display: grid;
+  gap: 4px;
+  padding: 12px 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.credential:first-child {
+  border-top: none;
 }
 
 .meta,
 .status {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
+  color: var(--soft);
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-stat);
 }
 
 .error {
-  color: var(--danger, #d45151);
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--text-sm);
 }

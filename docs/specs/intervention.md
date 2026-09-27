@@ -12,7 +12,8 @@ computer, while remote delivery serves **away oversight**. Parent:
 Reach the developer *while the session is still changeable* when a measured
 condition crosses a boundary the developer chose. The nudge may be local or
 remote. It is not a post-mortem, gamification to code more, or enforcement that
-stops an agent. Enforcement is parked with away control.
+stops an agent. Enforcement is out of scope: Seorak observes and never controls
+an agent ([ADR 008](../adr/008-seorak-observes-and-does-not-control-agents.md)).
 
 | | Intervention (nudge) | Developer model |
 |---|---------------------|-----------------|
@@ -74,4 +75,4 @@ Live Activity (ambient state) is separate — `live-activity-settings.ts`.
 | Project % / token thresholds | Not built |
 | Automatic pattern-informed rules | Not planned; the developer changes settings after reviewing their own evidence |
 | Sub-minute firing | Cron floor ~10 min |
-| Act for you (auto-stop, remote approve) | Parked — feasibility only |
+| Act for you (auto-stop, remote approve) | Out of scope ([ADR 008](../adr/008-seorak-observes-and-does-not-control-agents.md)); the program that hosts a session controls it |

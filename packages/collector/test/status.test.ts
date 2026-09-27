@@ -9,6 +9,7 @@ import { servicedDaemonProgram } from "../src/launchd.ts";
 import {
   evaluateRuntime,
   buildStatusReport,
+  evaluateCaptureSwitch,
   evaluateCodex,
   evaluateEventsLog,
   evaluateHeartbeat,
@@ -114,7 +115,7 @@ describe("evaluateRuntime and the plist it reads", () => {
     });
     expect(report.ok).toBe(false);
     expect(report.lines.join("\n")).toContain(
-      "✘ runtime — daemon 0.1.0 runs from a temporary directory",
+      "✘ runtime: daemon 0.1.0 runs from a temporary directory",
     );
   });
 
@@ -129,7 +130,7 @@ describe("evaluateRuntime and the plist it reads", () => {
     });
     expect(report.ok).toBe(true);
     expect(report.lines.join("\n")).toContain(
-      "• runtime — daemon 0.1.0 differs from this CLI 0.1.1",
+      "• runtime: daemon 0.1.0 differs from this CLI 0.1.1",
     );
   });
 });
@@ -159,20 +160,20 @@ describe("buildStatusReport — a caught-up cursor is not a delivery", () => {
   it("refuses the delivered wording when nothing left the machine", () => {
     const text = withRoute("local").lines.join("\n");
     expect(text).toContain(
-      "• shipping — nothing delivered; complete history stays on this machine",
+      "• shipping: nothing delivered; complete history stays on this machine",
     );
     expect(text).not.toContain("event backlog caught up");
   });
 
   it("names managed sync rather than implying a POST that never happens", () => {
     const text = withRoute("managed").lines.join("\n");
-    expect(text).toContain("✓ shipping — managed sync current");
+    expect(text).toContain("✓ shipping: managed sync current");
     expect(text).not.toContain("event backlog caught up");
   });
 
   it("keeps the delivered wording for the route that actually posts", () => {
     expect(withRoute("worker").lines.join("\n")).toContain(
-      "✓ shipping — event backlog caught up",
+      "✓ shipping: event backlog caught up",
     );
   });
 });
@@ -185,20 +186,20 @@ describe("buildStatusReport — healthy", () => {
   });
   it("renders every critical line with ✓ and the codex/events tiers", () => {
     const text = report.lines.join("\n");
-    expect(text).toContain(`✓ hooks — ${N}/${N} bound`);
-    expect(text).toContain("✓ service — launchd loaded (app.seorak.collector)");
-    expect(text).toContain("✓ daemon — alive");
-    expect(text).toContain("✓ worker reads — https://w.example reachable");
-    expect(text).toContain("✓ worker ingest — authority accepted");
-    expect(text).toContain("✓ shipping — event backlog caught up");
+    expect(text).toContain(`✓ hooks: ${N}/${N} bound`);
+    expect(text).toContain("✓ service: launchd loaded (app.seorak.collector)");
+    expect(text).toContain("✓ daemon: alive");
+    expect(text).toContain("✓ worker reads: https://w.example reachable");
+    expect(text).toContain("✓ worker ingest: authority accepted");
+    expect(text).toContain("✓ shipping: event backlog caught up");
     expect(text).toContain(
-      "• capture contract — no rejected records in current log generation 3",
+      "• capture contract: no rejected records in current log generation 3",
     );
     expect(text).toContain(
-      "• capture continuity — no hook contention gaps recorded",
+      "• capture continuity: no hook contention gaps recorded",
     );
-    expect(text).toContain("• codex — tailing /home/u/.codex/sessions");
-    expect(text).toContain("✓ events — log fresh");
+    expect(text).toContain("• codex: tailing /home/u/.codex/sessions");
+    expect(text).toContain("✓ events: log fresh");
   });
 });
 
@@ -266,22 +267,22 @@ describe("buildStatusReport — service and daemon legs", () => {
     input.platformName = "linux";
     const report = buildStatusReport(input);
     expect(report.ok).toBe(true);
-    expect(report.lines.find((l) => l.includes("service"))).toMatch(/^• service — N\/A on linux/);
+    expect(report.lines.find((l) => l.includes("service"))).toMatch(/^• service: N\/A on linux/);
   });
   it("missing plist and unloaded plist carry distinct remedies", () => {
     const a = healthy();
     a.service = evaluateService(false, false, true);
-    expect(buildStatusReport(a).lines.join("\n")).toContain("✘ service — not installed. Run `seorak setup`.");
+    expect(buildStatusReport(a).lines.join("\n")).toContain("✘ service: not installed. Run `seorak setup`.");
     const b = healthy();
     b.service = evaluateService(true, false, true);
-    expect(buildStatusReport(b).lines.join("\n")).toContain("✘ service — installed but not loaded. Run `seorak start`.");
+    expect(buildStatusReport(b).lines.join("\n")).toContain("✘ service: installed but not loaded. Run `seorak start`.");
   });
   it("absent heartbeat is informational; wedged (loaded + stale) is critical", () => {
     const absent = healthy();
     absent.heartbeat = evaluateHeartbeat(null, Date.now());
     const absentReport = buildStatusReport(absent);
     expect(absentReport.ok).toBe(true);
-    expect(absentReport.lines.join("\n")).toContain("• daemon — no heartbeat yet");
+    expect(absentReport.lines.join("\n")).toContain("• daemon: no heartbeat yet");
 
     const wedged = healthy();
     wedged.heartbeat = evaluateHeartbeat(Date.now() - 10 * 60_000, Date.now());
@@ -296,7 +297,7 @@ describe("buildStatusReport — service and daemon legs", () => {
     input.heartbeat = evaluateHeartbeat(Date.now() - 10 * 60_000, Date.now());
     const report = buildStatusReport(input);
     expect(report.ok).toBe(true);
-    expect(report.lines.join("\n")).toContain("• daemon — heartbeat stale");
+    expect(report.lines.join("\n")).toContain("• daemon: heartbeat stale");
   });
 });
 
@@ -353,7 +354,7 @@ describe("buildStatusReport — durable shipping leg", () => {
     const report = buildStatusReport(input);
     expect(report.ok).toBe(true);
     expect(report.lines.join("\n")).toContain(
-      "• shipping — backlog retry in 1m after HTTP 503",
+      "• shipping: backlog retry in 1m after HTTP 503",
     );
   });
 
@@ -512,13 +513,50 @@ describe("buildStatusReport — informational legs never flip the verdict", () =
   });
   it("codex states render their three distinct lines", () => {
     const tail = buildStatusReport(healthy()).lines.join("\n");
-    expect(tail).toContain("• codex — tailing");
+    expect(tail).toContain("• codex: tailing");
     const off = healthy();
     off.codex = "off";
-    expect(buildStatusReport(off).lines.join("\n")).toContain("• codex — off (SEORAK_CODEX=0)");
+    expect(buildStatusReport(off).lines.join("\n")).toContain("• codex: off (SEORAK_CODEX=0)");
     const missing = healthy();
     missing.codex = "no-root";
-    expect(buildStatusReport(missing).lines.join("\n")).toContain("• codex — nothing at /home/u/.codex/sessions");
+    expect(buildStatusReport(missing).lines.join("\n")).toContain("• codex: nothing at /home/u/.codex/sessions");
+  });
+});
+
+describe("evaluateCaptureSwitch", () => {
+  it("maps the switch, and only the off state prints", () => {
+    expect(evaluateCaptureSwitch(true)).toBe("on");
+    expect(evaluateCaptureSwitch(false)).toBe("off");
+
+    // Absent (a caller built before the field) and "on" both say nothing: the
+    // ✓/• lines around it already describe a capturing install.
+    for (const captureSwitch of [undefined, "on" as const]) {
+      const input = healthy();
+      input.captureSwitch = captureSwitch;
+      expect(buildStatusReport(input).lines.join("\n")).not.toContain(
+        "SEORAK_CAPTURE",
+      );
+    }
+  });
+
+  it("names the switch under the hooks line without failing the verdict", () => {
+    const input = healthy();
+    input.captureSwitch = "off";
+    const report = buildStatusReport(input);
+
+    // Informational: a deliberate opt-out is not a broken install.
+    expect(report.ok).toBe(true);
+    expect(report.lines.filter((line) => line.startsWith("✘"))).toEqual([]);
+
+    const capture = report.lines.findIndex((line) =>
+      line.startsWith("• capture: off (SEORAK_CAPTURE=0"),
+    );
+    const hooks = report.lines.findIndex((line) => line.startsWith("✓ hooks"));
+    expect(hooks).toBeGreaterThanOrEqual(0);
+    // Directly under the 6/6 line it qualifies, or the reader reconciles a
+    // healthy hooks check against an events log that stopped growing.
+    expect(capture).toBe(hooks + 1);
+    expect(report.lines[capture]).toContain("record nothing");
   });
 });
 

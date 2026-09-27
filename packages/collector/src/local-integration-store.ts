@@ -25,6 +25,7 @@ import {
   DISPLAYABLE_SESSION_SQL,
   mapLocalSessionRow,
   openLocalHistory,
+  readLocalSessionLaunchersIn,
   type LocalSessionRow,
 } from "./local-store.ts";
 
@@ -154,6 +155,8 @@ export interface LocalIntegrationSessionPage {
     projectRef: ExternalProjectRef;
     session: LocalSessionRow;
     declaredCapabilities: SessionCapabilities | undefined;
+    /** The recorded launcher label, or null when none was declared (ADR 007). */
+    launcher: string | null;
   }>;
   nextCursor: ExternalCursor | null;
   boundary: LocalIntegrationReadBoundary;
@@ -1232,43 +1235,21 @@ export function listLocalIntegrationSessionPage(
         )
         .all(...values, options.limit + 1) as Array<Record<string, unknown>>;
       const selected = raw.slice(0, options.limit).map(mapLocalSessionRow);
-      const declaredBySession = new Map<string, SessionCapabilities | undefined>();
-      if (selected.length > 0) {
-        const placeholders = selected.map(() => "?").join(", ");
-        const starts = database
-          .prepare(
-            `SELECT event.session_id, event.payload_json
-               FROM local_event AS event
-              WHERE event.kind = 'session.start'
-                AND event.session_id IN (${placeholders})
-                AND event.local_seq = (
-                  SELECT MIN(first.local_seq)
-                    FROM local_event AS first
-                   WHERE first.session_id = event.session_id
-                     AND first.kind = 'session.start'
-                )`,
-          )
-          .all(...selected.map((session) => session.sessionId)) as Array<{
-            session_id?: unknown;
-            payload_json?: unknown;
-          }>;
-        for (const start of starts) {
-          try {
-            const event = parseSessionEvent(JSON.parse(String(start.payload_json)));
-            if (event?.kind === "session.start") {
-              declaredBySession.set(String(start.session_id), event.capabilities);
-            }
-          } catch {
-            // A malformed retained start cannot authorize a reporting claim.
-          }
-        }
-      }
+      const declaredBySession = readLocalDeclaredCapabilitiesIn(
+        database,
+        selected.map((session) => session.sessionId),
+      );
+      const launchers = readLocalSessionLaunchersIn(
+        database,
+        selected.map((session) => session.sessionId),
+      );
       const rows = selected.map((session) => {
         return {
           sessionRef: ensureLocalIntegrationSessionRefIn(database, session.sessionId, now),
           projectRef: ensureLocalIntegrationProjectRefIn(database, session.repoId, now),
           session,
           declaredCapabilities: declaredBySession.get(session.sessionId),
+          launcher: launchers.get(session.sessionId) ?? null,
         };
       });
       return {
@@ -1291,6 +1272,67 @@ export function listLocalIntegrationSessionPage(
   } finally {
     database.close();
   }
+}
+
+/**
+ * The capabilities each session declared on its FIRST retained `session.start`.
+ * A session absent from the map declared none, or its start could not be parsed;
+ * either way it cannot authorize a reporting claim.
+ */
+export function readLocalDeclaredCapabilitiesIn(
+  database: DatabaseSync,
+  sessionIds: readonly string[],
+): Map<string, SessionCapabilities | undefined> {
+  const declaredBySession = new Map<string, SessionCapabilities | undefined>();
+  if (sessionIds.length === 0) return declaredBySession;
+  const placeholders = sessionIds.map(() => "?").join(", ");
+  const starts = database
+    .prepare(
+      `SELECT event.session_id, event.payload_json
+         FROM local_event AS event
+        WHERE event.kind = 'session.start'
+          AND event.session_id IN (${placeholders})
+          AND event.local_seq = (
+            SELECT MIN(first.local_seq)
+              FROM local_event AS first
+             WHERE first.session_id = event.session_id
+               AND first.kind = 'session.start'
+          )`,
+    )
+    .all(...sessionIds) as Array<{
+      session_id?: unknown;
+      payload_json?: unknown;
+    }>;
+  for (const start of starts) {
+    try {
+      const event = parseSessionEvent(JSON.parse(String(start.payload_json)));
+      if (event?.kind === "session.start") {
+        declaredBySession.set(String(start.session_id), event.capabilities);
+      }
+    } catch {
+      // A malformed retained start cannot authorize a reporting claim.
+    }
+  }
+  return declaredBySession;
+}
+
+/**
+ * The displayable session an agent's own identity names, or null. Both halves
+ * must match: a native id recorded under a different agent is not this session.
+ * The native id is a lookup key here and goes nowhere else (ADR 007).
+ */
+export function readLocalIntegrationSessionByNativeIn(
+  database: DatabaseSync,
+  agent: string,
+  nativeSessionId: string,
+): LocalSessionRow | null {
+  const row = database
+    .prepare(
+      `SELECT * FROM local_session
+        WHERE session_id = ? AND agent = ? AND ${DISPLAYABLE_SESSION_SQL}`,
+    )
+    .get(nativeSessionId, agent) as Record<string, unknown> | undefined;
+  return row ? mapLocalSessionRow(row) : null;
 }
 
 export function readLocalIntegrationSession(
@@ -1387,7 +1429,8 @@ export function recordLocalIntegrationQueryAudit(
       | "period_summary"
       | "list_sessions"
       | "get_session_outcome"
-      | "replay_lens";
+      | "replay_lens"
+      | "resolve_session";
     result:
       | "ok"
       | "unavailable"

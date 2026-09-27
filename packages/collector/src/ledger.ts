@@ -125,7 +125,10 @@ export function loadLedger(): FileTouchLedger {
  * A failure is returned to the caller because raw-log rollover must never treat
  * an in-memory-only offset as durable acknowledgement.
  */
-export function saveLedger(ledger: FileTouchLedger): boolean {
+export function saveLedger(
+  ledger: FileTouchLedger,
+  currentIsKnownValid = false,
+): boolean {
   try {
     const path = ledgerPath();
     const backup = ledgerBackupPath();
@@ -139,7 +142,14 @@ export function saveLedger(ledger: FileTouchLedger): boolean {
       closeSync(descriptor);
     }
     if (existsSync(path)) {
-      if (parseLedger(path)) {
+      // Re-parsing the CURRENT file guards against promoting a corrupt one to
+      // backup. It costs a full parse of the whole ledger (18ms at 4.3MB), and
+      // it is pure waste when the caller already knows the file is the one this
+      // process wrote and fsynced: writes land on a temp file and arrive by
+      // atomic rename, so a torn current file is disk corruption, not a partial
+      // write. The caller says which case it is rather than this function
+      // guessing, so a caller that cannot know still pays for the check.
+      if (currentIsKnownValid || parseLedger(path)) {
         if (existsSync(backup)) unlinkSync(backup);
         renameSync(path, backup);
       } else {
@@ -285,8 +295,64 @@ export function agentsTouching(
  * events the ledger does not care about (the ~90% of tool calls with no fileId) is
  * walked once rather than every tick.
  */
+/**
+ * The ledger this process is working with, held across syncs.
+ *
+ * `loadLedger` is the RECOVERY primitive and deliberately still reads disk every
+ * time: its job is to fall back to the previous checkpoint when the current file
+ * is torn, which an in-memory answer cannot do. What is cached is the working
+ * copy, and only after a save has proven it is also what is on disk.
+ *
+ * This matters because `syncLedgerOnce` parsed 4.3MB BEFORE it could reach its
+ * own nothing-new short-circuit, so a tick with no attributable events still
+ * paid for the whole ledger. The daemon calls this on every drain once the event
+ * log crosses its compaction threshold, which is when it would have hurt most.
+ */
+let workingLedger: FileTouchLedger | null = null;
+
+/**
+ * The ledger path the cache above belongs to.
+ *
+ * `ledgerPath()` resolves through `SEORAK_DIR`, which is process-global and can
+ * change under a test, an embedder, or a future multi-profile caller. A cache
+ * that ignored it would hand one directory's ledger to another and the offsets
+ * would be silently wrong, so the path is compared on every read and a change
+ * simply misses.
+ */
+let workingLedgerPath: string | null = null;
+
+/**
+ * Whether THIS process wrote the ledger file that is currently on disk.
+ *
+ * Deliberately separate from `workingLedger`. Holding a working copy says the
+ * parse can be skipped; having written the file says the re-parse inside
+ * `saveLedger` can be skipped. They become true at different moments: the first
+ * on load, the second only after a successful save. Conflating them would skip
+ * validation on the first save of a process, which is exactly the file this
+ * process did NOT write and the one most worth checking.
+ */
+let wroteCurrentFile = false;
+
+/** Test seam. The daemon is the only writer, so nothing in production invalidates
+ *  this; a test that writes a ledger file behind the module's back must. */
+export function resetLedgerCache(): void {
+  workingLedger = null;
+  workingLedgerPath = null;
+  wroteCurrentFile = false;
+}
+
 async function syncLedgerOnce(nowMs: number): Promise<FileTouchLedger> {
-  const ledger = loadLedger();
+  // Cached on the way in, not only after a save: a tick that short-circuits
+  // below still has the working copy, and re-reading 4.3MB to learn there was
+  // nothing to do is the cost this exists to remove.
+  const path = ledgerPath();
+  if (workingLedgerPath !== path) {
+    workingLedger = null;
+    wroteCurrentFile = false;
+    workingLedgerPath = path;
+  }
+  const ledger = workingLedger ?? loadLedger();
+  workingLedger = ledger;
   const generation = await readEventLogGeneration();
   if (ledger.generation !== generation) {
     ledger.generation = generation;
@@ -298,9 +364,15 @@ async function syncLedgerOnce(nowMs: number): Promise<FileTouchLedger> {
   applyEventsToLedger(ledger, events);
   pruneLedger(ledger, nowMs);
   ledger.offset = nextOffset;
-  if (!saveLedger(ledger)) {
+  if (!saveLedger(ledger, wroteCurrentFile)) {
+    // Drop both: the on-disk state no longer matches this object, and the next
+    // sync must re-read rather than build on an offset that was never
+    // acknowledged or trust a file it did not prove it wrote.
+    workingLedger = null;
+    wroteCurrentFile = false;
     throw new Error("failed to persist the attribution-ledger checkpoint");
   }
+  wroteCurrentFile = true;
   return ledger;
 }
 

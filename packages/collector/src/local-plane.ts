@@ -51,6 +51,7 @@ import {
   type ManagedSyncCoverage,
 } from "@seorak/types/data-plane";
 import {
+  SESSION_MATERIALIZATION_MAX_ROWS,
   SESSION_OUTCOME_MAX_ROWS,
   SESSION_PAGE_DEFAULT_LIMIT,
   SESSION_PAGE_MAX_LIMIT,
@@ -63,6 +64,9 @@ import {
   coerceProjectThemes,
   isOverviewRangeDays,
   OVERVIEW_RANGE_DAYS,
+  PRIVATE_SESSION_RESOLVE_MAX_BODY_BYTES,
+  type SessionMaterializationRefusal,
+  type ReplaySession,
   type SessionOutcome,
   type SessionOutcomeRefusal,
   type SettingsDocument,
@@ -101,8 +105,17 @@ import {
   buildLocalSessionOutcome,
   buildLocalSessionPage,
   buildLocalSessionSummary,
+  LocalLiveMaterializationTooLargeError,
+  LocalReplayTooLargeError,
   LocalSessionOutcomeTooLargeError,
 } from "./local-projection.ts";
+import {
+  ProjectionMemo,
+  projectionMemoKey,
+} from "./local-projection-cache.ts";
+import { ProjectionThread } from "./local-projection-thread.ts";
+import type { ProjectionJob } from "./local-projection-worker.ts";
+import { openLocalHistory } from "./local-store.ts";
 import { localHistoryThrough } from "./local-sync-store.ts";
 import { collectorPackageRoot } from "./package-layout.ts";
 import { captureSettingsPath, localSettingsPath } from "./paths.ts";
@@ -117,6 +130,110 @@ import {
 export const DEFAULT_LOCAL_PLANE_PORT = 4317;
 /** How long a shutdown waits for in-flight requests before dropping sockets. */
 const LOCAL_PLANE_SHUTDOWN_GRACE_MS = 250;
+
+/**
+ * Event rows one ROUTABLE replay read may scan before it is refused.
+ *
+ * Not in `@seorak/types` beside `SESSION_OUTCOME_MAX_ROWS`, and the reason is
+ * about the TYPE rather than the field. The hosted replay refusal does put
+ * `maxRows` on the wire, but it does so from an inline object literal with no
+ * `WorkerErrorCode` and no declared refusal interface
+ * (`registerProductReadRoutes.ts`), unlike the outcome route, whose
+ * `SessionOutcomeRefusal` is a shared type that both ends must agree on and
+ * that therefore has to hold its own bound. There is no type here to share,
+ * only a number. So this is a local bound that MATCHES a remote one rather than
+ * a contract both ends read, and nothing mechanical holds the two together.
+ *
+ * The number is 10,000 because two implementations already chose it for this
+ * exact read: `REPLAY_EVENT_ROW_BUDGET` in the worker, and
+ * `LOCAL_PRIVATE_REPLAY_ROW_BUDGET` for the private integration API. A third
+ * value here would mean the same request is refused at three different sizes
+ * depending on which door it came through.
+ */
+export const SESSION_REPLAY_MAX_ROWS = 10_000;
+
+/**
+ * Process-wide memo for the plane's projections, keyed on the event high-water
+ * mark. See local-projection-cache.ts for why this is safe against the two
+ * clock-dependent legs a snapshot carries and why a hit is honest rather than
+ * stale.
+ *
+ * Module scope rather than per-binding on purpose: the loopback and self-hosted
+ * bindings answer for the SAME history on the same machine, so a projection one
+ * computed is one the other would recompute identically. The directory is in the
+ * key, so two planes over two histories still cannot read each other's entries.
+ */
+const projectionMemo = new ProjectionMemo<unknown>();
+
+/**
+ * The thread the projections actually run on. Module scope for the same reason
+ * the memo is: one history, one machine, one builder. See
+ * local-projection-thread.ts for why it is a single worker and why every failure
+ * falls back inline.
+ */
+const projectionThread = new ProjectionThread();
+
+/**
+ * Read-through: memo, then the worker, then an inline build.
+ *
+ * The high-water mark makes any appended event a miss, so this never shortens
+ * the distance between capture and the screen; what it removes is rebuilding an
+ * identical projection for a reader polling every 30s while nothing is being
+ * captured. `inline` is the same fold on this thread, taken only when the worker
+ * cannot run at all, which is the old behaviour rather than an outage.
+ */
+async function serveProjection<T>(
+  kind: ProjectionJob["kind"],
+  directory: string | undefined,
+  parameters: unknown,
+  job: (nowMs: number) => ProjectionJob,
+  inline: (nowMs: number) => T,
+): Promise<T> {
+  const highWater = historyHighWater(directory);
+  const memoKey =
+    highWater === null
+      ? null
+      : projectionMemoKey({ kind, directory, parameters, highWater });
+  // One instant for both the window this build anchors at and the memo age, so
+  // a cached entry cannot claim to cover a window it was not built for.
+  const nowMs = Date.now();
+  if (memoKey !== null) {
+    const hit = projectionMemo.get(memoKey, nowMs);
+    if (hit !== null) return hit as T;
+  }
+  let value: T;
+  try {
+    value = (await projectionThread.build(job(nowMs), memoKey ?? kind)) as T;
+  } catch {
+    value = inline(nowMs);
+  }
+  // Stamped with the instant the build STARTED, so an entry can never claim to
+  // be fresher than the data it folded.
+  if (memoKey !== null) projectionMemo.set(memoKey, nowMs, value);
+  return value;
+}
+
+/** The high-water mark the memo keys on. Its own connection because the read is
+ *  0-3ms to open and 0ms to run, which is the whole reason this is affordable to
+ *  check before every build. Returns null when the history cannot be opened at
+ *  all, which makes the caller skip the memo and take the normal build path
+ *  rather than serve something it could not verify. */
+function historyHighWater(directory: string | undefined): number | null {
+  try {
+    const database = openLocalHistory(directory);
+    try {
+      const row = database
+        .prepare("SELECT COALESCE(MAX(local_seq), 0) AS high_water FROM local_event")
+        .get() as { high_water?: unknown } | undefined;
+      const value = Number(row?.high_water);
+      return Number.isFinite(value) ? value : null;
+    } finally {
+      database.close();
+    }
+  } catch {
+    return null;
+  }
+}
 
 /**
  * The same-origin CSRF proof the dashboard echoes on owner writes.
@@ -1044,6 +1161,17 @@ async function handleRequest(
     return;
   }
   if (route.authority === "api") {
+    // Only the resolve read has a body. It is read, bounded, before authorization,
+    // so an oversized body is refused without buffering it; the handler still
+    // authorizes before it parses a byte of it.
+    const body = route.route === "resolve"
+      ? {
+          contentType: typeof req.headers["content-type"] === "string"
+            ? req.headers["content-type"]
+            : undefined,
+          bytes: await readBodyBytes(req, PRIVATE_SESSION_RESOLVE_MAX_BODY_BYTES),
+        }
+      : undefined;
     const response = handleLocalPrivateApi(
       route,
       typeof req.headers.authorization === "string"
@@ -1053,6 +1181,7 @@ async function handleRequest(
       {
         ...(options.directory === undefined ? {} : { directory: options.directory }),
         ...(options.integrationNow === undefined ? {} : { now: options.integrationNow }),
+        ...(body === undefined ? {} : { body }),
       },
     );
     sendJson(binding, res, response.status, response.value, response.headers);
@@ -1178,7 +1307,37 @@ async function handleRequest(
       return;
 
     case "/live":
-      sendJson(binding, res, 200, buildLocalLive(directoryOption));
+      // Budgeted on EVERY binding, unlike the session-outcome read which leaves
+      // loopback unbounded on the argument that the caller is the person at the
+      // keyboard. That argument is about fairness; this is about latency, and it
+      // does not survive an endpoint the dashboard polls every 8 seconds on the
+      // same thread that serves everything else. A board over budget refuses
+      // rather than truncating, matching the worker's `/live` exactly.
+      try {
+        sendJson(
+          binding,
+          res,
+          200,
+          buildLocalLive({
+            ...directoryOption,
+            rowBudget: SESSION_MATERIALIZATION_MAX_ROWS,
+          }),
+        );
+      } catch (error) {
+        if (error instanceof LocalLiveMaterializationTooLargeError) {
+          const refusal: SessionMaterializationRefusal = {
+            error: "session materialization too large",
+            code: "session_materialization_limit",
+            detail:
+              "The live board holds too many sessions for one complete response. No partial board was returned.",
+            projectedRows: error.projectedRows,
+            maxRows: error.rowBudget,
+          };
+          sendJson(binding, res, 413, refusal);
+          return;
+        }
+        throw error;
+      }
       return;
 
     case "/overview": {
@@ -1191,7 +1350,43 @@ async function handleRequest(
       // No ETag on purpose. The conditional GET exists to protect the hosted
       // aggregate's D1 read budget; on loopback there is no budget to protect,
       // and an ETag that never changes would be the lie that costs a refresh.
-      sendJson(binding, res, 200, buildLocalOverview({ ...directoryOption, rangeDays }));
+      // Read here rather than inside the projection so the projection stays a
+      // pure function of (database, options) and the archive can be driven from
+      // a test without a settings file on disk.
+      // `SettingsDocument` is deliberately `Record<SettingsFamily, unknown>`, so
+      // the coerce is what types this. It is idempotent — readLocalSettings has
+      // already run it — and re-running costs one object walk per overview read.
+      const archivedRepoIds = new Set(
+        Object.keys(
+          coerceProjectArchive(
+            readLocalSettings(directoryOption.directory).projectArchive,
+          ).byRepo,
+        ),
+      );
+      sendJson(
+        binding,
+        res,
+        200,
+        await serveProjection(
+          "overview",
+          directoryOption.directory,
+          { rangeDays, archivedRepoIds: [...archivedRepoIds].sort() },
+          (nowMs) => ({
+            kind: "overview",
+            directory: directoryOption.directory ?? null,
+            nowMs,
+            rangeDays,
+            archivedRepoIds: [...archivedRepoIds],
+          }),
+          (nowMs) =>
+            buildLocalOverview({
+              ...directoryOption,
+              nowMs,
+              rangeDays,
+              archivedRepoIds,
+            }),
+        ),
+      );
       return;
     }
 
@@ -1223,15 +1418,30 @@ async function handleRequest(
       const rangeDays = isOverviewRangeDays(requested)
         ? requested
         : OVERVIEW_RANGE_DAYS[0];
+      const repoId = url.searchParams.get("repoId");
       sendJson(
         binding,
         res,
         200,
-        buildLocalDeveloperModel({
-          ...directoryOption,
-          rangeDays,
-          repoId: url.searchParams.get("repoId"),
-        }),
+        await serveProjection(
+          "developerModel",
+          directoryOption.directory,
+          { rangeDays, repoId },
+          (nowMs) => ({
+            kind: "developerModel",
+            directory: directoryOption.directory ?? null,
+            nowMs,
+            rangeDays,
+            repoId,
+          }),
+          (nowMs) =>
+            buildLocalDeveloperModel({
+              ...directoryOption,
+              nowMs,
+              rangeDays,
+              repoId,
+            }),
+        ),
       );
       return;
     }
@@ -1313,7 +1523,49 @@ async function handleRequest(
 
   const replay = path.match(/^\/replay\/([^/]+)$/);
   if (replay !== null) {
-    const built = buildLocalReplay(decodeURIComponent(replay[1]!), directoryOption);
+    // Budgeted on the ROUTABLE binding and not on loopback, which is the split
+    // the outcome route earlier in this same switch already argues for and this
+    // route did not have.
+    //
+    // It did not have it because it passed no `rowBudget` AT ALL, so the
+    // default at `buildLocalReplay` applied and BOTH bindings read every row of
+    // a session with no window. The outcome route's own comment says why that
+    // is wrong on a socket: the caller is whoever holds the credential, the
+    // scan is unbounded per session, and the request is cheap while the work is
+    // not. Nothing in that argument was ever specific to outcomes.
+    //
+    // The budget counts ALL event kinds, because the first-party replay is the
+    // all-event sequence (see `kinds` on `buildLocalReplayOnDatabase`); the
+    // narrower integration lens tops out lower on the same session. Measured on
+    // the author's history on 2026-09-09, the largest session of 5,605 holds
+    // 10,316 rows and answers a replay in 47 to 88 ms over eleven warm runs on
+    // an idle machine, and it is the ONLY session over this budget. The bound is
+    // not there because tens of milliseconds are expensive. It is there because
+    // nothing in the route said what the ceiling was, on a socket where the
+    // caller is whoever holds the credential.
+    //
+    // The refusal body is the worker's, field for field
+    // (`registerProductReadRoutes.ts`), so a client that already understands a
+    // hosted replay refusal needs no second dialect for this one.
+    let built: ReplaySession | null;
+    try {
+      built = buildLocalReplay(decodeURIComponent(replay[1]!), {
+        ...directoryOption,
+        rowBudget: binding.mode === "loopback" ? null : SESSION_REPLAY_MAX_ROWS,
+      });
+    } catch (error) {
+      if (error instanceof LocalReplayTooLargeError) {
+        sendJson(binding, res, 413, {
+          error: "replay too large",
+          detail:
+            "This session has too many events for one honest replay. No partial timeline was returned.",
+          projectedRows: error.projectedRows,
+          maxRows: error.rowBudget,
+        });
+        return;
+      }
+      throw error;
+    }
     if (built === null) {
       sendJson(binding, res, 404, { error: "not found" });
       return;
@@ -1492,6 +1744,11 @@ function started(
       });
       if (grace !== null) clearTimeout(grace);
       await serverIntegrationClosers.get(server)?.();
+      // After the server, so a build still feeding an in-flight response is not
+      // terminated out from under it. The worker is unref'd and its outstanding
+      // requests fail into the inline fallback, so this bounds the thread rather
+      // than being what makes shutdown safe.
+      await projectionThread.close();
     },
   };
 }

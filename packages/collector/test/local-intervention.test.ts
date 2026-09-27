@@ -133,6 +133,39 @@ function seedLiveSession(
   for (const event of events) appendLocalEvent(event, dir);
 }
 
+/**
+ * A session carrying nothing but its own start, which is what the SessionStart
+ * hook records when an agent process boots and exits without the developer ever
+ * typing. It sits on the live board (not ended, inside the abandoned horizon)
+ * and has no work to have fallen silent from.
+ */
+function seedPhantomSession(dir: string, startedMinutesAgo = 12): void {
+  appendLocalEvent(
+    {
+      kind: "session.start",
+      eventId: "start",
+      sessionId: "s-1",
+      at: new Date(NOW - startedMinutesAgo * 60_000).toISOString(),
+      repoId: REPO,
+      repoLabel: "seorak",
+      agent: "claude-code",
+      agentVersion: "1.0.0",
+      capabilities: {
+        hasTokens: true,
+        hasCacheTokens: true,
+        cost: "estimated",
+        toolResult: "both",
+        endReason: true,
+        duration: "measured",
+        verification: "both",
+        costScope: "call",
+        usageWindow: "count",
+      },
+    } satisfies SessionEvent,
+    dir,
+  );
+}
+
 function settingsWith(
   notifications: Partial<NotificationSettings> = {},
 ): SettingsDocument {
@@ -192,6 +225,40 @@ describe("what may cross a threshold", () => {
     expect(
       evaluateLocalWentCold(summary({ status: "ended" }), 1, NOW),
     ).toBeNull();
+  });
+
+  // Silence is only a measurement when something once made noise. The start hook
+  // runs when the agent boots, before the developer has typed, so a session
+  // carrying nothing but its own start never began and there is nothing to step
+  // back into.
+  it("never fires went_cold on a session that only ever started", () => {
+    const started = new Date(NOW - 12 * 60_000).toISOString();
+    expect(
+      evaluateLocalWentCold(
+        summary({ toolCallCount: 0, startedAt: started, lastEventAt: started }),
+        10,
+        NOW,
+      ),
+    ).toBeNull();
+  });
+
+  // The guard must not over-suppress: an agent blocked on a permission prompt is
+  // the most actionable live state there is, and tool.call comes from PostToolUse
+  // so the prompt precedes the first call.
+  it("still fires went_cold on a session stalled at a permission prompt", () => {
+    const started = new Date(NOW - 12 * 60_000).toISOString();
+    expect(
+      evaluateLocalWentCold(
+        summary({
+          toolCallCount: 0,
+          awaitingInput: true,
+          startedAt: started,
+          lastEventAt: started,
+        }),
+        10,
+        NOW,
+      ),
+    ).toMatchObject({ kind: "went_cold" });
   });
 });
 
@@ -365,6 +432,19 @@ describe("the sweep and the ledger", () => {
     } as Partial<NotificationSettings>);
     const fired = sweepLocalInterventions(settings, { directory: dir, nowMs: NOW });
     expect(fired.map((fire) => fire.kind)).not.toContain("cost_spike");
+  });
+
+  // The end-to-end shape of the bug this guard closes: an agent process that
+  // booted and never did anything sat on the live board and paged the developer
+  // every time the sweep ran. The ledger assertion is the honest one, since a
+  // fire that is recorded but undelivered still claims the crossing happened.
+  it("neither records nor delivers went_cold for a session that only ever started", () => {
+    const dir = directory();
+    seedPhantomSession(dir);
+    expect(
+      sweepLocalInterventions(settingsWith(), { directory: dir, nowMs: NOW }),
+    ).toEqual([]);
+    expect(listLocalInterventions({ directory: dir, nowMs: NOW })).toEqual([]);
   });
 
   it("is empty on a machine with nothing live", () => {

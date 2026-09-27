@@ -189,3 +189,133 @@ describe("local private HTTP resource", () => {
     }
   });
 });
+
+describe("local private HTTP resolve (ADR 007)", () => {
+  function resolveRoute(method = "POST") {
+    return classifyLocalPlaneRequestTarget("/api/v1/sessions/resolve", method);
+  }
+  function json(value: unknown) {
+    return {
+      contentType: "application/json; charset=utf-8",
+      bytes: Buffer.from(JSON.stringify(value), "utf8"),
+    };
+  }
+
+  it("classifies resolve as a POST-only sessions:read row read with no query string", () => {
+    expect(resolveRoute()).toMatchObject({
+      authority: "api",
+      route: "resolve",
+      scope: "sessions:read",
+      routeClass: "read",
+    });
+    expect(resolveRoute("GET")).toMatchObject({
+      authority: "reserved-refusal",
+      status: 405,
+      allow: "POST",
+    });
+    expect(
+      classifyLocalPlaneRequestTarget(
+        "/api/v1/sessions/resolve?nativeSessionId=claude-session",
+        "POST",
+      ),
+    ).toMatchObject({ authority: "reserved-refusal", status: 404 });
+  });
+
+  it("resolves by body, audits the operation, and never records the native id", () => {
+    const directory = seeded();
+    const credential = issue(directory);
+    const authorization = `Bearer ${credential.token}`;
+    const now = () => new Date(FIXTURE_NOW);
+    const route = resolveRoute();
+    if (route.authority !== "api") throw new Error("expected API route");
+
+    const hit = handleLocalPrivateApi(route, authorization, API_AUDIENCE, {
+      directory,
+      now,
+      body: json({ agent: "claude-code", nativeSessionId: "claude-session" }),
+    });
+    expect(hit).toMatchObject({
+      status: 200,
+      value: {
+        apiVersion: "v1",
+        availability: { state: "available", reason: null },
+        session: { agent: "claude-code", launcher: null },
+      },
+    });
+    const sessionRef = (hit.value as { session: { sessionRef: string } }).session.sessionRef;
+    expect(sessionRef).toMatch(/^ses_[0-9a-f]{32}$/);
+    expect(JSON.stringify(hit.value)).not.toContain("claude-session");
+
+    const miss = handleLocalPrivateApi(route, authorization, API_AUDIENCE, {
+      directory,
+      now,
+      body: json({ agent: "codex", nativeSessionId: "claude-session" }),
+    });
+    expect(miss).toMatchObject({
+      status: 200,
+      value: { availability: { state: "unavailable", reason: "not-captured" }, session: null },
+    });
+
+    const database = openLocalHistory(directory);
+    try {
+      const rows = database.prepare(
+        `SELECT * FROM local_integration_query_audit ORDER BY audit_id`,
+      ).all();
+      expect(rows.map((row) => (row as { operation: string; result: string }))).toMatchObject([
+        { operation: "resolve_session", result: "ok" },
+        { operation: "resolve_session", result: "unavailable" },
+      ]);
+      expect(JSON.stringify(rows)).not.toContain("claude-session");
+      expect(JSON.stringify(rows)).not.toContain(sessionRef);
+    } finally {
+      database.close();
+    }
+  });
+
+  it("refuses a body it cannot parse with a status the caller can act on", () => {
+    const directory = seeded();
+    const credential = issue(directory);
+    const authorization = `Bearer ${credential.token}`;
+    const options = { directory, now: () => new Date(FIXTURE_NOW) };
+    const route = resolveRoute();
+    if (route.authority !== "api") throw new Error("expected API route");
+
+    expect(handleLocalPrivateApi(route, authorization, API_AUDIENCE, {
+      ...options,
+      body: { contentType: "application/json", bytes: null },
+    }).status).toBe(413);
+    expect(handleLocalPrivateApi(route, authorization, API_AUDIENCE, {
+      ...options,
+      body: {
+        contentType: "text/plain",
+        bytes: Buffer.from('{"agent":"codex","nativeSessionId":"x"}'),
+      },
+    }).status).toBe(415);
+    for (const bad of [
+      "not json",
+      JSON.stringify({ agent: "codex" }),
+      JSON.stringify({ agent: "cursor", nativeSessionId: "x" }),
+      JSON.stringify({ agent: "codex", nativeSessionId: "x", extra: 1 }),
+    ]) {
+      expect(handleLocalPrivateApi(route, authorization, API_AUDIENCE, {
+        ...options,
+        body: { contentType: "application/json", bytes: Buffer.from(bad) },
+      }).status, bad).toBe(400);
+    }
+
+    const periodOnly = issue(directory, API_AUDIENCE, ["period:read"]);
+    expect(handleLocalPrivateApi(route, `Bearer ${periodOnly.token}`, API_AUDIENCE, {
+      ...options,
+      body: json({ agent: "claude-code", nativeSessionId: "claude-session" }),
+    }).status).toBe(403);
+
+    const database = openLocalHistory(directory);
+    try {
+      expect(database.prepare(
+        `SELECT DISTINCT operation, result FROM local_integration_query_audit`,
+      ).all()).toEqual([{ operation: "resolve_session", result: "protocol_error" }]);
+    } finally {
+      database.close();
+    }
+  });
+});

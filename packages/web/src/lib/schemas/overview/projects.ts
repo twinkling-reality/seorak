@@ -33,6 +33,10 @@ export const periodDeltaSchema = z.object({
 export const projectRollupSchema: z.ZodType<ProjectRollup> = z.object({
   project: z.string(),
   repoId: z.string(),
+  // Present only when the owner archived this project; absent means active.
+  // Optional rather than defaulted, so a worker that does not yet emit it is
+  // read as "nothing archived" instead of failing the whole snapshot.
+  archived: z.boolean().optional(),
   sessions: z.number(),
   // Required on current workers; null is the honest KV-only/unmeasured state.
   sessionsDelta: periodDeltaSchema.nullable(),

@@ -18,6 +18,7 @@ import {
   coerceNotificationSettings,
   DEFAULT_NOTIFICATION_SETTINGS,
   buildSignalBody,
+  sessionHasActivity,
   SIGNAL_IDS,
   SIGNAL_CATALOG,
 } from "@seorak/types";
@@ -377,3 +378,46 @@ function stateRefs(blocks: Record<string, string>, names: string[]): Set<string>
   }
   return refs;
 }
+
+// ── sessionHasActivity: the subject a silence watch needs ─────────────────────
+// A `session.start` with nothing after it is a session that never began. The
+// start hook runs when the agent boots, before the developer has typed, so a
+// bare start is capture working rather than work happening. `went_cold` measures
+// silence, and silence is only a measurement when something once made noise.
+const AT_START = "2026-06-15T12:00:00.000Z";
+
+test("a bare session.start has no activity to be silent about", () => {
+  const s = sessionToSummary(
+    fx({ startedAt: AT_START, lastEventAt: AT_START, toolCallCount: 0 }),
+  );
+  assert.equal(sessionHasActivity(s), false);
+});
+
+test("one completed tool call is activity", () => {
+  assert.equal(sessionHasActivity(sessionToSummary(fx())), true);
+});
+
+test("a session blocked on the developer is activity before its first call", () => {
+  // tool.call is emitted from PostToolUse, so a permission prompt precedes the
+  // first call. Losing this leg would mute the most actionable live state there is.
+  const s = sessionToSummary(
+    fx({
+      startedAt: AT_START,
+      lastEventAt: AT_START,
+      toolCallCount: 0,
+      awaitingInput: true,
+    }),
+  );
+  assert.equal(sessionHasActivity(s), true);
+});
+
+test("any event after the start is activity, even with no tool call", () => {
+  const s = sessionToSummary(
+    fx({
+      startedAt: AT_START,
+      lastEventAt: "2026-06-15T12:00:01.000Z",
+      toolCallCount: 0,
+    }),
+  );
+  assert.equal(sessionHasActivity(s), true);
+});

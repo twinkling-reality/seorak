@@ -72,6 +72,37 @@ const PENDING_COMMIT_CAP = EVENT_LINE_SURVIVAL_COMMIT_LIMIT;
 const PENDING_RETENTION_DAYS = LEDGER_RETENTION_DAYS;
 
 const DEFAULT_SURVIVAL_AGE_DAYS = 3;
+
+/**
+ * How much MAIN-THREAD time one sweep may spend blaming, in milliseconds.
+ *
+ * Blame is `spawnSync`, so every call fully blocks the daemon's event loop and
+ * the local plane answers nothing for its duration. Measured on this repository
+ * (2026-09-09): `git blame --line-porcelain -M -C -w` costs 380ms on a large
+ * source file and 170ms on a medium one, and a matured record blames EVERY file
+ * it attributed. Nothing bounded how many records one tick took, so a batch that
+ * matured together could block the loop for tens of seconds; the sweep runs
+ * hourly, which is exactly often enough for that to be noticed and rare enough
+ * for it to look like something else.
+ *
+ * A time budget rather than a record count, because the cost per record is not
+ * knowable in advance: it depends on file size, repository age and how many
+ * files that session touched. The budget is checked BEFORE starting a record, so
+ * one slow record can overrun it but a second cannot begin.
+ *
+ * Nothing is lost when the budget runs out. An unblamed record stays on disk as
+ * pending and the next sweep reaches it, and records that finish set
+ * `emittedEventId` and are skipped from then on, so the frontier advances rather
+ * than re-blaming the same head every hour.
+ */
+const DEFAULT_SURVIVAL_BLAME_BUDGET_MS = 2_000;
+
+export function survivalBlameBudgetMs(): number {
+  const raw = process.env.SEORAK_SURVIVAL_BLAME_BUDGET_MS;
+  if (!raw) return DEFAULT_SURVIVAL_BLAME_BUDGET_MS;
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) && n >= 0 ? n : DEFAULT_SURVIVAL_BLAME_BUDGET_MS;
+}
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /** One commit a session's attributed work landed in. LOCAL ONLY — the sha and the paths
@@ -361,6 +392,9 @@ export function sweepAttributedSurvival(nowIso: string): SweptLineSurvival[] {
   const minAge = survivalAgeDays();
   const repoLabels = captureSettings().repoLabels;
   const swept: SweptLineSurvival[] = [];
+  // Measured against a monotonic clock, not `nowMs`: the caller's instant is the
+  // event timestamp and may be minutes old by the time the sweep runs.
+  const blameDeadline = performance.now() + survivalBlameBudgetMs();
 
   for (const name of names) {
     const path = survivalPendingPath(name.replace(/\.json$/, ""));
@@ -384,6 +418,11 @@ export function sweepAttributedSurvival(nowIso: string): SweptLineSurvival[] {
       pending.commits.map((c) => c.sha),
     );
     if (eventId === pending.emittedEventId) continue; // same set, same answer — no re-blame
+
+    // Everything above is a file read and a comparison; everything below spawns
+    // git. Stop at the boundary rather than mid-record, so the work already done
+    // is never wasted and the record is left exactly as it was found.
+    if (performance.now() >= blameDeadline) break;
 
     // Honest-empty gate: a repo that is genuinely gone emits nothing.
     const ctx = gitContext(pending.toplevel);

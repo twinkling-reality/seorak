@@ -19,8 +19,6 @@ interface Props {
   iconUrl?: string;
   /** Favicon URL from evaluation metadata. */
   favicon?: string;
-  /** Brand color extracted from the tool's icon (metadata.brand_color). */
-  brandColor?: string;
   /** px by default; pass an em string when the mark must track prose size. */
   size?: number | string;
   monochrome?: boolean;
@@ -28,12 +26,41 @@ interface Props {
   ariaHidden?: boolean;
 }
 
+/**
+ * A tool's mark, or NOTHING when we have no mark for it.
+ *
+ * There used to be a fifth branch below: a brand-filled circle holding the
+ * first letter of the label. It was removed on 2026-08-17 because it was
+ * standing in for recognition it could not deliver. `toolMeta.ts` pins `icon`
+ * to null for every tool (ADR 005 §6 legal review; the B7 re-sync was measured
+ * impossible on 2026-08-04), so that branch was what every caller actually got,
+ * and it was doing two bad things at once:
+ *
+ *   - Codex and Claude Code both start with C, so the mark separated the two
+ *     agents by HUE ALONE. In a screenshot, at a glance, or to a reader with a
+ *     red-green deficiency it identified nothing.
+ *   - A brand-colored disc holding a letter the vendor never chose is closer to
+ *     a FABRICATED mark than to an absent one, which is the opposite of what
+ *     `toolMeta.ts` claims the fallback buys ("an absent mark is absent, not
+ *     fabricated").
+ *
+ * Removing it costs no information: every one of the five call sites renders the
+ * tool's NAME immediately beside the mark, so nothing here was the sole
+ * identifier of anything. Where the brand hue did work it still does, through
+ * `--agent-brand` on the heading text (AgentsView.module.css).
+ *
+ * The branches below are deliberately kept, and so are the call sites. A
+ * backend-resolved `iconUrl` from evaluation metadata is a live future path,
+ * and if the legal question is ever answered a pinned local mark lights all of
+ * this up again with a one-line change in `toolMeta.ts`. Restoring one still
+ * goes through `docs/reference/vendored-assets.json` and
+ * `npm run vendored-assets:check`.
+ */
 export default function ToolIcon({
   tool,
   website,
   iconUrl,
   favicon,
-  brandColor,
   size = 18,
   monochrome = false,
   className = '',
@@ -101,24 +128,20 @@ export default function ToolIcon({
     );
   }
 
-  // 5. Letter fallback - use brand color from metadata if available, else toolMeta color
-  const fallbackColor = brandColor || meta.color;
-  return (
-    <span
-      className={clsx(classes, styles.fallback)}
-      style={{ width: size, height: size, backgroundColor: fallbackColor }}
-      aria-hidden={ariaHidden}
-    >
-      {meta.label.slice(0, 1)}
-    </span>
-  );
+  // 5. No mark. Render nothing rather than invent one; the caller's label is
+  // what names the tool. See the contract note above this function.
+  return null;
 }
 
 /**
- * The tool identity mark set inline in answer prose — the agent-side mirror of
- * ProjectInline. The mark is em-sized so it tracks whatever prose it sits in,
- * and the pair never breaks across a wrap. Brand color rides the mark only;
- * the label stays ink so prose legibility never depends on a brand hue.
+ * A tool named inside prose. The mark is em-sized so it tracks whatever prose it
+ * sits in, and the name never breaks across a wrap.
+ *
+ * With no mark available this currently renders the name alone, which is the
+ * intended reading: an agent's name is a proper noun that identifies itself,
+ * unlike a project, whose squircle IS its identity because the repo name has no
+ * visual one. Brand color still rides the mark only; the label stays ink so
+ * prose legibility never depends on a vendor hue.
  */
 export function ToolInline({ tool, className }: { tool: string; className?: string }) {
   const meta = getToolMeta(tool);

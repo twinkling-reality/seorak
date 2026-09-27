@@ -219,6 +219,6 @@ them is its own pass.
 ---
 
 *Accurate as of 2026-08-16. `@seorak/types` and `@seorak/dashboard` are on npm
-at 0.1.0; the CLI's last registry release is `@seorak/collector@0.1.1`, under
-the name it has since traded for the unscoped `seorak`. See
+at 0.1.0, and the CLI at `seorak@0.2.0`; `@seorak/collector@0.1.1` is the last
+registry release under the name the CLI has since traded away. See
 [`docs/STATUS.md`](docs/STATUS.md) for ship state that ages faster than this page.*

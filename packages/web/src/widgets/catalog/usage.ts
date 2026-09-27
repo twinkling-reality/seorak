@@ -35,7 +35,7 @@ export const USAGE_WIDGETS: WidgetDef[] = [
     id: 'sessions',
     name: 'sessions',
     description:
-      'How many sessions your agent ran this period. Use it with cost and how sessions ended, not as a score.',
+      'How many sessions your agent ran this period. A session that ran no tool and spent nothing is not counted, so this stays the denominator for the numbers beside it. Use it with cost and how sessions ended, not as a score.',
     category: 'usage',
     scope: 'both',
     viz: 'stat',

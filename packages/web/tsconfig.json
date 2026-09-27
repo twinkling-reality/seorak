@@ -29,6 +29,6 @@
     "lib": ["ES2024", "DOM", "DOM.Iterable"],
     "types": ["vite/client", "vitest/globals"]
   },
-  "include": ["src", "vite.config.ts"],
+  "include": ["dashboard", "src", "vite.config.ts"],
   "exclude": ["dist", "dist-dashboard", "node_modules", "src/marketing", "src/public"]
 }

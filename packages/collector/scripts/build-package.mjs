@@ -18,12 +18,21 @@ const bins = [
 rmSync(outdir, { recursive: true, force: true });
 const result = await build({
   absWorkingDir: packageRoot,
-  entryPoints: Object.fromEntries(
-    bins.map((entry) => [
-      basename(entry, extname(entry)),
-      `bin/${entry}`,
-    ]),
-  ),
+  entryPoints: {
+    ...Object.fromEntries(
+      bins.map((entry) => [
+        basename(entry, extname(entry)),
+        `bin/${entry}`,
+      ]),
+    ),
+    // Its own entry, not a chunk. `new Worker(path)` needs a real file at a
+    // predictable name, and esbuild does not follow `new Worker(new URL(...))`,
+    // so without this line the shipped package spawns nothing and silently
+    // folds every overview on the daemon's main thread instead.
+    // `projectionWorkerEntry` in src/local-projection-thread.ts resolves this exact
+    // name; the two have to move together.
+    "local-projection-worker": "src/local-projection-worker.ts",
+  },
   outdir,
   outExtension: { ".js": ".mjs" },
   entryNames: "[name]",

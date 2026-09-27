@@ -390,6 +390,19 @@
   color: var(--ink);
 }
 
+/* The quiet second half of a row label: the facts that decide an action rather
+ * than name it. Muted and one step down so a list of these reads as one column
+ * of names with evidence attached, not two columns competing. */
+.settingsRowMeta {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--mono);
+  font-size: var(--text-2xs);
+  font-weight: 400;
+  letter-spacing: var(--tracking-stat);
+  color: var(--soft);
+}
+
 .settingsRowSwitch {
   composes: toggle from '../../components/controls/Toggle.module.css';
   display: inline-block;
@@ -555,4 +568,58 @@
 .settingsBoundSelect:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+/* Per-project watch override — one watch, on one project. Sits inside a project
+   row's detail rail, so it inherits that rail's left border and only has to
+   space its own parts. */
+.projectWatch {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 0;
+}
+
+.projectWatchName {
+  font-size: var(--text-sm);
+  color: var(--ink);
+}
+
+/* Inherit / On / Off. A radiogroup rather than a switch because the choice is
+   three-way: "inherit" is a stored state of its own, not the absence of one. */
+.projectWatchChoices {
+  display: inline-flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.projectWatchChoice {
+  height: 26px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--radius-xs);
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+  color: var(--soft);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: background var(--motion-fast) var(--motion);
+}
+
+.projectWatchChoice:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.projectWatchChoice:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.projectWatchChoiceOn {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.projectWatchChoiceOn:hover:not(:disabled) {
+  background: var(--accent);
 }

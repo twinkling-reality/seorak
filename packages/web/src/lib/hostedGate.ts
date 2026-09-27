@@ -25,7 +25,7 @@ export interface HostedGate {
 const CAPABILITY_COPY: Record<string, { title: string; hint: string }> = {
   remoteVisibility: {
     title: 'Reading your history here is a Pro capability',
-    hint: 'Your sessions are still captured and complete on this computer. Pro adds reading them from anywhere — this dashboard and your phone.',
+    hint: 'Your sessions are still captured and complete on this computer. Pro adds reading them from anywhere: this dashboard and your phone.',
   },
   managedSync: {
     title: 'Managed sync is a Pro capability',

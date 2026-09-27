@@ -73,7 +73,7 @@ product including the parts kept private, and says which is which.
 ## Product (pointers only)
 
 Three jobs: period clarity · developer model · away oversight (nudges shipped;
-control parked).
+agent control out of scope, [ADR 008](docs/adr/008-seorak-observes-and-does-not-control-agents.md)).
 
 The local product is complete and account-free: capture, history, the primary
 dashboard, reports, replay, export, and local intervention all run from this tree

@@ -17,9 +17,9 @@ The dashboard reads the plane that served it. `seorak init` remains a supported
 compatibility alias for existing global installs and scripts.
 
 The CLI package was renamed from `@seorak/collector` to the unscoped `seorak`,
-and the commands above require `seorak@0.2.0`, which this repository prepares but
-does not publish. `@seorak/collector@0.1.1` remains the last registry release
-under the old name.
+so the commands above resolve on that name. `seorak@0.2.0` published to npm on
+2026-08-16 with provenance attesting to `twinkling-reality/seorak`.
+`@seorak/collector@0.1.1` remains the last registry release under the old name.
 
 ## What is in it
 

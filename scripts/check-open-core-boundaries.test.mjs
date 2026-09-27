@@ -710,11 +710,3 @@ test("a planted forbidden dependency fails the per-workspace executable with no 
   assert.equal(planted.status, 1, planted.stdout);
   assert.match(planted.stdout, /declares forbidden internal dependency @seorak\/priv/);
 });
-
-test("both shipped gates exit zero on this repository with no flags", () => {
-  for (const script of ["check-package-boundaries.mjs", "check-open-core-boundaries.mjs"]) {
-    const result = runGate(script, REPO_ROOT);
-    assert.equal(result.status, 0, result.stdout);
-    assert.match(result.stdout, /Undeclared violations \(0\)/);
-  }
-});

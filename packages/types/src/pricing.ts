@@ -19,8 +19,17 @@
  * cache multipliers are cacheRead = 0.1× input, cacheWrite (5-min TTL) = 1.25× input;
  * OpenAI has a cached-input read discount (0.1× input) and NO cache-write premium.
  *
- * KEEP CURRENT: Claude rows verified 2026-06-05 (Opus 4.x is a flat $5/$25 across its
- * 1M window, corrected down from the pre-4.6 $15/$75). OpenAI/Codex rows verified
+ * The Claude 5 generation broke the "a minor never changes the price" assumption:
+ * Fable 5.1 cut the cache-read rate to a quarter of Fable 5's, and Opus 5.5 cut every
+ * rate below Opus 5's. So a Claude row covers the minors under it ONLY when it is one
+ * of `CLAUDE_WHOLE_FAMILY_KEYS` (the Claude 4 families, whose minors really did share
+ * one list price). Every other Claude row names ONE version: it matches that id and
+ * its snapshot or context suffixes (`-20260401`, `@20260401`, `[1m]`), never a newer
+ * minor, so an unlisted `claude-opus-5-6` is `unknown-model` rather than silently
+ * inheriting a sibling's rate.
+ *
+ * KEEP CURRENT: Claude rows verified 2026-09-26 against Anthropic's model pricing
+ * table (platform.claude.com/docs/en/about-claude/pricing). OpenAI/Codex rows verified
  * 2026-07-10 (see the table's inline source note).
  */
 
@@ -40,8 +49,26 @@ export interface PricePerMTok {
 // guards the longest-prefix matcher (see below).
 export const MODEL_PRICES: Record<string, PricePerMTok | null> = {
   "claude-opus-4": { in: 5, out: 25, cacheRead: 0.5, cacheWrite: 6.25 },
+  // Opus 4 and 4.1 predate the 4.5 price cut and are still $15/$75 (retired on the
+  // Claude API, still served on Bedrock and Google Cloud). Without these rows the
+  // `claude-opus-4` family priced them at a third of their list rate. Opus 4's only id
+  // is its dated snapshot.
+  "claude-opus-4-20250514": { in: 15, out: 75, cacheRead: 1.5, cacheWrite: 18.75 },
+  "claude-opus-4-1": { in: 15, out: 75, cacheRead: 1.5, cacheWrite: 18.75 },
   "claude-sonnet-4": { in: 3, out: 15, cacheRead: 0.3, cacheWrite: 3.75 },
   "claude-haiku-4": { in: 1, out: 5, cacheRead: 0.1, cacheWrite: 1.25 },
+  // Claude 5 generation, one row per version (see the header). Verified 2026-09-26.
+  // cacheWrite is the 5-minute rate (1.25x input) for every row; cacheRead is 0.1x
+  // input except where Anthropic publishes a deeper multiplier: 0.05x on Opus 5.5,
+  // 0.025x on Fable 5.1 and Mythos 5.1. Sonnet 5's $2/$10 was introductory pricing
+  // at launch and was made the standard price; the announced move to $3/$15 did not
+  // happen.
+  "claude-opus-5": { in: 5, out: 25, cacheRead: 0.5, cacheWrite: 6.25 },
+  "claude-opus-5-5": { in: 4, out: 20, cacheRead: 0.2, cacheWrite: 5 },
+  "claude-sonnet-5": { in: 2, out: 10, cacheRead: 0.2, cacheWrite: 2.5 },
+  "claude-fable-5-1": { in: 10, out: 50, cacheRead: 0.25, cacheWrite: 12.5 },
+  "claude-mythos-5": { in: 10, out: 50, cacheRead: 1, cacheWrite: 12.5 },
+  "claude-mythos-5-1": { in: 10, out: 50, cacheRead: 0.25, cacheWrite: 12.5 },
   // Claude Fable 5. Verified 2026-07-12: $10 in / $50 out per Mtok, with the standard
   // Anthropic cache multipliers (cacheRead 0.1x input, cacheWrite 5-min TTL 1.25x input),
   // the same arithmetic every row above uses.
@@ -84,6 +111,34 @@ export const MODEL_PRICES: Record<string, PricePerMTok | null> = {
   // misprice it at the codex rate. Do not substitute a sibling's price.
   "gpt-5.3-codex-spark": null,
 };
+
+/**
+ * The Claude rows that deliberately cover every minor under them. Only the Claude 4
+ * families qualify: each of their minors shared one list price. Do not add a Claude 5
+ * row here; that generation has already changed price within a family twice.
+ */
+export const CLAUDE_WHOLE_FAMILY_KEYS: ReadonlySet<string> = new Set([
+  "claude-opus-4",
+  "claude-sonnet-4",
+  "claude-haiku-4",
+]);
+
+// What may follow a single-version Claude key and still name that same version: a
+// dated snapshot (`-20260401`, or Vertex's `@20260401`) or a context-window marker
+// (`[1m]`). A further `-<digits>` is a different minor and must not match.
+const SAME_VERSION_SUFFIX = /^(?:-\d{8}(?!\d)|@|\[)/;
+
+/**
+ * Whether the price row `key` applies to `model`. Non-Claude rows and the Claude 4
+ * families match by plain prefix, as they always have. Every other Claude row matches
+ * its own version only (see the file header).
+ */
+function priceKeyCovers(key: string, model: string): boolean {
+  if (!model.startsWith(key)) return false;
+  if (!key.startsWith("claude-") || CLAUDE_WHOLE_FAMILY_KEYS.has(key)) return true;
+  const rest = model.slice(key.length);
+  return rest === "" || SAME_VERSION_SUFFIX.test(rest);
+}
 
 /** Per-model token usage in the canonical (camelCase, event-shaped) form. */
 export interface ModelTokenUsage {
@@ -133,13 +188,13 @@ export function priceModelUsage(
   // declaration order and could swing several-fold silently. The most specific
   // registered family is always the right one.
   //
-  // This is also the mechanism that makes the table scale: a family prefix covers every
-  // minor under it, so `claude-opus-4-8`, `-4-7` and `-4-6` all resolve off ONE row and
-  // a new minor needs no edit at all. Only a genuinely new FAMILY needs a row, and that
-  // is exactly the case `unknown-model` now reports.
+  // For the Claude 4 families a prefix covers every minor under it, so
+  // `claude-opus-4-8`, `-4-7` and `-4-6` all resolve off ONE row. Claude 5 rows are
+  // version-bounded instead (`priceKeyCovers`), so a new Claude 5 minor needs its own
+  // row, and until it has one it reports `unknown-model`, which names the owed row.
   let key: string | undefined;
   for (const k of Object.keys(MODEL_PRICES)) {
-    if (model.startsWith(k) && (key === undefined || k.length > key.length)) key = k;
+    if (priceKeyCovers(k, model) && (key === undefined || k.length > key.length)) key = k;
   }
   if (key === undefined) return { costUsd: 0, priced: false, unpriced: "unknown-model" };
   const p = MODEL_PRICES[key];

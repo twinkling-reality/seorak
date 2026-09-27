@@ -147,6 +147,21 @@
 }
 
 .help,
+/* The loading line, held to the ONE settings convention rather than this file's
+ * own `.empty`. Five panels (Capture, Notifications, Projects, Project archive,
+ * Delivery health) render `Loading…` through `.notifyEmpty` at --text-xs; this
+ * one rendered a BARE <p> with no class at all, so it inherited body size at
+ * full ink and read visibly larger than every sibling. Composed rather than
+ * copied so there stays one definition of what a settings panel looks like
+ * while it waits.
+ *
+ * `.empty` below is deliberately NOT this: it is a real empty STATE ("no
+ * captured projects"), which is a finding, not a wait. */
+.loading {
+  composes: notifyEmpty from './SettingsView.module.css';
+  margin: 0;
+}
+
 .empty {
   margin: 0 0 16px;
   color: var(--muted);

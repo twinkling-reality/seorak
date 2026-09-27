@@ -86,8 +86,22 @@ export const agentRollupSchema: z.ZodType<AgentRollup> = z.object({
 }) as unknown as z.ZodType<AgentRollup>;
 
 // One (agent, day) activity point (tools.agentDaily). PAST ACTIVITY ONLY; lines
-// null on a day whose rows carried no line fields (never {0,0}). tokensTotal is
-// 0 when neither carrier measured tokens that day for this agent.
+// null on a day whose rows carried no line fields (never {0,0}). `tokensTotal`
+// is null when NEITHER carrier measured tokens that day for this agent, and 0
+// only when a carrier measured a real zero — the same honest-empty distinction
+// `lines` makes, and the one both producers emit: the worker's
+// `agentDailyFromBuckets` returns null off `tokensMeasured`, and the collector's
+// local projection starts each bucket at null and only assigns on a measuring
+// carrier. This schema required a number until 2026-08-17, so a single
+// unmeasured day rejected the WHOLE overview and the dashboard rendered no
+// projects at all.
+//
+// No `as unknown as` cast here, deliberately: input and output coincide for this
+// shape, so the annotation alone type-checks, and that catches a wrong-TYPE
+// drift a cast would hide. It does NOT catch this bug's shape — a schema
+// stricter than the contract (`number` where `number | null` is declared) is
+// assignable by output covariance, verified with tsc. Only the null fixture in
+// contract-parity.test.ts catches that, which is why it exists.
 export const agentDailyPointSchema: z.ZodType<AgentDailyPoint> = z.object({
   agent: z.string(),
   day: z.string(),
@@ -95,8 +109,8 @@ export const agentDailyPointSchema: z.ZodType<AgentDailyPoint> = z.object({
   lines: z
     .object({ added: z.number(), removed: z.number() })
     .nullable(),
-  tokensTotal: z.number(),
-}) as unknown as z.ZodType<AgentDailyPoint>;
+  tokensTotal: z.number().nullable(),
+});
 
 export const agentModelRollupSchema: z.ZodType<AgentModelRollup> = z.object({
   agent: z.string(),

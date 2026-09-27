@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { classifyReplayError } from '../replayError.js';
+import { classifyReplayError, replayRefusalMessage } from '../replayError.js';
 
 // DA-14: a 404 from /replay/:id is honest-empty "no keyframes yet" (the KV-backed
 // picker runs ahead of the D1 log), not a load failure. Real errors still show,
@@ -20,6 +20,29 @@ describe('classifyReplayError (DA-14)', () => {
     const err = new Error('Invalid API response (replay)');
     err.name = 'SchemaValidationError';
     expect(classifyReplayError(err)).toBe('error');
+  });
+
+  it('a 413 is a refusal, not a load failure', () => {
+    // The plane declined to materialise an oversized replay rather than
+    // returning a partial one. Printing "failed: 413" would read as a bug in
+    // the product rather than a bound it is honouring.
+    const err = Object.assign(new Error('GET /replay/x failed: 413'), {
+      status: 413,
+      refusal: {
+        error: 'replay too large',
+        detail: 'This session has too many events for one honest replay. No partial timeline was returned.',
+        projectedRows: 10001,
+        maxRows: 10000,
+      },
+    });
+    expect(classifyReplayError(err)).toBe('too-large');
+    expect(replayRefusalMessage(err)).toMatch(/No partial timeline was returned/);
+  });
+
+  it('a 413 with no readable body still says what happened', () => {
+    const err = Object.assign(new Error('GET /replay/x failed: 413'), { status: 413 });
+    expect(classifyReplayError(err)).toBe('too-large');
+    expect(replayRefusalMessage(err)).toMatch(/too many events/);
   });
 
   it('an aborted fetch is ignored', () => {

@@ -180,6 +180,11 @@ jobs:
           npm run bytes:test
           npm run bytes:check
 
+      # Private-only public-tree content scanners (credential signatures and
+      # provisioned resource ids) were never part of this workflow; they were
+      # removed from the private half on 2026-08-22. Font container scanning
+      # remains a private pre-publication tool, not a public CI step.
+
       # The governance files state facts nothing else tests: one contact address
       # across the set, a copyright line that matches every Apache grant, a
       # security window a solo maintainer can hold, and the sign-off enforcement
@@ -203,6 +208,11 @@ jobs:
         run: |
           npm run local-integration-activation:test
           npm run local-integration-activation:check
+
+      - name: Local plane work
+        run: |
+          npm run plane-work:test
+          npm run plane-work:check
 
       - name: Test
         run: |

@@ -92,7 +92,11 @@ export function computeProjects(input: ReplayLensInput): ReplayLensResult {
       formatDuration(Math.round(entry.durationMs / 60_000)),
       formatCost(entry.costUsd),
       entry.attention.toLocaleString(),
-      entry.firstElapsedMs == null ? '—' : formatTimelineAxis(input.timeline, entry.firstElapsedMs),
+      // "First seen" is empty when no session in this project put an item on the
+      // replay timeline at all, so there is no first moment to name.
+      entry.firstElapsedMs == null
+        ? 'none captured'
+        : formatTimelineAxis(input.timeline, entry.firstElapsedMs),
     ],
     cellTones: [undefined, undefined, undefined, attentionTone(entry.attention), undefined],
   }));

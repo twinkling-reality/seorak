@@ -120,6 +120,38 @@ export function localHistoryFixture(): SessionEvent[] {
       reason: "clear",
     },
 
+    // ── MEASURELESS, in the prior window ────────────────────────────────────
+    //
+    // A session that opened and did nothing: `session.start`, `session.end`, no
+    // call between them. The ordinary shape when an agent process boots and
+    // exits without anyone typing, and on one real machine 93% of a day's
+    // sessions had it. `usage.totals.sessions` counts sessions that MEASURED
+    // something, so both engines must refuse this one.
+    //
+    // It sits in the PRIOR window on purpose. `sessionsDelta` has two legs, and
+    // filtering only the current one does not half-fix the count: it compares a
+    // measured window against a process-count baseline, which is a different
+    // question rather than a smaller error. Without a measureless session on
+    // this side, that mistake passes the gate.
+    {
+      kind: "session.start",
+      eventId: "prior-measureless-start",
+      sessionId: "prior-measureless-session",
+      at: at(8, 13),
+      repoId: REPO_A,
+      repoLabel: "seorak",
+      agent: "claude-code",
+      agentVersion: "1.0.0",
+      capabilities: { ...CLAUDE_CAPABILITIES },
+    },
+    {
+      kind: "session.end",
+      eventId: "prior-measureless-end",
+      sessionId: "prior-measureless-session",
+      at: at(8, 13, 1),
+      reason: "other",
+    },
+
     // ── STRADDLING the window start: begun before it, worked inside it ──────
     //
     // The shape a long-running session has whenever the picker lands mid-flight,
@@ -410,6 +442,35 @@ export function localHistoryFixture(): SessionEvent[] {
       sessionId: "claude-session",
       at: at(2, 10, 1),
       reason: "clear",
+    },
+
+    // ── MEASURELESS, in the current window ──────────────────────────────────
+    //
+    // The prior-window twin above, on this side of the boundary, so the current
+    // leg of every count is exercised too: `usage.totals.sessions`,
+    // `sessionsDelta.current`, `usage.dailyTrends[].sessions` and
+    // `activity.hourlyDistribution` all read this shape and all must refuse it.
+    //
+    // Its `session.end` also keeps `outcomes.endReasons` honest. These sessions
+    // DO end, with reason "other", so on a real machine the top end reason was
+    // an artifact of processes nobody ran.
+    {
+      kind: "session.start",
+      eventId: "measureless-start",
+      sessionId: "measureless-session",
+      at: at(2, 11),
+      repoId: REPO_A,
+      repoLabel: "seorak",
+      agent: "claude-code",
+      agentVersion: "1.0.0",
+      capabilities: { ...CLAUDE_CAPABILITIES },
+    },
+    {
+      kind: "session.end",
+      eventId: "measureless-end",
+      sessionId: "measureless-session",
+      at: at(2, 11, 1),
+      reason: "other",
     },
     {
       kind: "session.linesurvival",

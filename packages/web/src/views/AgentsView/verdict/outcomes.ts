@@ -30,7 +30,7 @@ import type { AgentOutcomeRollup, AgentRollup } from '../../../lib/apiSchemas.js
 import { getToolMeta } from '../../../lib/toolMeta.js';
 import { count, fmtCount, formatCost, naturalList } from '../../../lib/voice/index.js';
 
-import { dash, text, type MatrixCell, type MatrixRow } from './cells.js';
+import { blank, text, type MatrixRow } from './cells.js';
 import { rankAgents } from './metrics.js';
 import { mark, note, t, type AgentsNarrativeSegment, type AgentsNote } from './notes.js';
 
@@ -76,13 +76,6 @@ export interface AgentsOutcomes {
   disclosures: string[];
 }
 
-/** An honest-empty cell whose text says WHY. "None" and "unknown" are different
- *  cells (multi-tool Appendix A): a tool that structurally cannot report a number
- *  is not the same as a number we simply do not have yet. */
-function blank(reason: string): MatrixCell {
-  return { text: reason, empty: true };
-}
-
 /**
  * buildAgentsOutcomes — the Outcomes panel.
  *
@@ -113,7 +106,12 @@ export function buildAgentsOutcomes(
       hint: 'Committed lines this tool wrote that are still on the branch, over the committed lines it wrote. Both legs, because a survival percentage on its own hides how much work it is about.',
       cells: agents.map(({ id }) => {
         const o = rowFor(id);
-        if (o === null || o.linesAuthored === 0) return dash();
+        // No outcome row at all means nothing from this tool has cleared the
+        // three-day check yet, which is a different empty from a matured tool that
+        // has simply committed no lines. Both fill in; they fill in from different
+        // things, so they do not share a cell.
+        if (o === null) return blank('not matured yet');
+        if (o.linesAuthored === 0) return blank('no lines yet');
         return text(`${fmtCount(o.linesSurviving)} of ${fmtCount(o.linesAuthored)}`);
       }),
     },
@@ -123,7 +121,7 @@ export function buildAgentsOutcomes(
       hint: `Needs ${fmtCount(AGENT_SURVIVAL_FLOOR.lines)} attributed lines and ${AGENT_SURVIVAL_FLOOR.commits} commits before a percentage means anything. A lower rate means more of that work was changed back later, which is not the same as worse.`,
       cells: agents.map(({ id }) => {
         const o = rowFor(id);
-        if (o === null) return dash();
+        if (o === null) return blank('not matured yet');
         const rate = shownSurvivalRate(o);
         return rate === null ? blank('not enough yet') : text(`${Math.round(rate * 100)}%`);
       }),
@@ -134,7 +132,7 @@ export function buildAgentsOutcomes(
       hint: 'Distinct commits this tool got work into. A tool can carry a lot of lines across very few commits, and a rate over few commits is a small sample however many lines it holds.',
       cells: agents.map(({ id }) => {
         const o = rowFor(id);
-        return o === null ? dash() : text(fmtCount(o.commits));
+        return o === null ? blank('not matured yet') : text(fmtCount(o.commits));
       }),
     },
     {
@@ -146,9 +144,10 @@ export function buildAgentsOutcomes(
         const caps = byAgent.find((a) => a.agent === id)?.capabilities;
         // A tool that structurally cannot report cost says so, whether or not it has
         // outcomes yet: "none" and "unknown" are different cells, and this one will
-        // never fill in, so an anonymous dash would be a promise we cannot keep.
+        // never fill in, so an anonymous placeholder would be a promise we cannot keep.
         if (caps && caps.cost === 'none') return blank('reports no cost');
-        if (o === null || o.costPerSurvivingLine === null) return dash();
+        if (o === null) return blank('not matured yet');
+        if (o.costPerSurvivingLine === null) return blank('unpriced');
         return text(formatCost(o.costPerSurvivingLine, 4));
       }),
     },
@@ -158,9 +157,11 @@ export function buildAgentsOutcomes(
       hint: 'Of every line in the commits this tool landed work in, how many Seorak could place with some tool. The rest are your own hand edits, script-written files, or a gap in capture. Two tools can only be compared when this number is close.',
       cells: agents.map(({ id }) => {
         const o = rowFor(id);
-        if (o === null) return dash();
+        if (o === null) return blank('not matured yet');
         const total = o.coverage.linesInCommits;
-        if (total <= 0) return dash();
+        // No denominator because this tool landed no commits (agentTraceShare), which
+        // is a different empty from "we have no outcome row for it at all" above.
+        if (total <= 0) return blank('no commits yet');
         return text(`${fmtCount(total - o.coverage.linesUnattributed)} of ${fmtCount(total)}`);
       }),
     },

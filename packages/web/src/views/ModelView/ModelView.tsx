@@ -79,7 +79,7 @@ export default function ModelView() {
           eyebrow="Reconnecting"
           actions={[{ label: 'Retry', onClick: refreshModel }]}
         >
-          Showing the last read of your recent work — the latest refresh didn’t land.
+          Showing the last read of your recent work. The latest refresh didn’t land.
         </FloatingBanner>
       )}
 

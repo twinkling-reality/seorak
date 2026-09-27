@@ -224,7 +224,7 @@ export function compilePeriodClarity(
     id: 'volume-sessions',
     facet: 'volume',
     label: 'Sessions',
-    detail: `Activity across ${windowPhrase(days)}. Counts are from captured sessions, not a grade.`,
+    detail: `Activity across ${windowPhrase(days)}. Counts captured sessions that ran a tool or spent something, not a grade.`,
     citations: [
       `${sessionsPhrase} in ${windowPhrase(days)}`,
       `${projectsPhrase} with activity`,

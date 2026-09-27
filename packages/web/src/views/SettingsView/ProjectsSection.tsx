@@ -34,6 +34,10 @@ interface ProjectRow {
   lastEventAt: string;
   sessions: number;
   costUsd: number | null;
+  /** Stamped by the plane from `projectArchive`; absent means active. This is
+   *  the only place an archived project is still listed, which is what makes
+   *  the archive reversible — the label to restore it by lives here. */
+  archived?: boolean;
 }
 
 /** Module-const empty fallback: selecting `overviewData` (a stable store ref) and
@@ -47,7 +51,7 @@ export default function ProjectsSection() {
   const { state, applyChange } = useSettingsSection<ProjectMerges>({
     load: fetchProjectMerges,
     demoData: DEFAULT_PROJECT_MERGES,
-    unavailableReason: 'Worker unreachable — project merging needs a running worker.',
+    unavailableReason: 'Worker unreachable. Project merging needs a running worker.',
     readOnlyNote:
       "This access token can read this worker, but it can't merge projects. Sign in with the worker's owner token to make changes here.",
     logLabel: 'project merges',
@@ -102,7 +106,7 @@ export default function ProjectsSection() {
     const patch: Record<string, string> = {};
     for (const r of rows) if (r.repoId !== canonical) patch[r.repoId] = canonical;
     const optimistic: ProjectMerges = { byRepo: { ...state.data.byRepo, ...patch } };
-    write(optimistic, { byRepo: patch }, 'Merged — the cards fold on the next refresh.');
+    write(optimistic, { byRepo: patch }, 'Merged. The cards fold on the next refresh.');
   }
 
   function mergeManual(): void {
@@ -113,7 +117,7 @@ export default function ProjectsSection() {
     write(
       optimistic,
       { byRepo: patch },
-      'Merged — the cards fold on the next refresh.',
+      'Merged. The cards fold on the next refresh.',
       workspace?.mode === 'workspace'
         ? async () => {
             await claimWorkspaceProject({
@@ -137,7 +141,7 @@ export default function ProjectsSection() {
     if (state.kind !== 'ready') return;
     const patch: Record<string, string | null> = {};
     for (const key of Object.keys(state.data.byRepo)) patch[key] = null;
-    write({ byRepo: {} }, { byRepo: patch }, 'Unmerged — the cards split on the next refresh.');
+    write({ byRepo: {} }, { byRepo: patch }, 'Unmerged. The cards split on the next refresh.');
   }
 
   if (state.kind === 'unavailable') {
@@ -165,7 +169,7 @@ export default function ProjectsSection() {
             <div className={styles.settingsRow} style={{ cursor: 'default' }}>
               <span className={styles.settingsRowLabel}>
                 “{label}” is {rows.length} cards ({rows.reduce((n, r) => n + (r.sessions || 0), 0)}{' '}
-                sessions) — likely one project.
+                sessions), likely one project.
               </span>
               <OutlineActionButton
                 size="sm"
@@ -269,6 +273,7 @@ export default function ProjectsSection() {
       ) : null}
 
       {state.note ? <span className={styles.feedback}>{state.note}</span> : null}
+
     </div>
   );
 }

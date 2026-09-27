@@ -73,7 +73,21 @@ const WEB_ROOT = import.meta.dirname;
  * unchanged. This is a boundary change that happens to weigh less, not a
  * performance change.
  */
-const DASHBOARD_ENTRY_CEILING = 688_000;
+/*
+ * Raised 2026-09-09, 688,000 to 706,000, for `thinking-orbs` in the loader.
+ *
+ * Measured at the change: entry:index 697,925 raw, which is 9,925 over the old
+ * ceiling. The library is 22,930 bytes raw / 7,738 gzip on disk and cannot be
+ * trimmed to the one state we render: `MODE_FRAMES` and `MODE_DRAWS` in its
+ * engine registry are `Record<ModeKey, ...>` literals holding all nine modes, so
+ * importing `ThinkingOrb` pulls every mode whatever `state` is passed. It has to
+ * sit in the entry chunk rather than a lazy one, because it is what renders
+ * WHILE the lazy chunks load.
+ *
+ * The new ceiling keeps roughly the previous headroom (8,075 bytes) rather than
+ * tracking the measurement exactly, so ordinary drift does not trip the guard.
+ */
+const DASHBOARD_ENTRY_CEILING = 706_000;
 
 /**
  * What the dashboard artifact carries out of `public/`, named explicitly rather

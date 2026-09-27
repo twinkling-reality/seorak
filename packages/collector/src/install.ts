@@ -404,7 +404,7 @@ export function installHooks(options: InstallOptions = {}): InstallResult {
 
   for (const binFile of new Set(Object.values(EVENT_BINS))) {
     if (!existsSync(join(binDir, binFile))) {
-      throw new Error(`missing hook script: ${join(binDir, binFile)} — run from a full checkout.`);
+      throw new Error(`missing hook script: ${join(binDir, binFile)}. Run from a full checkout.`);
     }
   }
 

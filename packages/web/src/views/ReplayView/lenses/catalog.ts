@@ -63,7 +63,7 @@ export const REPLAY_LENSES: ReplayLensDef[] = [
     id: 'rework',
     name: 'Rework',
     description:
-      'Work the agent changed back within the session — where effort was spent and then discarded.',
+      'Work the agent changed back within the session, where effort was spent and then discarded.',
     question: 'attention',
     viz: 'timeline-marks',
     dataKeys: ['moments.undoKind', 'moments.at'],
@@ -75,7 +75,7 @@ export const REPLAY_LENSES: ReplayLensDef[] = [
     id: 'verification',
     name: 'Checks',
     description:
-      'Verification runs over time and whether they passed — whether checks went red, and whether they came back.',
+      'Verification runs over time and whether they passed: whether checks went red, and whether they came back.',
     question: 'attention',
     viz: 'timeline-marks',
     dataKeys: ['moments.verificationKind', 'moments.verificationPassed', 'moments.at'],
@@ -99,7 +99,7 @@ export const REPLAY_LENSES: ReplayLensDef[] = [
     id: 'cadence',
     name: 'Cadence',
     description:
-      'How the gaps between captured moments were distributed — whether the work ran in bursts or in stalls.',
+      'How the gaps between captured moments were distributed, whether the work ran in bursts or in stalls.',
     question: 'what-happened',
     viz: 'distribution',
     dataKeys: ['moments.at'],

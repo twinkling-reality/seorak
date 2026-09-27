@@ -166,7 +166,12 @@ describe('Sidebar primary navigation', () => {
     expect(badge).not.toBeNull();
     expect(badge?.tagName).toBe('DIV');
     expect(container.querySelector('a[href$="/homes"]')).toBeNull();
-    expect(badge?.textContent).toContain('Private history');
+    // The name STANDS ALONE. This used to read "Personal / Private history",
+    // but that second line was the default state restating the product's
+    // premise in permanent chrome, and Settings already carries that claim.
+    // The Shared case above still asserts its subtitle, which is the one that
+    // changes what you would believe about whose sessions these are.
+    expect(badge?.textContent?.trim()).toBe('Personal');
     unmount();
   });
 

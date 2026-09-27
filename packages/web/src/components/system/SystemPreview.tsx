@@ -15,12 +15,12 @@ import { SystemFault } from './SystemFault.js';
 import { SystemError } from './SystemError.js';
 
 const VARIANTS: { slug: string; label: string }[] = [
-  { slug: 'loader', label: 'Loader — indeterminate (no number)' },
-  { slug: 'loader-progress', label: 'Loader — determinate (62%, checklist)' },
+  { slug: 'loader', label: 'Loader: indeterminate (no number)' },
+  { slug: 'loader-progress', label: 'Loader: determinate (62%, checklist)' },
   { slug: 'mini', label: 'Mini loader (inline / centered fallback)' },
-  { slug: 'notfound', label: 'Not found — PAGE LOST (404)' },
-  { slug: 'fault', label: 'Error boundary — SYSTEM FAULT' },
-  { slug: 'inline', label: 'Inline error — CONNECTION LOST' },
+  { slug: 'notfound', label: 'Not found: PAGE LOST (404)' },
+  { slug: 'fault', label: 'Error boundary: SYSTEM FAULT' },
+  { slug: 'inline', label: 'Inline error: CONNECTION LOST' },
 ];
 
 const wrap: CSSProperties = {

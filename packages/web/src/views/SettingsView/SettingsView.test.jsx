@@ -956,7 +956,7 @@ describe('SettingsView', () => {
     // `?section=` pointing elsewhere in the shared jsdom URL.
     await selectSettingsSection(container, 'Profile');
 
-    expect(container.textContent).not.toContain('Private integration access');
+    expect(container.textContent).not.toContain('Private integrations');
     // The rest of Profile is untouched: this withholds one panel, not the tab.
     expect(container.querySelector('[data-tab="profile"]')).not.toBeNull();
     expect(container.querySelector('[aria-label="Edit username"]')).not.toBeNull();
@@ -971,7 +971,7 @@ describe('SettingsView', () => {
     await flushEffects();
     await selectSettingsSection(container, 'Profile');
 
-    expect(container.textContent).toContain('Private integration access');
+    expect(container.textContent).toContain('Private integrations');
 
     unmount();
   });
@@ -987,7 +987,7 @@ describe('SettingsView', () => {
     await flushEffects();
     await selectSettingsSection(container, 'Profile');
 
-    expect(container.textContent).toContain('Private integration access');
+    expect(container.textContent).toContain('Private integrations');
 
     unmount();
   });

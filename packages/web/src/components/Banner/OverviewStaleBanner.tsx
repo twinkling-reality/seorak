@@ -13,7 +13,7 @@ export default function OverviewStaleBanner({
       eyebrow="Reconnecting"
       actions={[{ label: 'Retry', onClick: forceRefresh }]}
     >
-      Showing the last loaded snapshot — the latest refresh didn’t land.
+      Showing the last loaded snapshot. The latest refresh didn’t land.
     </FloatingBanner>
   );
 }

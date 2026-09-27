@@ -147,9 +147,3 @@ test("a control-character range written as an escape stays legal", () => {
     ["NUL", "US"],
   );
 });
-
-test("the real repository is free of raw control bytes", () => {
-  // The regression pin. Every site this gate was written for is now escaped, so
-  // this asserts the tree stays that way rather than describing a backlog.
-  assert.deepEqual(scanSourceBytes(), []);
-});

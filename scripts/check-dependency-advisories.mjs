@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
 import { createHash } from "node:crypto";
+import { tmpdir } from "node:os";
 import { readFileSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const REPO_ROOT = resolve(import.meta.dirname, "..");
@@ -56,6 +57,56 @@ const compareStrings = (left, right) =>
  * coverage; loosening is the edit that has to be deliberate.
  */
 export const INFORMATIONAL_FIELDS = Object.freeze(["effects", "fixAvailable"]);
+
+/**
+ * THE AUDIT RUNS UNDER THE npm THE BASELINE RECORDS, NOT WHATEVER IS ON PATH.
+ *
+ * `range` is not a GHSA field. For a carried edge it is computed locally, by
+ * `Advisory[_calculateRange]` in `@npmcli/metavuln-calculator`, which walks
+ * contiguous runs of versions its `[_testSpec]` marked vulnerable. That
+ * predicate changed in metavuln-calculator 9.0.1, first shipped in npm 11.5.0:
+ *
+ *   before   const satisfies = semver.satisfies(v, spec)
+ *   after    const satisfies = semver.satisfies(v, spec, semverOpt)
+ *
+ * `semverOpt` carries `includePrerelease`, so the newer npm can find a
+ * prerelease escape the older one cannot, and one contiguous vulnerable run
+ * splits in two. Measured on this repository on 2026-09-09, the same lockfile
+ * and the same installed tree:
+ *
+ *   npm 10.9.8  @react-navigation/native-stack  range "<=7.18.10"
+ *               graphSha256 0bea469db650e543...
+ *   npm 11.12.1 @react-navigation/native-stack  range "<=5.0.4 || 6.0.0-next.1 - 7.18.10"
+ *               graphSha256 1f883139fcfbbc96...
+ *
+ * Proven to be that one line: patching it into npm 10.9.8 and changing nothing
+ * else reproduces npm 11's hash exactly. node is NOT the variable; node 22.23.2
+ * running npm 11.12.1 reproduces the npm 11 hash.
+ *
+ * That made the gate green in one place and red in the other with no dependency
+ * change anywhere: CI pins `node-version: "22"`, whose bundled npm was 10.9.8,
+ * while this repository's author runs 11.12.1. A claim whose value depends on
+ * which npm asked is not a claim two machines can agree on.
+ *
+ * THE FIX IS TO PIN THE DERIVATION, NOT TO STOP ASSERTING THE FIELD. Excluding
+ * `range` was considered and rejected: ten of the twenty-six entries carry a
+ * range derived from GHSA `vulnerable_versions` and six of those differ from
+ * npm's rollup, so dropping it would take real advisory news out of the
+ * comparison to fix an environment split. Asserting the ambient npm and failing
+ * on a mismatch was also rejected: `advisories:check` is chained into the root
+ * `test` script, so that hard stop would fire on the everyday command every time
+ * Homebrew moved npm, and this repository's own gates argue that a gate which
+ * fails correct code gets weakened rather than obeyed.
+ *
+ * WHAT IT COSTS, said plainly. When the ambient npm is not the recorded one the
+ * gate fetches that npm from the registry through `npx`, by exact version but
+ * with no integrity hash of its own. That is the same registry this project
+ * already trusts for every dependency, minus the lockfile pin, inside the gate
+ * whose subject is dependency risk. It is a real cost and it is why the ambient
+ * npm is used directly whenever it already matches: on the author's machine
+ * nothing is fetched, and only a runner whose bundled npm differs pays it.
+ */
+const NPX_PIN_ARGS = Object.freeze(["-y", "npm@"]);
 
 export class DependencyAdvisoryPolicyError extends Error {
   constructor(message) {
@@ -302,6 +353,7 @@ export function informationalDrift(entries, expectedEntries) {
 export function advisoryBaseline(
   report,
   measuredAt = new Date().toISOString().slice(0, 10),
+  derivedWith = null,
 ) {
   const normalized = normalizeAuditReport(report);
   const vulnerabilities = Object.fromEntries(
@@ -317,13 +369,20 @@ export function advisoryBaseline(
   }
 
   return {
-    // 2 is the schema whose `graphSha256` covers the advisory claim rather than
-    // the whole report. A version 1 baseline hashed npm's remediation
-    // attribution with it and cannot be compared against this one, so it is
-    // refused by name instead of failing as a mismatch nobody can re-triage.
-    schemaVersion: 2,
+    // 3 is the schema that records WHICH npm derived the claim. A version 2
+    // baseline hashed the same fields but left the derivation environment
+    // undeclared, and `range` on a carried edge is npm-version dependent, so a
+    // version 2 baseline cannot be compared without knowing what produced it.
+    // A version 1 baseline hashed npm's remediation attribution as well. Both
+    // are refused by name rather than failing as a mismatch nobody can
+    // re-triage.
+    schemaVersion: 3,
     auditReportVersion: 2,
     measuredAt,
+    // Metadata, deliberately OUTSIDE `comparableBaseline`: it says how the claim
+    // was produced, not what the claim is. Comparing it would fail a baseline
+    // that agrees about every advisory purely because the recorded npm moved.
+    derivedWith: { npm: derivedWith },
     vulnerabilities: {
       ...vulnerabilities,
       total: normalized.length,
@@ -347,20 +406,66 @@ function comparableBaseline(baseline) {
   };
 }
 
+/** Human-readable claim differences between measured and reviewed baselines. */
+export function describeBaselineDiff(actual, expected) {
+  const lines = [];
+  const aVuln = actual.vulnerabilities ?? {};
+  const eVuln = expected.vulnerabilities ?? {};
+  for (const key of [...SEVERITIES, "total"]) {
+    if (aVuln[key] !== eVuln[key]) {
+      lines.push(`vulnerabilities.${key}: baseline ${eVuln[key]}, measured ${aVuln[key]}`);
+    }
+  }
+  const actualByName = new Map((actual.entries ?? []).map((entry) => [entry.name, entry]));
+  const expectedByName = new Map((expected.entries ?? []).map((entry) => [entry.name, entry]));
+  for (const name of expectedByName.keys()) {
+    if (!actualByName.has(name)) lines.push(`entry removed: ${name}`);
+  }
+  for (const name of actualByName.keys()) {
+    if (!expectedByName.has(name)) lines.push(`entry added: ${name}`);
+  }
+  for (const [name, measured] of actualByName) {
+    const baseline = expectedByName.get(name);
+    if (baseline === undefined) continue;
+    const measuredClaim = JSON.stringify(advisoryIdentity([measured])[0]);
+    const baselineClaim = JSON.stringify(advisoryIdentity([baseline])[0]);
+    if (measuredClaim !== baselineClaim) {
+      lines.push(`entry changed: ${name}`);
+      lines.push(`  baseline: ${baselineClaim}`);
+      lines.push(`  measured: ${measuredClaim}`);
+    }
+  }
+  if (actual.graphSha256 !== expected.graphSha256) {
+    lines.push(
+      `graphSha256: baseline ${expected.graphSha256}, measured ${actual.graphSha256}`,
+    );
+  }
+  lines.push(
+    "Inspect the live claim with: node scripts/check-dependency-advisories.mjs --print-baseline",
+  );
+  return lines;
+}
+
 export function assertAdvisoryBaseline(report, expected) {
-  if (expected?.schemaVersion !== 2) {
+  if (expected?.schemaVersion !== 3) {
     throw new DependencyAdvisoryPolicyError(
       "dependency advisory baseline has an unsupported schema",
     );
   }
-  const actual = advisoryBaseline(report, expected.measuredAt);
+  const actual = advisoryBaseline(
+    report,
+    expected.measuredAt,
+    expected.derivedWith?.npm ?? null,
+  );
   if (
     JSON.stringify(comparableBaseline(actual)) !==
     JSON.stringify(comparableBaseline(expected))
   ) {
+    const detail = describeBaselineDiff(actual, expected).join("\n  ");
     throw new DependencyAdvisoryPolicyError(
       "npm advisory graph differs from the reviewed baseline; re-triage " +
-        "dependency reachability before updating the baseline and posture document",
+        "dependency reachability before updating the baseline and posture document\n  " +
+        detail,
     );
   }
   return {
@@ -369,8 +474,78 @@ export function assertAdvisoryBaseline(report, expected) {
   };
 }
 
-function runNpmAudit() {
-  const result = spawnSync("npm", NPM_AUDIT_ARGS, {
+/** The npm on PATH, or null when it cannot be asked. */
+export function ambientNpmVersion(spawn = spawnSync) {
+  const result = spawn("npm", ["--version"], {
+    cwd: REPO_ROOT,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+    timeout: 30_000,
+  });
+  if (result.error || result.status !== 0) return null;
+  const version = String(result.stdout ?? "").trim();
+  return /^\d+\.\d+\.\d+/.test(version) ? version : null;
+}
+
+/**
+ * A cache directory owned by one npm version, never the ambient one.
+ *
+ * PINNING THE BINARY IS NOT ENOUGH, and the first version of this shipped
+ * believing it was. `@npmcli/metavuln-calculator` writes each advisory it
+ * COMPUTES into the npm cache, and a later npm reads that entry back rather
+ * than recomputing it. So the claim is a function of two things, the npm and
+ * the cache, and whichever npm populated the cache wins whatever runs later.
+ *
+ * Measured 2026-09-10 against the same lockfile, `@react-navigation/native-stack`:
+ *
+ *   npm 10.9.8, this machine's warm cache   <=5.0.4 || 6.0.0-next.1 - 7.18.10
+ *   npm 10.9.8, cold cache                  <=7.18.10
+ *   npm 11.12.1, cold cache                 <=5.0.4 || 6.0.0-next.1 - 7.18.10
+ *
+ * The first row is npm 10 returning npm 11's answer out of the cache. That is
+ * exactly what happened in CI when only the binary was pinned: `actions/setup-node`
+ * restores an npm cache that earlier runs populated under node 22's npm 10, and
+ * the pinned npm 11 read those entries straight back.
+ *
+ * So the cache is keyed by the recorded version. Changing the pin therefore
+ * changes the directory, which is what stops a stale computation outliving the
+ * npm that made it. It lives under the OS temp directory rather than in the
+ * repository: a developer keeps it between runs and pays the fetch once, and a
+ * fresh CI runner starts cold, which is correct rather than merely acceptable.
+ */
+export function auditCacheDirectory(version, root = tmpdir()) {
+  return join(root, `seorak-advisory-cache-npm-${version ?? "ambient"}`);
+}
+
+/**
+ * How to invoke the audit so that it answers as `pinned` did.
+ *
+ * The npm BINARY is left alone when the ambient one already is the recorded
+ * one, which keeps the registry fetch off the developer's every run. The CACHE
+ * is version-keyed either way, because the ambient cache is shared with every
+ * other npm that has ever run on the machine and is the second half of the
+ * derivation.
+ */
+export function auditInvocation(pinned, ambient, root = tmpdir()) {
+  const cache = ["--cache", auditCacheDirectory(pinned ?? ambient, root)];
+  if (pinned === null || pinned === undefined || pinned === ambient) {
+    return { command: "npm", args: [...NPM_AUDIT_ARGS, ...cache], pinned: false };
+  }
+  return {
+    command: "npx",
+    args: [
+      NPX_PIN_ARGS[0],
+      `${NPX_PIN_ARGS[1]}${pinned}`,
+      ...NPM_AUDIT_ARGS,
+      ...cache,
+    ],
+    pinned: true,
+  };
+}
+
+function runNpmAudit(pinned = null) {
+  const invocation = auditInvocation(pinned, ambientNpmVersion());
+  const result = spawnSync(invocation.command, invocation.args, {
     cwd: REPO_ROOT,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
@@ -379,7 +554,11 @@ function runNpmAudit() {
   });
   if (result.error || (result.status !== 0 && result.status !== 1)) {
     throw new DependencyAdvisoryPolicyError(
-      "npm audit could not produce a dependency report",
+      invocation.pinned
+        ? `npm audit could not produce a dependency report under the recorded npm ${pinned}. ` +
+          "The baseline names the npm it was derived with; a runner that cannot fetch it " +
+          "cannot check this claim."
+        : "npm audit could not produce a dependency report",
     );
   }
   try {
@@ -398,12 +577,19 @@ function isMain() {
 
 if (isMain()) {
   try {
-    const report = runNpmAudit();
-    if (
+    const writing =
       process.argv.includes("--print-baseline") ||
-      process.argv.includes("--write-baseline")
-    ) {
-      const rendered = `${JSON.stringify(advisoryBaseline(report), null, 2)}\n`;
+      process.argv.includes("--write-baseline");
+    // Writing DERIVES a new claim, so it runs under the npm the operator is
+    // actually holding and records that version. Checking COMPARES an existing
+    // claim, so it runs under the npm that claim names. Reading the baseline
+    // before the audit is what makes the second possible.
+    const reviewed = writing
+      ? null
+      : JSON.parse(readFileSync(BASELINE_PATH, "utf8"));
+    const report = runNpmAudit(writing ? null : reviewed?.derivedWith?.npm ?? null);
+    if (writing) {
+      const rendered = `${JSON.stringify(advisoryBaseline(report, undefined, ambientNpmVersion()), null, 2)}\n`;
       if (process.argv.includes("--write-baseline")) {
         writeFileSync(BASELINE_PATH, rendered, "utf8");
         console.log(`Wrote reviewed advisory baseline to ${BASELINE_PATH}`);
@@ -411,7 +597,7 @@ if (isMain()) {
         process.stdout.write(rendered);
       }
     } else {
-      const expected = JSON.parse(readFileSync(BASELINE_PATH, "utf8"));
+      const expected = reviewed;
       const actual = assertAdvisoryBaseline(report, expected);
       console.log(
         `Dependency advisory policy passed: ${actual.vulnerabilities.total} ` +

@@ -12,6 +12,7 @@ import {
   PUBLIC_PROFILE_FIELDS,
   PUBLIC_PROJECT_EVIDENCE_FIELDS,
   PUBLIC_PROJECT_FIELDS,
+  parsePrivateSessionResolveInput,
   type IntegrationCredentialIssueRequest,
   type PrivatePeriodDto,
   type PublicProfilePublicationDto,
@@ -95,6 +96,7 @@ test("private MCP publishes one closed read-only catalog and scope map", () => {
     "list_sessions",
     "get_session_outcome",
     "replay_lens",
+    "resolve_session",
   ]);
   assert.deepEqual(
     PRIVATE_MCP_TOOL_CATALOG.map(({ name }) => name),
@@ -105,6 +107,7 @@ test("private MCP publishes one closed read-only catalog and scope map", () => {
     list_sessions: "sessions:read",
     get_session_outcome: "sessions:read",
     replay_lens: "replay:read",
+    resolve_session: "sessions:read",
   });
 
   for (const tool of PRIVATE_MCP_TOOL_CATALOG) {
@@ -230,4 +233,33 @@ test("the external contract declares no internal identifier-shaped fields", () =
   const forbiddenProperty = /^\s*(?:readonly\s+)?(?:owner|member|session|repo|device|tenant)Id\??\s*:/gim;
   assert.doesNotMatch(source, forbiddenProperty);
   assert.doesNotMatch(source, /\brawEvents?\??\s*:/i);
+});
+
+test("a resolve request is exactly an agent and a native id, parsed strictly", () => {
+  const uuid = "0f7c1a52-3b9e-4d1a-9f2e-6c0b8d4e1a27";
+  assert.deepEqual(parsePrivateSessionResolveInput({ agent: "claude-code", nativeSessionId: uuid }), {
+    agent: "claude-code",
+    nativeSessionId: uuid,
+  });
+  assert.deepEqual(
+    parsePrivateSessionResolveInput({ agent: "codex", nativeSessionId: uuid })?.agent,
+    "codex",
+  );
+  for (const refused of [
+    null,
+    [],
+    "claude-code",
+    {},
+    { agent: "claude-code" },
+    { nativeSessionId: uuid },
+    { agent: "cursor", nativeSessionId: uuid },
+    { agent: "claude-code", nativeSessionId: "" },
+    { agent: "claude-code", nativeSessionId: "../etc/passwd" },
+    { agent: "claude-code", nativeSessionId: "a".repeat(257) },
+    { agent: "claude-code", nativeSessionId: 42 },
+    { agent: "claude-code", nativeSessionId: uuid, sessionRef: "ses_" + "a".repeat(32) },
+  ]) {
+    assert.equal(parsePrivateSessionResolveInput(refused), null, JSON.stringify(refused));
+  }
+  assert.ok(parsePrivateSessionResolveInput({ agent: "codex", nativeSessionId: "a".repeat(256) }));
 });

@@ -291,6 +291,11 @@ export const seorakRoutes = {
     const query = params.toString();
     return query ? `/api/v1/sessions?${query}` : "/api/v1/sessions";
   },
+  /**
+   * Versioned third-party resolve of a known native session identity (ADR 007).
+   * POST, so the native id travels in the body and never in a URL or access log.
+   */
+  privateSessionResolve: (): string => "/api/v1/sessions/resolve",
   /** Versioned third-party content-free session outcome. */
   privateSessionOutcome: (sessionRef: string): string =>
     `/api/v1/sessions/${encodeURIComponent(sessionRef)}/outcome`,

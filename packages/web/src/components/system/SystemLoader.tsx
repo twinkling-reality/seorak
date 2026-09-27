@@ -13,6 +13,7 @@
  */
 
 import { useEffect, useState, type ReactNode } from 'react';
+import { ThinkingOrb } from 'thinking-orbs';
 import {
   SegmentedRing,
   ShimmerWord,
@@ -110,9 +111,14 @@ export function SystemLoader({ progress }: { progress?: number }): ReactNode {
       </span>
     </span>
   ) : (
-    <span className={styles.sweepTrack}>
-      <span className={reduce ? `${styles.sweepFill} ${styles.sweepStatic}` : styles.sweepFill} />
-    </span>
+    /* The indeterminate slot carries an orb, not the old sweeping line. A line
+     * that fills reads as progress even when it measures nothing, which is the
+     * one thing this path must not imply. `breathing` is the state that makes
+     * no claim: the nine states are semantic, and rendering `solving` while a
+     * lazy chunk resolves would invent an activity the loader cannot observe.
+     * `theme="auto"` watches the `data-theme` attribute useTheme already sets,
+     * so it follows the theme switch with no wiring of its own. */
+    <ThinkingOrb state="breathing" size={20} theme="auto" paused={reduce} aria-label="Loading" />
   );
 
   return (
@@ -147,11 +153,17 @@ export function SystemMiniLoader({
   size?: number;
   center?: boolean;
 }): ReactNode {
-  // The mini ring keeps its own light scaffold (no facet field / bottom bar), so
-  // it can sit inside any container without taking over the viewport.
+  // The mini loader keeps its own light scaffold (no facet field / bottom bar),
+  // so it can sit inside any container without taking over the viewport.
+  //
+  // The orb ships exactly two tuned sizes, 64 and 20, which are separate designs
+  // rather than one design scaled, so an arbitrary `size` is snapped to the
+  // nearer of the two instead of being passed through and silently ignored.
+  const reduce = useReducedMotion();
+  const orbSize = size >= 40 ? 64 : 20;
   return (
     <div className={center ? styles.miniCenter : styles.mini} role="status" aria-live="polite" aria-label={label ?? 'Loading'}>
-      <SegmentedRing size={size} accent="live" />
+      <ThinkingOrb state="breathing" size={orbSize} theme="auto" paused={reduce} aria-hidden />
       {label ? <span className={styles.miniLabel}>{label}</span> : null}
     </div>
   );

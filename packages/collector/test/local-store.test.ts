@@ -6,10 +6,12 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { SessionEvent } from "@seorak/types";
 import {
   appendLocalEvent,
+  DISPLAYABLE_SESSION_SQL,
   importLegacyEventLog,
   listLocalSessions,
   localHistoryCounts,
   LOCAL_HISTORY_SCHEMA_VERSION,
+  MEASURED_SESSION_SQL,
   openLocalHistory,
   replayLocalSession,
 } from "../src/local-store.ts";
@@ -309,5 +311,122 @@ describe("permanent local history", () => {
     expect(replayLocalSession("session-1", dir)).toMatchObject([
       { kind: "session.start" },
     ]);
+  });
+
+  it("cuts measured sessions on an axis ORTHOGONAL to displayable ones", () => {
+    // Two predicates, two different jobs, and the whole point is that neither
+    // implies the other. `DISPLAYABLE_SESSION_SQL` refuses a row nobody ever
+    // ran: `projectEvent` opens a `local_session` for ANY unseen session id and
+    // fills `repo_id` with an empty string, so an event that arrives without a
+    // `session.start` manufactures a row. `MEASURED_SESSION_SQL` refuses a real
+    // session that did nothing — the Claude Desktop spawn that starts, calls no
+    // tool, and stops.
+    //
+    // All four corners exist below, because a fixture holding only the diagonal
+    // passes with the two folded into one.
+    const dir = directory();
+    const events: SessionEvent[] = [
+      // displayable AND measured: an ordinary session.
+      {
+        kind: "session.start",
+        eventId: "both-start",
+        sessionId: "b-both",
+        at: "2026-08-01T12:00:00.000Z",
+        repoId: "a".repeat(64),
+        repoLabel: "seorak",
+        agent: "claude-code",
+        agentVersion: "1.0.0",
+      },
+      {
+        kind: "tool.call",
+        eventId: "both-call",
+        sessionId: "b-both",
+        at: "2026-08-01T12:01:00.000Z",
+        toolName: "Read",
+        inputTokens: 10,
+        outputTokens: 5,
+        cacheReadTokens: 2,
+        cacheWriteTokens: 1,
+        costUsd: 0.01,
+        errored: false,
+      },
+      // displayable, NOT measured: started, called nothing, ended.
+      {
+        kind: "session.start",
+        eventId: "idle-start",
+        sessionId: "c-displayable-only",
+        at: "2026-08-01T12:02:00.000Z",
+        repoId: "b".repeat(64),
+        repoLabel: "atlas",
+        agent: "claude-code",
+        agentVersion: "1.0.0",
+      },
+      {
+        kind: "session.end",
+        eventId: "idle-end",
+        sessionId: "c-displayable-only",
+        at: "2026-08-01T12:03:00.000Z",
+        reason: "other",
+      },
+      // measured, NOT displayable: a call whose `session.start` never arrived,
+      // so the row it opened carries an empty `repo_id`.
+      {
+        kind: "tool.call",
+        eventId: "orphan-call",
+        sessionId: "d-measured-only",
+        at: "2026-08-01T12:04:00.000Z",
+        toolName: "Read",
+        inputTokens: 10,
+        outputTokens: 5,
+        cacheReadTokens: 2,
+        cacheWriteTokens: 1,
+        costUsd: 0.01,
+        errored: false,
+      },
+      // neither.
+      {
+        kind: "session.end",
+        eventId: "orphan-end",
+        sessionId: "e-neither",
+        at: "2026-08-01T12:05:00.000Z",
+        reason: "other",
+      },
+    ];
+    for (const event of events) appendLocalEvent(event, dir);
+
+    const database = openLocalHistory(dir);
+    try {
+      const ids = (sql: string): string[] =>
+        database
+          .prepare(
+            `SELECT session_id FROM local_session WHERE ${sql} ORDER BY session_id`,
+          )
+          .all()
+          .map((row) => String((row as { session_id?: unknown }).session_id));
+
+      expect(ids(MEASURED_SESSION_SQL)).toEqual(["b-both", "d-measured-only"]);
+      expect(ids(DISPLAYABLE_SESSION_SQL)).toEqual([
+        "b-both",
+        "c-displayable-only",
+      ]);
+      // Each predicate keeps a row the other throws away. Fold one into the
+      // other and one of these two lists goes empty.
+      expect(
+        ids(`${MEASURED_SESSION_SQL} AND NOT (${DISPLAYABLE_SESSION_SQL})`),
+      ).toEqual(["d-measured-only"]);
+      expect(
+        ids(`${DISPLAYABLE_SESSION_SQL} AND NOT (${MEASURED_SESSION_SQL})`),
+      ).toEqual(["c-displayable-only"]);
+    } finally {
+      database.close();
+    }
+
+    // And the ROW COUNT is untouched by any of it: `localHistoryCounts`
+    // describes the database, not the work, so the session that measured
+    // nothing is still one of its sessions and still one of its completed ones.
+    expect(localHistoryCounts(dir)).toMatchObject({
+      sessions: 2,
+      completedSessions: 1,
+    });
   });
 });

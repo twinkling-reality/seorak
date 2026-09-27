@@ -28,7 +28,9 @@ import { repoIdentityLedgerPath } from "../src/paths.ts";
 import {
   emptyRepoIdentityLedger,
   loadRepoIdentityLedger,
+  neverRepoIdsIn,
   type RepoDiscriminators,
+  type RepoIdentityEntry,
   REPO_IDENTITY_LEDGER_VERSION,
   resolveIdentityPure,
   saveRepoIdentityLedger,
@@ -516,5 +518,63 @@ describe("repoIdentity end to end (git.ts call site)", () => {
     expect(
       (JSON.parse(readFileSync(path, "utf8")) as { entries: unknown[] }).entries,
     ).toHaveLength(1);
+  });
+});
+
+/**
+ * The classifier behind the "Outside a repo" fold. Every case here was taken
+ * from a real 36-entry ledger, including the one that makes the rule two
+ * anchors instead of one.
+ */
+describe("neverRepoIdsIn", () => {
+  const entry = (over: Partial<RepoIdentityEntry>): RepoIdentityEntry => ({
+    repoId: "id",
+    repoLabel: "label",
+    origins: [],
+    toplevels: ["/somewhere"],
+    ...over,
+  });
+
+  function idsFrom(entries: RepoIdentityEntry[]): Set<string> {
+    return neverRepoIdsIn({ version: REPO_IDENTITY_LEDGER_VERSION, entries });
+  }
+
+  it("folds an identity that never carried a root key or an origin", () => {
+    // A home directory, /tmp, or a folder named after a prompt fragment. The
+    // label stands for "named after the person", so it must not BE a person:
+    // this package publishes to npm, and the public tree has to read as
+    // somebody else's too. The assertion keys on repoId, not on this.
+    const ids = idsFrom([entry({ repoId: "home", repoLabel: "user" })]);
+    expect([...ids]).toEqual(["home"]);
+  });
+
+  it("does NOT fold a repo whose root key was unreadable but has an origin", () => {
+    // THE CASE THAT SETS THE RULE. `rootKey` is absent for a non-git dir AND for
+    // an empty/shallow/evicted repo, so keying on it alone would file a real
+    // project as "not a project" and hide it. Measured: one entry in a real
+    // ledger looked exactly like this.
+    const ids = idsFrom([
+      entry({ repoId: "degraded", origins: ["git@github.com:me/thing"] }),
+    ]);
+    expect(ids.has("degraded")).toBe(false);
+  });
+
+  it("does NOT fold a repo with a root key", () => {
+    const ids = idsFrom([entry({ repoId: "real", rootKey: "abc" })]);
+    expect(ids.has("real")).toBe(false);
+  });
+
+  it("does not fold a repo carrying both anchors", () => {
+    const ids = idsFrom([
+      entry({ repoId: "both", rootKey: "abc", origins: ["git@github.com:me/thing"] }),
+    ]);
+    expect(ids.size).toBe(0);
+  });
+
+  it("folds nothing when the ledger is empty, so a lost ledger hides no project", () => {
+    // buildLocalOverviewOn falls back to this when the ledger is absent or
+    // unusable. Showing every directory as its own project is the recoverable
+    // failure; hiding a real one is not.
+    expect(neverRepoIdsIn(emptyRepoIdentityLedger()).size).toBe(0);
   });
 });

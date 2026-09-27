@@ -17,6 +17,7 @@ import {
   bearerHeader,
   coerceCaptureSettings,
   coerceNotificationSettings,
+  coerceProjectArchive,
   coerceProjectMerges,
   coerceProjectThemes,
   conditionalGetHeaders,
@@ -28,6 +29,7 @@ import {
   type NotificationSettings,
   type OverviewSnapshot,
   type PaletteToken,
+  type ProjectArchive,
   type ProjectMerges,
   type ProjectThemes,
   type SessionPage,
@@ -39,11 +41,19 @@ import {
 } from '@seorak/types';
 
 /** A partial NotificationSettings write — the same SPARSE shape the worker
- *  deep-merges server-side (any subset of signals / quietHours / perProject). */
+ *  deep-merges server-side (any subset of signals / quietHours / perProject).
+ *
+ *  `null` at any depth is the worker's DELETE tombstone. It has to be spelled
+ *  out here because omission already means "leave this alone", and a per-project
+ *  override is inherited by being absent — so returning one to inherited is a
+ *  deletion, and a patch that merely omits it merges back into the stored value
+ *  and changes nothing. See `deepMerge` in the worker's notificationSettings.ts. */
+type Tombstoned<T> = { [K in keyof T]?: T[K] extends object ? Tombstoned<T[K]> | null : T[K] | null };
+
 type NotificationSettingsPatch = {
-  signals?: Partial<NotificationSettings['signals']>;
+  signals?: Tombstoned<NotificationSettings['signals']>;
   quietHours?: Partial<NotificationSettings['quietHours']>;
-  perProject?: Partial<NotificationSettings['perProject']>;
+  perProject?: Tombstoned<NotificationSettings['perProject']>;
   workspaceDelivery?: NotificationSettings['workspaceDelivery'];
 };
 
@@ -81,8 +91,24 @@ async function getJson(path: string, options: FetchOptions = {}): Promise<unknow
   if (options.signal) init.signal = options.signal;
   const res = await fetch(`${API_BASE}${path}`, init);
   if (!res.ok) {
-    const err = new Error(`GET ${path} failed: ${res.status}`) as Error & { status: number };
+    const err = new Error(`GET ${path} failed: ${res.status}`) as Error & {
+      status: number;
+      refusal?: unknown;
+    };
     err.status = res.status;
+    // A REFUSAL carries its reason in the body, and a status code alone throws
+    // that reason away. Both planes answer 413 with `detail`, `projectedRows`
+    // and `maxRows` for a read they declined to serve partially, so keeping the
+    // body is what lets a view say what was refused instead of printing a
+    // number. Only for 413: every other failure here is a status, not a message.
+    if (res.status === 413) {
+      try {
+        err.refusal = await res.json();
+      } catch {
+        // A refusal that is not JSON is still a refusal; the caller falls back
+        // to its own wording.
+      }
+    }
     throw err;
   }
   return res.json();
@@ -589,6 +615,24 @@ export function fetchProjectMerges(options: FetchOptions = {}): Promise<ProjectM
 
 export function updateProjectMerges(patch: ProjectMergesPatch): Promise<ProjectMerges> {
   return putSettingsFamily('projectMerges', patch, coerceProjectMerges);
+}
+
+/** A project-archive patch: repoId → the archive entry, or null to RESTORE it
+ *  (the coerce drops a null, and an entry with no parseable `archivedAt` too, so
+ *  a corrupt row resolves to "not archived" — the state that shows you more). */
+type ProjectArchivePatch = {
+  byRepo: Record<string, { archivedAt: string } | null>;
+};
+
+/** Put a project away without deleting a thing. Distinct from a merge: a merge
+ *  says two cards are ONE project, an archive says this project is real but not
+ *  one you are working on. */
+export function fetchProjectArchive(options: FetchOptions = {}): Promise<ProjectArchive> {
+  return getSettingsFamily('projectArchive', coerceProjectArchive, options);
+}
+
+export function updateProjectArchive(patch: ProjectArchivePatch): Promise<ProjectArchive> {
+  return putSettingsFamily('projectArchive', patch, coerceProjectArchive);
 }
 
 export type {

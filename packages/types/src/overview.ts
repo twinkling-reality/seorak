@@ -120,6 +120,28 @@ export interface UsageSnapshot {
    *  `live[].tokens.*` (inherited from SessionSummary) for any future tokens
    *  widget. */
   totals: {
+    /**
+     * Sessions that MEASURED something: a tool call, or a priced session carrier.
+     *
+     * This is the denominator of the panel it sits in. `toolCalls` and
+     * `cost.totalUsd` beside it count only sessions that did work, and a surface
+     * divides one by the other, so a session that produced neither would make
+     * this the only member able to see it and every rate beside it wrong by the
+     * size of the class. The rule is the one `outcomes.oneShotRate` already
+     * carries ("ended sessions that ran a named tool") applied to the last member
+     * that was missing it.
+     *
+     * It is NOT a claim about who opened the session. A start hook fires when an
+     * agent process boots, before anyone has typed, and nothing on
+     * `SessionStartEvent` says why it launched, so a developer who opened a
+     * session and closed it without typing is excluded for exactly the same
+     * reason another program's short-lived process is. Counting is the only
+     * question being answered; attribution is not.
+     *
+     * The permanent local record is untouched and still holds every row. A
+     * surface that reports this number is expected to SAY what it counts, the
+     * same obligation project archiving carries.
+     */
     sessions: number;
     toolCalls: number;
     /** Period-over-period session count (ADR-WS4/WS5). Both legs are distinct
@@ -250,9 +272,46 @@ export interface RepoWorkMix {
   sessionDurationMedianSeconds?: number | null;
 }
 
+/**
+ * The one row that carries work done OUTSIDE any git repository.
+ *
+ * An agent run in a home directory, in `/tmp`, or in a folder whose name is a
+ * prompt fragment is not a project, and listing each as one buries the real
+ * projects: a measured local record had 24 project rows of which 10 were this.
+ * But the work is real tokens and real time, so it is FOLDED here rather than
+ * discarded — honest-empty means not fabricating, not deleting.
+ *
+ * Every project-scoped leg on this row is honest by construction: none of the
+ * git-derived measures (line survival, ship rate, commit attribution) can exist
+ * for a non-repo, so they read empty here for the same reason they read empty
+ * anywhere else — nothing measured them.
+ *
+ * The id is a fixed sentinel rather than a salted hash so it is stable across
+ * machines and restarts, which is what lets per-project settings (theme,
+ * archive) key off it like any other row. Its 64-hex shape matches a real
+ * `repoId` so no surface needs a special case to render it.
+ */
+export const NON_REPO_PROJECT_ID = "0".repeat(64);
+
+/** Label for `NON_REPO_PROJECT_ID`. Names the boundary that was crossed rather
+ *  than the directories involved, because the directories are the noise. */
+export const NON_REPO_PROJECT_LABEL = "Outside a repo";
+
 export interface ProjectRollup {
   project: string;       // basename (display label)
   repoId: string;        // salted per-repo id — the grouping key; never the path
+  /**
+   * Set when the owner archived this project (`projectArchive`). Project LISTS
+   * hide it; Settings still shows it, which is what makes the archive
+   * reversible — a restore control needs the label, and the label only exists
+   * on this rollup.
+   *
+   * STAMPED, not filtered out at the source, deliberately. Dropping the row
+   * would mean the surface that offers "restore" has nothing but a repoId to
+   * name it by, and its window totals would silently stop matching the global
+   * ones. Absent means active: nothing is hidden until you hide it.
+   */
+  archived?: boolean;
   // Per-repo window rollups. Overview merges all repos; Project and period
   // Compare scope to one row; explicit repo A/B reads two rows side-by-side.
   sessions: number;

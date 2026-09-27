@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "author": "Twinkling Reality",
   "private": true,
-  "description": "Performance tracking for agentic development",
+  "description": "Performance tracking for agentic development (public core)",
   "workspaces": [
     "packages/*"
   ],
@@ -41,7 +41,9 @@
     "publication:test": "node --test scripts/check-publication-packages.test.mjs",
     "local-integration-activation:check": "node scripts/check-local-integration-activation.mjs",
     "local-integration-activation:test": "node --test scripts/check-local-integration-activation.test.mjs",
-    "test": "npm run gate-coverage:test && npm run gate-coverage:check && npm run git-isolation:test && npm run git-isolation:check && npm run test-timeouts:test && npm run test-timeouts:check && npm run bytes:test && npm run bytes:check && npm run copy:test && npm run copy:check && npm run local-artifacts:test && npm run local-artifacts:check && npm run advisories:test && npm run advisories:check && npm run boundaries:test && npm run boundaries:check && npm run types-boundary:test && npm run types-boundary:check && npm run union-parity:test && npm run union-parity:check && npm run coverage:test && npm run publication:test && npm run publication:check && npm run local-integration-activation:test && npm run local-integration-activation:check && npm run open-core:test && npm run open-core:check && npm run file-set:test && npm run governance:test && npm run governance:check && npm run vendored-assets:test && npm run vendored-assets:check && npm run test --workspaces --if-present",
+    "plane-work:check": "node scripts/check-plane-work.mjs",
+    "plane-work:test": "node --test scripts/check-plane-work.test.mjs",
+    "test": "npm run gate-coverage:test && npm run gate-coverage:check && npm run git-isolation:test && npm run git-isolation:check && npm run test-timeouts:test && npm run test-timeouts:check && npm run bytes:test && npm run bytes:check && npm run copy:test && npm run copy:check && npm run local-artifacts:test && npm run local-artifacts:check && npm run advisories:test && npm run advisories:check && npm run boundaries:test && npm run boundaries:check && npm run types-boundary:test && npm run types-boundary:check && npm run union-parity:test && npm run union-parity:check && npm run coverage:test && npm run publication:test && npm run publication:check && npm run local-integration-activation:test && npm run local-integration-activation:check && npm run plane-work:test && npm run plane-work:check && npm run open-core:test && npm run open-core:check && npm run file-set:test && npm run governance:test && npm run governance:check && npm run vendored-assets:test && npm run vendored-assets:check && npm run test --workspaces --if-present",
     "typecheck": "npm run build:publish --workspace @seorak/types && npm run typecheck --workspaces --if-present",
     "check": "npm run typecheck && npm run test",
     "build:dashboard": "npm --workspace @seorak/web run build:dashboard",

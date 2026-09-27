@@ -59,7 +59,9 @@ function formatValue(value: number, format: CompareFormat): string {
 }
 
 function formatDelta(item: CompareMetric): string {
-  if (item.deltaPct == null) return item.bValue > 0 ? 'new' : '—';
+  // A null delta means the A side was zero. If B is zero too, neither period had
+  // any of this, which is a fact and not a missing number.
+  if (item.deltaPct == null) return item.bValue > 0 ? 'new' : 'neither';
   if (item.deltaPct === 0) return 'no change';
   const pct = Math.abs(item.deltaPct * 100);
   const sign = item.deltaPct > 0 ? '+' : '−';

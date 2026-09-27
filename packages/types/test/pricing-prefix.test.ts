@@ -78,3 +78,57 @@ test("gpt-5.3-codex-spark is a KNOWN family with no price: honest-unpriced, neve
   assert.ok("gpt-5.3-codex-spark" in MODEL_PRICES);
   assert.equal(MODEL_PRICES["gpt-5.3-codex-spark"], null);
 });
+
+test("Claude 5 generation rows price at their own published rates", () => {
+  // 1M tokens of each kind, so each cost equals the published USD/Mtok rate. Verified
+  // 2026-09-26 against Anthropic's model pricing table. Literal numbers on purpose:
+  // comparing against MODEL_PRICES would pass whatever the table said.
+  const cases: Array<[string, PricePerMTok]> = [
+    ["claude-opus-5", { in: 5, out: 25, cacheRead: 0.5, cacheWrite: 6.25 }],
+    ["claude-opus-5-5", { in: 4, out: 20, cacheRead: 0.2, cacheWrite: 5 }],
+    ["claude-sonnet-5", { in: 2, out: 10, cacheRead: 0.2, cacheWrite: 2.5 }],
+    ["claude-fable-5", { in: 10, out: 50, cacheRead: 1, cacheWrite: 12.5 }],
+    ["claude-fable-5-1", { in: 10, out: 50, cacheRead: 0.25, cacheWrite: 12.5 }],
+    ["claude-mythos-5", { in: 10, out: 50, cacheRead: 1, cacheWrite: 12.5 }],
+    ["claude-mythos-5-1", { in: 10, out: 50, cacheRead: 0.25, cacheWrite: 12.5 }],
+    ["claude-haiku-4-5", { in: 1, out: 5, cacheRead: 0.1, cacheWrite: 1.25 }],
+    ["claude-opus-4-1", { in: 15, out: 75, cacheRead: 1.5, cacheWrite: 18.75 }],
+    ["claude-opus-4-20250514", { in: 15, out: 75, cacheRead: 1.5, cacheWrite: 18.75 }],
+  ];
+  for (const [model, rate] of cases) {
+    const leg = (usage: Partial<Record<"inputTokens" | "outputTokens" | "cacheReadTokens" | "cacheWriteTokens", number>>) =>
+      priceModelUsage(model, usage);
+    assert.equal(leg({ inputTokens: M }).costUsd, rate.in, `${model} input`);
+    assert.equal(leg({ outputTokens: M }).costUsd, rate.out, `${model} output`);
+    assert.equal(leg({ cacheReadTokens: M }).costUsd, rate.cacheRead, `${model} cache read`);
+    assert.equal(leg({ cacheWriteTokens: M }).costUsd, rate.cacheWrite, `${model} cache write`);
+  }
+});
+
+test("a Claude 5 row prices its own snapshot and context suffixes", () => {
+  for (const model of ["claude-opus-5[1m]", "claude-opus-5-20260401", "claude-opus-5@20260401"]) {
+    const r = priceModelUsage(model, { inputTokens: M });
+    assert.equal(r.priced, true, model);
+    assert.equal(r.costUsd, 5, model);
+  }
+  assert.equal(priceModelUsage("claude-opus-5-5[1m]", { inputTokens: M }).costUsd, 4);
+  assert.equal(priceModelUsage("claude-opus-4-1-20250805", { inputTokens: M }).costUsd, 15);
+});
+
+test("an unlisted Claude 5 minor is unknown, never a sibling's rate", () => {
+  // Opus 5.5 changed price within its family, so a future minor must not inherit
+  // Opus 5's rate by prefix. It reports unknown-model, naming the owed row.
+  for (const model of ["claude-opus-5-6", "claude-sonnet-5-1", "claude-fable-5-2", "claude-opus-5-55"]) {
+    const r = priceModelUsage(model, { inputTokens: M });
+    assert.equal(r.priced, false, model);
+    assert.equal(r.unpriced, "unknown-model", model);
+    assert.equal(r.costUsd, 0, model);
+  }
+});
+
+test("the Claude 4 families still cover their minors by prefix", () => {
+  assert.equal(priceModelUsage("claude-opus-4-8[1m]", { inputTokens: M }).costUsd, 5);
+  assert.equal(priceModelUsage("claude-opus-4-5-20251101", { inputTokens: M }).costUsd, 5);
+  assert.equal(priceModelUsage("claude-sonnet-4-6", { inputTokens: M }).costUsd, 3);
+  assert.equal(priceModelUsage("claude-haiku-4-5-20251001", { inputTokens: M }).costUsd, 1);
+});

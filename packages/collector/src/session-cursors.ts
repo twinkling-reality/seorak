@@ -10,6 +10,7 @@ import {
 } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { collectorDir, sessionCursorDatabasePath } from "./paths.ts";
+import { applyWalJournal } from "./sqlite-journal.ts";
 
 const SESSION_CURSOR_SCHEMA_VERSION = 1;
 const SQLITE_BUSY_TIMEOUT_MS = 5_000;
@@ -140,11 +141,9 @@ function openCursorDatabase(): DatabaseSync {
 
   const database = new DatabaseSync(path);
   try {
-    database.exec(`
-      PRAGMA busy_timeout = ${SQLITE_BUSY_TIMEOUT_MS};
-      PRAGMA journal_mode = DELETE;
-      PRAGMA synchronous = FULL;
-    `);
+    database.exec(`PRAGMA busy_timeout = ${SQLITE_BUSY_TIMEOUT_MS};`);
+    applyWalJournal(database);
+    database.exec(`PRAGMA synchronous = FULL;`);
     const readVersion = (): number => {
       const row = database.prepare("PRAGMA user_version").get() as
         | { user_version?: unknown }

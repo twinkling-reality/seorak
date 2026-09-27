@@ -1,6 +1,8 @@
 import {
   INTEGRATION_REPLAY_LENSES,
+  parsePrivateSessionResolveInput,
   type IntegrationScope,
+  type PrivateSessionResolveInput,
 } from "@seorak/types";
 import {
   authorizeLocalIntegrationCredential,
@@ -17,6 +19,7 @@ import {
   queryLocalPrivateOutcome,
   queryLocalPrivatePeriod,
   queryLocalPrivateReplayLens,
+  queryLocalPrivateResolveSession,
   queryLocalPrivateSessions,
 } from "./local-private-queries.ts";
 import {
@@ -77,6 +80,8 @@ function audit(
       ? "list_sessions"
       : route.route === "outcome"
       ? "get_session_outcome"
+      : route.route === "resolve"
+      ? "resolve_session"
       : "replay_lens",
     result,
     httpStatus: response.status,
@@ -96,6 +101,52 @@ function resultKind(value: unknown): "ok" | "unavailable" {
   return availability?.state === "unavailable" ? "unavailable" : "ok";
 }
 
+/** The raw body of a request that carries one. Only the resolve read does. */
+export interface LocalPrivateApiBody {
+  readonly contentType: string | undefined;
+  /** Null when the body exceeded the route's byte bound. */
+  readonly bytes: Buffer | null;
+}
+
+/**
+ * Parse a resolve body, or say why it is refused. The status separates the three
+ * failures a client can fix differently: too large, wrong media type, wrong shape.
+ */
+function resolveInput(
+  body: LocalPrivateApiBody | undefined,
+): { ok: true; input: PrivateSessionResolveInput } | { ok: false; response: LocalPrivateHttpResponse } {
+  if (body === undefined || body.bytes === null) {
+    return { ok: false, response: { status: 413, value: { error: "resolve request body too large" } } };
+  }
+  const mediaType = body.contentType?.split(";")[0]?.trim().toLowerCase();
+  if (mediaType !== "application/json") {
+    return {
+      ok: false,
+      response: { status: 415, value: { error: "resolve request body must be application/json" } },
+    };
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(body.bytes.toString("utf8"));
+  } catch {
+    parsed = undefined;
+  }
+  const input = parsePrivateSessionResolveInput(parsed);
+  if (input === null) {
+    return {
+      ok: false,
+      response: {
+        status: 400,
+        value: {
+          error:
+            "resolve request must be exactly { agent: \"claude-code\" | \"codex\", nativeSessionId }",
+        },
+      },
+    };
+  }
+  return { ok: true, input };
+}
+
 function cursorRefusal(error: unknown): boolean {
   return error instanceof InvalidLocalIntegrationCursorError ||
     error instanceof LocalIntegrationAuthorityChangedError ||
@@ -108,7 +159,7 @@ export function handleLocalPrivateApi(
   route: ApiRoute,
   authorization: string | undefined,
   audience: string,
-  options: { directory?: string; now?: () => Date } = {},
+  options: { directory?: string; now?: () => Date; body?: LocalPrivateApiBody } = {},
 ): LocalPrivateHttpResponse {
   const now = options.now?.() ?? new Date();
   const admission = authorizeLocalIntegrationCredential(authorization, {
@@ -162,6 +213,20 @@ export function handleLocalPrivateApi(
           limit,
           cursor: route.url.searchParams.get("cursor"),
         }),
+      };
+    } else if (route.route === "resolve") {
+      const parsed = resolveInput(options.body);
+      if (!parsed.ok) {
+        response = parsed.response;
+        audit(principal, route, response, "protocol_error", {
+          ...queryOptions,
+          nowMs: now.getTime(),
+        });
+        return response;
+      }
+      response = {
+        status: 200,
+        value: queryLocalPrivateResolveSession(principal, parsed.input, queryOptions),
       };
     } else if (route.route === "outcome") {
       response = {

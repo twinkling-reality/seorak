@@ -328,7 +328,7 @@ function VerificationWidget({ overview, capture }: WidgetBodyProps) {
       <StripFaceHead
         value="none"
         caption="checks failed"
-        titleHint="On Claude Code, passing runs aren't separately reported — counts failures only, not a pass rate."
+        titleHint="On Claude Code, passing runs aren't separately reported. Counts failures only, not a pass rate."
       />
     );
   }

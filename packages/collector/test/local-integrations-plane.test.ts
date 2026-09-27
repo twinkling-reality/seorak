@@ -170,6 +170,73 @@ describe("mounted loopback private integrations", () => {
     }
   });
 
+  it("resolves a native session identity over HTTP and MCP to one identical DTO", async () => {
+    const dir = directory();
+    const clock = { value: FIXTURE_NOW };
+    const base = await serve(dir, clock);
+    const apiCredential = await issue(base, "api");
+    const mcpCredential = await issue(base, "mcp");
+    const identity = { agent: "claude-code", nativeSessionId: "claude-session" };
+
+    const post = (body: string, contentType = "application/json") =>
+      fetch(`${base}/api/v1/sessions/resolve`, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${apiCredential.secret}`,
+          "content-type": contentType,
+        },
+        body,
+      });
+
+    const response = await post(JSON.stringify(identity));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("application/json");
+    const resolved = await response.json() as {
+      session: { sessionRef: string; launcher: string | null } | null;
+    };
+    expect(resolved.session?.sessionRef).toMatch(/^ses_[0-9a-f]{32}$/);
+    expect(resolved.session?.launcher).toBeNull();
+    expect(JSON.stringify(resolved)).not.toContain("claude-session");
+
+    // The ref it hands back is the one the session page shows.
+    const sessions = await (await api(
+      base,
+      apiCredential.secret,
+      "/api/v1/sessions?limit=100",
+    )).json() as { items: Array<{ sessionRef: string }> };
+    expect(sessions.items.map((item) => item.sessionRef)).toContain(
+      resolved.session!.sessionRef,
+    );
+
+    expect((await post("x".repeat(2048))).status).toBe(413);
+    expect((await post(JSON.stringify(identity), "text/plain")).status).toBe(415);
+    expect((await post("{}")).status).toBe(400);
+    expect((await fetch(`${base}/api/v1/sessions/resolve`, {
+      headers: { authorization: `Bearer ${apiCredential.secret}` },
+    })).status).toBe(405);
+
+    const client = new Client(
+      { name: "seorak-mounted-loopback-resolve-test", version: "1.0.0" },
+      { versionNegotiation: { mode: { pin: "2026-07-28" } } },
+    );
+    const transport = new StreamableHTTPClientTransport(
+      new URL(`${base}/mcp/private`),
+      {
+        authProvider: { token: async () => mcpCredential.secret },
+        onInsufficientScope: "throw",
+      },
+    );
+    try {
+      await client.connect(transport);
+      expect(structured(await client.callTool({
+        name: "resolve_session",
+        arguments: identity,
+      }))).toEqual(resolved);
+    } finally {
+      await client.close();
+    }
+  });
+
   it("revokes a one-time secret when its response closes before delivery", async () => {
     const dir = directory();
     const created = createLocalIntegrationCredential({

@@ -14,7 +14,7 @@ import { REPLAY_SESSION_REQUEST_MAX } from '@seorak/types';
 import type { ReplaySession, SessionSummary } from '../lib/apiSchemas.js';
 import { replaySessionSchema, validateResponse } from '../lib/apiSchemas.js';
 import { fetchReplay, fetchSessions } from '../lib/api.js';
-import { classifyReplayError } from '../lib/replayError.js';
+import { classifyReplayError, replayRefusalMessage } from '../lib/replayError.js';
 import { getDemoData, buildDemoReplay } from '../lib/demo/index.js';
 import { pooledMap } from '../lib/pooledMap.js';
 import { useDemoScenario } from './useDemoScenario.js';
@@ -151,6 +151,11 @@ export function useReplay(sessionId: string | null): UseReplayResult {
             setReplay(null);
             setError(null);
             break;
+          case 'too-large':
+            // The plane refused rather than truncating, so say so in its words.
+            setError(replayRefusalMessage(err));
+            setReplay(null);
+            break;
           case 'error':
             setError((err as Error).message || 'Failed to load replay');
             setReplay(null);
@@ -223,6 +228,14 @@ export function useReplays(sessionIds: string[]): ReplayLoadState[] {
           case 'ignore':
           case 'no-keyframes':
             return { sessionId, replay: null, isLoading: false, error: null };
+          case 'too-large':
+            // The plane refused rather than truncating, so say so in its words.
+            return {
+              sessionId,
+              replay: null,
+              isLoading: false,
+              error: replayRefusalMessage(err),
+            };
           case 'error':
             return {
               sessionId,

@@ -37,7 +37,7 @@ function NarrowDashboardNotice(): ReactNode {
         </div>
         <h1 className={styles.title}>This dashboard needs a wider screen</h1>
         <p className={styles.body}>
-          The overview and detail panels need a laptop or tablet landscape — about{' '}
+          The overview and detail panels need a laptop or tablet landscape, about{' '}
           {DASHBOARD_SHELL_MIN_WIDTH_PX}px or wider.
         </p>
         <a className={styles.marketLink} href="/">

@@ -766,7 +766,7 @@ function cmdHome(
       return 1;
     }
     console.log(
-      `✓ active home — ${selected.home.name} (${selected.home.kind === "workspace" ? "Shared workspace" : "Personal"})`,
+      `✓ active home: ${selected.home.name} (${selected.home.kind === "workspace" ? "Shared workspace" : "Personal"})`,
     );
     console.log(`  run \`${currentCollectorInvocation()} setup\` to point capture at this home`);
     return 0;
@@ -792,7 +792,7 @@ function cmdHome(
     const marker = active?.home?.id === home.id ? "●" : "○";
     const label =
       home.kind === "workspace" ? "Shared workspace" : "Personal";
-    console.log(`${marker} ${home.name} — ${label} (${home.id})`);
+    console.log(`${marker} ${home.name} (${label}, ${home.id})`);
   }
   console.log(`\nSwitch with \`${currentCollectorInvocation()} home <name-or-id>\`.`);
   return 0;
@@ -1456,6 +1456,14 @@ env:
   SEORAK_RECOVERY_TOKEN  one-time recovery grant for \`seorak recovery download\`
   SEORAK_DIR          collector state dir (default ~/.seorak)
   SEORAK_SETTINGS     hook-install target (default ~/.claude/settings.json)
+  SEORAK_CAPTURE      set 0 in the environment of an agent you SPAWN and every
+                      Seorak hook it fires records nothing, so a program that
+                      runs coding agents of its own (\`claude -p\` for a build
+                      step, an enrichment pass, a bot) keeps those invocations
+                      out of your session history. Unset captures normally.
+  SEORAK_LAUNCHER     a short label a program sets in the environment of an
+                      agent it launches on your behalf: the session is kept and
+                      counted as usual, and carries the label locally.
 `;
 
 /**

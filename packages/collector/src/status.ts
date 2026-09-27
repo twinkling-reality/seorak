@@ -32,6 +32,7 @@ import {
 } from "./capture-failure.ts";
 import { codexSessionsRoot, codexTailEnabled } from "./codex-tailer.ts";
 import { loadSavedConnection } from "./connection.ts";
+import { hookCaptureEnabled } from "./hook-capture.ts";
 import {
   readCurrentEventRejections,
   type CurrentEventRejections,
@@ -167,6 +168,28 @@ export function evaluateHeartbeat(writtenMs: number | null, nowMs: number, stale
  */
 export function isDaemonWedged(service: ServiceCheck, heartbeat: HeartbeatCheck): boolean {
   return !service.unsupported && service.loaded && heartbeat.present && !heartbeat.fresh;
+}
+
+export type CaptureSwitch = "on" | "off";
+
+/**
+ * evaluateCaptureSwitch: PURE. `SEORAK_CAPTURE=0` makes every installed hook
+ * exit having recorded nothing, which looks identical to a broken install: the
+ * hooks line still reads 6/6 bound, the events log just stops growing. So the
+ * checklist says it out loud, the same way it says the Codex tailer is off.
+ *
+ * Reported for the eye, never for the exit code: refusing to capture is a thing
+ * someone asked for, not a fault. Only the "off" state prints, because the ✓/•
+ * lines around it already describe a capturing install and a permanent
+ * an always-on "capture" line would say nothing the reader did not have.
+ *
+ * Honest about its reach: this reads the environment of THIS process, so it
+ * answers for the shell you typed the command in. A program that sets the
+ * variable only for the agents it spawns is invisible here, correctly, because
+ * it has not turned off capture for your own sessions.
+ */
+export function evaluateCaptureSwitch(enabled: boolean): CaptureSwitch {
+  return enabled ? "on" : "off";
 }
 
 export type CodexState = "tailing" | "off" | "no-root";
@@ -311,6 +334,12 @@ export interface StatusReportInput {
    * two builds. Optional so a caller built before this field keeps compiling.
    */
   skewedHookPaths?: Array<{ event: string; path: string }>;
+  /**
+   * Whether `SEORAK_CAPTURE` leaves the installed hooks free to record in this
+   * environment. Optional so a caller built before this field keeps compiling,
+   * and absent reads as "on", which prints nothing.
+   */
+  captureSwitch?: CaptureSwitch;
   service: ServiceCheck;
   /** Optional so a caller built before this field keeps compiling; absent simply
    *  prints no runtime line. */
@@ -365,42 +394,51 @@ export function buildStatusReport(input: StatusReportInput): StatusReport {
 
   if (input.activeHome) {
     lines.push(
-      `• home — ${input.activeHome.name} (${input.activeHome.kind === "workspace" ? "Shared workspace" : "Personal"})`,
+      `• home: ${input.activeHome.name} (${input.activeHome.kind === "workspace" ? "Shared workspace" : "Personal"})`,
     );
   }
 
   // hooks (critical): valid JSON, all six bound, none pointing at a dead path.
   let hooksOk = false;
   if (!input.settingsValid) {
-    lines.push(`✘ hooks — ${input.settingsPath} is not valid JSON. Fix or restore it (look for a .bak next to it), then run \`${cmd} setup\`.`);
+    lines.push(`✘ hooks: ${input.settingsPath} is not valid JSON. Fix or restore it (look for a .bak next to it), then run \`${cmd} setup\`.`);
   } else if (!input.hooks.ok) {
     const missing = input.hooks.missing.join(", ");
     const pronoun = input.hooks.missing.length === 1 ? "it" : "them";
-    lines.push(`✘ hooks — ${input.hooks.present.length}/${totalEvents} bound (missing ${missing}). Run \`${cmd} setup\` to add ${pronoun}.`);
+    lines.push(`✘ hooks: ${input.hooks.present.length}/${totalEvents} bound (missing ${missing}). Run \`${cmd} setup\` to add ${pronoun}.`);
   } else if (input.staleHookPaths.length > 0) {
     const stalePath = input.staleHookPaths[0]!.path;
-    lines.push(`✘ hooks — ${totalEvents}/${totalEvents} bound, but they point at a missing checkout (${stalePath}). Run \`${cmd} setup\` from the current checkout to re-point them.`);
+    lines.push(`✘ hooks: ${totalEvents}/${totalEvents} bound, but they point at a missing checkout (${stalePath}). Run \`${cmd} setup\` from the current checkout to re-point them.`);
   } else if (input.skewedHookPaths && input.skewedHookPaths.length > 0) {
     // Bound, present, and WRONG: the scripts exist, but they belong to a build
     // the service is not running. Capture is split until setup re-points them.
     const skewed = input.skewedHookPaths[0]!.path;
     lines.push(
-      `✘ hooks — ${totalEvents}/${totalEvents} bound, but they run a different install than the service (${skewed}). Run \`${cmd} setup\` to re-point them.`,
+      `✘ hooks: ${totalEvents}/${totalEvents} bound, but they run a different install than the service (${skewed}). Run \`${cmd} setup\` to re-point them.`,
     );
   } else {
     hooksOk = true;
-    lines.push(`✓ hooks — ${totalEvents}/${totalEvents} bound`);
+    lines.push(`✓ hooks: ${totalEvents}/${totalEvents} bound`);
+  }
+
+  // Bound hooks that have been told to record nothing (informational). It goes
+  // directly under the hooks line because it is the qualifier on it: all six
+  // are installed AND all six will decline.
+  if (input.captureSwitch === "off") {
+    lines.push(
+      "• capture: off (SEORAK_CAPTURE=0 in this environment). The hooks stay bound and record nothing while it is set; unset it to capture again.",
+    );
   }
 
   // service (critical on mac, N/A elsewhere)
   if (input.service.unsupported) {
-    lines.push(`• service — N/A on ${input.platformName} (run \`${cmd} start --foreground\`)`);
+    lines.push(`• service: N/A on ${input.platformName} (run \`${cmd} start --foreground\`)`);
   } else if (input.service.ok) {
-    lines.push(`✓ service — launchd loaded (${input.label})`);
+    lines.push(`✓ service: launchd loaded (${input.label})`);
   } else if (!input.service.plistPresent) {
-    lines.push(`✘ service — not installed. Run \`${cmd} setup\`.`);
+    lines.push(`✘ service: not installed. Run \`${cmd} setup\`.`);
   } else {
-    lines.push(`✘ service — installed but not loaded. Run \`${cmd} start\`.`);
+    lines.push(`✘ service: installed but not loaded. Run \`${cmd} start\`.`);
   }
 
   // Which build the service actually runs. The CLI and the daemon are separate
@@ -410,34 +448,34 @@ export function buildStatusReport(input: StatusReportInput): StatusReport {
     const version = input.runtime.daemonVersion ?? "unknown version";
     if (input.runtime.ephemeral) {
       lines.push(
-        `✘ runtime — daemon ${version} runs from a temporary directory that may be deleted: ${input.runtime.daemonPath}. Reinstall it somewhere durable.`,
+        `✘ runtime: daemon ${version} runs from a temporary directory that may be deleted: ${input.runtime.daemonPath}. Reinstall it somewhere durable.`,
       );
     } else if (
       input.runtime.daemonVersion !== null &&
       input.runtime.daemonVersion !== input.runtime.cliVersion
     ) {
       lines.push(
-        `• runtime — daemon ${version} differs from this CLI ${input.runtime.cliVersion} (${input.runtime.daemonPath})`,
+        `• runtime: daemon ${version} differs from this CLI ${input.runtime.cliVersion} (${input.runtime.daemonPath})`,
       );
     } else {
-      lines.push(`• runtime — daemon ${version} (${input.runtime.daemonPath})`);
+      lines.push(`• runtime: daemon ${version} (${input.runtime.daemonPath})`);
     }
   }
 
   // daemon liveness (heartbeat): wedged is critical, the rest informational.
   const wedged = isDaemonWedged(input.service, input.heartbeat);
   if (!input.heartbeat.present) {
-    lines.push(`• daemon — no heartbeat yet (it appears within 30s of the daemon starting)`);
+    lines.push(`• daemon: no heartbeat yet (it appears within 30s of the daemon starting)`);
   } else if (input.heartbeat.fresh) {
-    lines.push(`✓ daemon — alive (heartbeat ${formatAge(input.heartbeat.ageMs!)} ago)`);
+    lines.push(`✓ daemon: alive (heartbeat ${formatAge(input.heartbeat.ageMs!)} ago)`);
   } else if (wedged) {
-    lines.push(`✘ daemon — heartbeat stale (last beat ${formatAge(input.heartbeat.ageMs!)} ago); likely wedged. Restart with \`launchctl kickstart -k gui/$(id -u)/${input.label}\`.`);
+    lines.push(`✘ daemon: heartbeat stale (last beat ${formatAge(input.heartbeat.ageMs!)} ago); likely wedged. Restart with \`launchctl kickstart -k gui/$(id -u)/${input.label}\`.`);
   } else {
-    lines.push(`• daemon — heartbeat stale (last beat ${formatAge(input.heartbeat.ageMs!)} ago); the daemon does not look like it is running.`);
+    lines.push(`• daemon: heartbeat stale (last beat ${formatAge(input.heartbeat.ageMs!)} ago); the daemon does not look like it is running.`);
   }
 
   // The local record is the product on this machine, connected or not.
-  lines.push(`• local — complete history on this machine, dashboard at ${input.localPlaneUrl}`);
+  lines.push(`• local: complete history on this machine, dashboard at ${input.localPlaneUrl}`);
 
   // worker reads and ingest are critical ONLY for an install that opted into a
   // connection. A local-only install reports the absence informationally.
@@ -446,34 +484,34 @@ export function buildStatusReport(input: StatusReportInput): StatusReport {
   let connectionOk = true;
   if (!input.connected || worker === null || ingest === null) {
     lines.push(
-      `• connection — none configured. Run \`${cmd} login\`, or \`${cmd} setup --worker-url URL\` for a worker you operate.`,
+      `• connection: none configured. Run \`${cmd} login\`, or \`${cmd} setup --worker-url URL\` for a worker you operate.`,
     );
   } else {
     if (worker.ok) {
-      lines.push(`✓ worker reads — ${input.workerUrl} reachable`);
+      lines.push(`✓ worker reads: ${input.workerUrl} reachable`);
     } else if (worker.authRejected) {
       connectionOk = false;
-      lines.push(`✘ worker reads — ${input.workerUrl} answered ${worker.status}: no valid read authority is set. Set SEORAK_READ_KEY, or re-run \`${cmd} setup\` with --read-key.`);
+      lines.push(`✘ worker reads: ${input.workerUrl} answered ${worker.status}: no valid read authority is set. Set SEORAK_READ_KEY, or re-run \`${cmd} setup\` with --read-key.`);
     } else {
       connectionOk = false;
       const why = worker.error ?? `HTTP ${worker.status}`;
-      lines.push(`✘ worker reads — ${input.workerUrl} unreachable (${why}). Check the URL, or point me with --worker-url / SEORAK_WORKER_URL.`);
+      lines.push(`✘ worker reads: ${input.workerUrl} unreachable (${why}). Check the URL, or point me with --worker-url / SEORAK_WORKER_URL.`);
     }
 
     // The credential reached the closed event parser, but the deliberately
     // invalid probe could not persist product data.
     if (ingest.ok) {
-      lines.push("✓ worker ingest — authority accepted");
+      lines.push("✓ worker ingest: authority accepted");
     } else if (ingest.authRejected) {
       connectionOk = false;
       lines.push(
-        `✘ worker ingest — worker answered ${ingest.status}: no valid ingest authority is set. Set SEORAK_INGEST_KEY, or re-run \`${cmd} setup\` with --ingest-key.`,
+        `✘ worker ingest: worker answered ${ingest.status}: no valid ingest authority is set. Set SEORAK_INGEST_KEY, or re-run \`${cmd} setup\` with --ingest-key.`,
       );
     } else {
       connectionOk = false;
       const why = ingest.error ?? `HTTP ${ingest.status}`;
       lines.push(
-        `✘ worker ingest — authority could not be verified (${why}). Check the worker and ingest configuration.`,
+        `✘ worker ingest: authority could not be verified (${why}). Check the worker and ingest configuration.`,
       );
     }
   }
@@ -484,13 +522,13 @@ export function buildStatusReport(input: StatusReportInput): StatusReport {
   if (input.shipping.kind === "missing") {
     lines.push(
       input.connected
-        ? "• shipping — no delivery attempt recorded yet"
-        : "• shipping — nothing to ship, capture stays on this machine",
+        ? "• shipping: no delivery attempt recorded yet"
+        : "• shipping: nothing to ship, capture stays on this machine",
     );
   } else if (input.shipping.kind === "invalid") {
     shippingOk = false;
     lines.push(
-      "✘ shipping — local delivery status is invalid. Restart the collector to rebuild it.",
+      "✘ shipping: local delivery status is invalid. Restart the collector to rebuild it.",
     );
   } else if (input.shipping.snapshot.state === "caught-up") {
     // "caught-up" means the cursor reached the end of the log, which is NOT the
@@ -501,12 +539,12 @@ export function buildStatusReport(input: StatusReportInput): StatusReport {
     const route = input.shipping.snapshot.route;
     if (route === "local") {
       lines.push(
-        "• shipping — nothing delivered; complete history stays on this machine",
+        "• shipping: nothing delivered; complete history stays on this machine",
       );
     } else if (route === "managed") {
-      lines.push("✓ shipping — managed sync current");
+      lines.push("✓ shipping: managed sync current");
     } else {
-      lines.push("✓ shipping — event backlog caught up");
+      lines.push("✓ shipping: event backlog caught up");
     }
   } else if (input.shipping.snapshot.state === "retrying") {
     const waitMs = Math.max(
@@ -518,7 +556,7 @@ export function buildStatusReport(input: StatusReportInput): StatusReport {
         ? ""
         : ` after HTTP ${input.shipping.snapshot.httpStatus}`;
     lines.push(
-      `• shipping — backlog retry in ${formatAge(waitMs)}${status}`,
+      `• shipping: backlog retry in ${formatAge(waitMs)}${status}`,
     );
   } else {
     shippingOk = false;
@@ -542,15 +580,15 @@ export function buildStatusReport(input: StatusReportInput): StatusReport {
           ? `worker rejected collector event schema ${protocol.emittedSchemaVersion} and did not advertise accepted versions`
           : `collector emits event schema ${protocol.emittedSchemaVersion}, but worker accepts ${protocol.workerAcceptedSchemaVersions.join(", ")}`;
       lines.push(
-        `✘ shipping — ${incompatibility}${status}.${retry} Upgrade the worker and collector to compatible releases.`,
+        `✘ shipping: ${incompatibility}${status}.${retry} Upgrade the worker and collector to compatible releases.`,
       );
     } else if (protocol) {
       lines.push(
-        `✘ shipping — worker rejected the event protocol (${protocol.code})${status}.${retry} Upgrade the worker and collector to compatible releases.`,
+        `✘ shipping: worker rejected the event protocol (${protocol.code})${status}.${retry} Upgrade the worker and collector to compatible releases.`,
       );
     } else {
       lines.push(
-        `✘ shipping — event backlog is blocked${status}.${retry} Check the ingest key and collector/worker versions.`,
+        `✘ shipping: event backlog is blocked${status}.${retry} Check the ingest key and collector/worker versions.`,
       );
     }
   }
@@ -562,47 +600,47 @@ export function buildStatusReport(input: StatusReportInput): StatusReport {
     input.rejections.count === 0
   ) {
     lines.push(
-      `• capture contract — no rejected records in current log generation ${input.rejections.generation}`,
+      `• capture contract: no rejected records in current log generation ${input.rejections.generation}`,
     );
   } else if (input.rejections.kind === "unreadable") {
     lines.push(
-      `✘ capture contract — the local rejection checkpoint for log generation ${input.rejections.generation} cannot be read. Check the collector directory permissions, then restart the collector.`,
+      `✘ capture contract: the local rejection checkpoint for log generation ${input.rejections.generation} cannot be read. Check the collector directory permissions, then restart the collector.`,
     );
   } else {
     lines.push(
-      `✘ capture contract — ${input.rejections.count} locally captured record(s) in current log generation ${input.rejections.generation} could not be validated. Your collector and @seorak/types event contract disagree; upgrade both or file these counts.`,
+      `✘ capture contract: ${input.rejections.count} locally captured record(s) in current log generation ${input.rejections.generation} could not be validated. Your collector and @seorak/types event contract disagree; upgrade both or file these counts.`,
     );
   }
 
   const captureContinuityOk = input.captureFailure.kind === "missing";
   if (input.captureFailure.kind === "missing") {
-    lines.push("• capture continuity — no hook contention gaps recorded");
+    lines.push("• capture continuity: no hook contention gaps recorded");
   } else if (input.captureFailure.kind === "invalid") {
     lines.push(
-      "✘ capture continuity — the local capture-failure marker is invalid. Check capture-failure.json and collector directory permissions before clearing it.",
+      "✘ capture continuity: the local capture-failure marker is invalid. Check capture-failure.json and collector directory permissions before clearing it.",
     );
   } else {
     lines.push(
-      `✘ capture continuity — one or more hook events were not recorded after event-log contention (evidence recorded at ${input.captureFailure.snapshot.recordedAt}). Fix the competing writer, then remove capture-failure.json after acknowledging the gap.`,
+      `✘ capture continuity: one or more hook events were not recorded after event-log contention (evidence recorded at ${input.captureFailure.snapshot.recordedAt}). Fix the competing writer, then remove capture-failure.json after acknowledging the gap.`,
     );
   }
 
   // codex (informational)
   if (input.codex === "tailing") {
-    lines.push(`• codex — tailing ${input.codexRoot} (set SEORAK_CODEX=0 to turn off)`);
+    lines.push(`• codex: tailing ${input.codexRoot} (set SEORAK_CODEX=0 to turn off)`);
   } else if (input.codex === "off") {
-    lines.push(`• codex — off (SEORAK_CODEX=0)`);
+    lines.push(`• codex: off (SEORAK_CODEX=0)`);
   } else {
-    lines.push(`• codex — nothing at ${input.codexRoot} on this machine`);
+    lines.push(`• codex: nothing at ${input.codexRoot} on this machine`);
   }
 
   // events log (informational: a quiet day is not a broken install)
   if (!input.events.present) {
-    lines.push(`• events — no log yet (created on your first session)`);
+    lines.push(`• events: no log yet (created on your first session)`);
   } else if (input.events.fresh) {
-    lines.push(`✓ events — log fresh (last write ${formatAge(input.events.ageMs!)} ago)`);
+    lines.push(`✓ events: log fresh (last write ${formatAge(input.events.ageMs!)} ago)`);
   } else {
-    lines.push(`• events — no writes in ${formatAge(input.events.ageMs!)} (nothing captured lately)`);
+    lines.push(`• events: no writes in ${formatAge(input.events.ageMs!)} (nothing captured lately)`);
   }
 
   const ok =
@@ -804,6 +842,7 @@ export async function cmdStatus(flags: Record<string, string | boolean> = {}): P
     settingsPath,
     settingsValid: settings !== null,
     hooks,
+    captureSwitch: evaluateCaptureSwitch(hookCaptureEnabled()),
     staleHookPaths,
     skewedHookPaths,
     invocation: currentCollectorInvocation(),

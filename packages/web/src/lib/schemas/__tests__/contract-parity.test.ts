@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { sessionToSummary, DEFAULT_THRESHOLDS } from '@seorak/types';
 import type { SessionState, OverviewSnapshot } from '@seorak/types';
 import { overviewSnapshotSchema, sessionSummarySchema, createEmptyOverview } from '../common.js';
+// Not on the barrel: the nullable-leaf guard at the bottom needs the element
+// schema itself, because that is the level the null lives at.
+import { agentDailyPointSchema } from '../overview/agents.js';
 
 type DeepRequired<T> = T extends readonly (infer Item)[]
   ? DeepRequired<Item>[]
@@ -214,6 +217,10 @@ describe('contract parity — OverviewSnapshot survives the web schema', () => {
           {
             project: 'seorak',
             repoId: 'r1',
+            // Populated so a schema that forgets to declare `archived` strips it
+            // here and fails, rather than shipping a dashboard where archiving a
+            // project silently does nothing.
+            archived: true,
             sessions: 4,
             sessionsDelta: { current: 4, previous: 3 },
             activeSessions: 1,
@@ -251,7 +258,27 @@ describe('contract parity — OverviewSnapshot survives the web schema', () => {
             agentOutcomes: [],
             agentOutcomesUnusable: 0,
             agentModels: [],
-            agentDaily: [],
+            // Was `[]` until 2026-08-17, so the PER-PROJECT element schema was
+            // never reached — the comment above about empty arrays applied to
+            // this very field. [0] stays fully populated for the strip walk; [1]
+            // is an unmeasured day, which is what the local plane actually
+            // serves and what the schema used to reject.
+            agentDaily: [
+              {
+                agent: 'claude-code',
+                day: '2026-06-14',
+                sessions: 2,
+                lines: { added: 40, removed: 5 },
+                tokensTotal: 61_000,
+              },
+              {
+                agent: 'claude-code',
+                day: '2026-06-15',
+                sessions: 1,
+                lines: null,
+                tokensTotal: null,
+              },
+            ],
             dailyTrends: [],
             agentHourly: [],
             cacheReadTokens: 4000,
@@ -460,6 +487,17 @@ describe('contract parity — OverviewSnapshot survives the web schema', () => {
             lines: { added: 400, removed: 80 },
             tokensTotal: 120_000,
           },
+          // An UNMEASURED day: a session started, no carrier reported tokens.
+          // Populating every nullable leaf with a value — this fixture's stated
+          // goal — can never reach a nullable's null branch, so this second row
+          // is what covers it. See the nullable-leaf describe at the bottom.
+          {
+            agent: 'claude-code',
+            day: '2026-06-15',
+            sessions: 1,
+            lines: null,
+            tokensTotal: null,
+          },
         ],
         agentModels: [
           {
@@ -544,6 +582,58 @@ describe('usageAllowances degrade element-wise, never the dashboard', () => {
   it('a non-array current usageAllowances field rejects the response', () => {
     const mangled = snapshotWithAllowances('not-an-array');
     expect(overviewSnapshotSchema.safeParse(mangled).success).toBe(false);
+  });
+});
+
+// A SECOND class of drift, which the key-parity guard above structurally cannot
+// catch. That guard asks "is every key carried?" and answers it with a fixture
+// that populates every leaf. This one asks "is every declared VALUE DOMAIN
+// admitted?" — and for a leaf the contract declares `X | null`, the honest-empty
+// null is exactly the value a maximally-populated fixture never supplies.
+//
+// TypeScript cannot stand in for it. `z.ZodType<T>` is covariant in its output,
+// so a schema STRICTER than the contract (`z.number()` where `number | null` is
+// declared) is assignable and type-checks clean; only a WRONG type is caught.
+// Verified with tsc on 2026-08-17 while fixing the bug below.
+//
+// The bug this encodes: agentDailyPointSchema required a number for
+// `tokensTotal`. The collector's local projection and the worker both emit null
+// for a day no carrier measured, so ONE unmeasured day threw
+// SchemaValidationError for the WHOLE overview. validateOverview returns nothing
+// on throw, so polling.ts never assigned overviewData — every project vanished
+// and Settings → Alerts rendered zero per-project rows. Measured on the local
+// plane: 13 null leaves, 24 projects lost.
+describe('honest-empty nullable leaves are admitted, not rejected', () => {
+  it('an unmeasured tokensTotal parses and stays null — never coerced to 0', () => {
+    const unmeasured = {
+      agent: 'claude-code',
+      day: '2026-08-11',
+      sessions: 1,
+      lines: null,
+      tokensTotal: null,
+    };
+    const parsed = agentDailyPointSchema.parse(unmeasured);
+    expect(parsed.tokensTotal).toBeNull();
+    // 0 would be a lie: it claims a carrier measured zero tokens that day.
+    expect(parsed.tokensTotal).not.toBe(0);
+    // A measured zero still round-trips as 0, so the two stay distinguishable.
+    expect(agentDailyPointSchema.parse({ ...unmeasured, tokensTotal: 0 }).tokensTotal).toBe(0);
+  });
+
+  it('one unmeasured day does not reject the whole overview', () => {
+    const snap = structuredClone(createEmptyOverview(7)) as Record<string, any>;
+    snap.usage.totals = { sessions: 9, toolCalls: 120, sessionsDelta: null };
+    snap.tools.agentDaily = [
+      { agent: 'claude-code', day: '2026-08-11', sessions: 1, lines: null, tokensTotal: null },
+    ];
+    const result = overviewSnapshotSchema.safeParse(snap);
+    expect(
+      result.success,
+      result.success ? '' : JSON.stringify(result.error.issues),
+    ).toBe(true);
+    // The real regression: the rest of the snapshot survives rather than the
+    // dashboard falling back to "no data".
+    expect((result as { data: any }).data.usage.totals.sessions).toBe(9);
   });
 });
 

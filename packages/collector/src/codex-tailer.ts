@@ -486,7 +486,7 @@ export async function sweepCodexRollouts(nowIso: string): Promise<number> {
       const { lines, stuck } = readCompleteLines(path, entry.offset, size, MAX_ROWS_PER_TICK);
       if (stuck) {
         console.error(
-          `[seorak/collector] codex tail: no line boundary within ${READ_WINDOW_CAP_BYTES} bytes of ${basename(path)} — leaving cursor put`,
+          `[seorak/collector] codex tail: no line boundary within ${READ_WINDOW_CAP_BYTES} bytes of ${basename(path)}, leaving cursor put`,
         );
         continue;
       }
@@ -535,7 +535,7 @@ export async function sweepCodexRollouts(nowIso: string): Promise<number> {
               // The tripwire caught a would-be leak: drop the event (nothing
               // shipped — the safe direction), advance past the row, and be
               // LOUD. Retrying forever would wedge the whole file's tail.
-              console.error(`[seorak/collector] codex tail: emit blocked — ${error.message}`);
+              console.error(`[seorak/collector] codex tail: ${error.message}`);
             } else {
               // Disk trouble: stop HERE without advancing past this row; the
               // next tick re-parses it and the PK absorbs any half-appended
@@ -563,7 +563,7 @@ export async function sweepCodexRollouts(nowIso: string): Promise<number> {
           fileEmitted += 1;
         } catch (error) {
           if (error instanceof EmitAllowlistError) {
-            console.error(`[seorak/collector] codex tail: emit blocked — ${error.message}`);
+            console.error(`[seorak/collector] codex tail: ${error.message}`);
           } else {
             // The accumulator persists, so the next token_count row emits a snapshot
             // that SUPERSEDES this lost one. Nothing is permanently undercounted.
@@ -583,7 +583,7 @@ export async function sweepCodexRollouts(nowIso: string): Promise<number> {
           fileEmitted += 1;
         } catch (error) {
           if (error instanceof EmitAllowlistError) {
-            console.error(`[seorak/collector] codex tail: emit blocked — ${error.message}`);
+            console.error(`[seorak/collector] codex tail: ${error.message}`);
           } else {
             console.error("[seorak/collector] codex tail: agent.quota append failed", error);
           }

@@ -166,7 +166,9 @@ describe('outcome disclosures — every way this could mislead, said out loud', 
       0,
     );
     expect(o.agents.map((a) => a.id)).toEqual(['claude-code', 'codex']); // BOTH columns
-    expect(cellFor(o, 'survival', 'codex').text).toBe('\u2014'); // honest-empty, not 0%
+    // Honest-empty, not 0%, and it names the thing that fills it rather than
+    // leaving a punctuation mark for the reader to interpret.
+    expect(cellFor(o, 'survival', 'codex').text).toBe('not matured yet');
     expect(o.disclosures[0]).toContain('has matured past the three-day check');
 
     // ...and the verdict says so too, instead of leaving the reader to infer failure.

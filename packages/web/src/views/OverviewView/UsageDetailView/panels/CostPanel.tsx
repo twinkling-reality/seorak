@@ -126,7 +126,7 @@ export function CostPanel({ overview }: { overview: OverviewSnapshot }) {
       cost.costPartial === true ||
       overview.tools.byModel.some((m) => m.tokensTotal > 0 && m.costUsd == null);
     const floorClause = isFloor
-      ? ' The total is a floor — some spend is unpriced or uncaptured.'
+      ? ' The total is a floor. Some spend is unpriced or uncaptured.'
       : '';
 
     // A `note`, not a `caveat`: a reader who misses this is WRONG (they think they

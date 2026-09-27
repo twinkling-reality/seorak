@@ -240,6 +240,32 @@ describe("attributed survival, end to end", () => {
     expect(existsSync(survivalPendingDir())).toBe(false);
   });
 
+  it("spends no main-thread time blaming once the budget is gone, and loses nothing", () => {
+    commitAt("a.txt", 4, "2026-06-05T00:00:00Z");
+    expect(
+      attributeAndRecord([
+        { sessionId: "sess-budget", file: "a.txt", at: "2026-06-03T00:00:00Z" },
+      ]),
+    ).toEqual(["sess-budget"]);
+
+    const saved = process.env.SEORAK_SURVIVAL_BLAME_BUDGET_MS;
+    process.env.SEORAK_SURVIVAL_BLAME_BUDGET_MS = "0";
+    try {
+      // A zero budget is spent before the first record, so nothing is blamed.
+      expect(sweep()).toEqual([]);
+    } finally {
+      if (saved === undefined) delete process.env.SEORAK_SURVIVAL_BLAME_BUDGET_MS;
+      else process.env.SEORAK_SURVIVAL_BLAME_BUDGET_MS = saved;
+    }
+
+    // The record survived the skipped sweep, so the next one still grades it.
+    // A budget that dropped work would be worse than no budget at all.
+    const swept = sweep();
+    expect(swept).toHaveLength(1);
+    expect(swept[0]!.event.sessionId).toBe("sess-budget");
+    expect(swept[0]!.event.linesAuthored).toBe(4);
+  });
+
   it("an empty survival dir sweeps to no events (honest-empty)", () => {
     expect(readdirSync(dir)).not.toContain("survival");
     expect(sweep()).toHaveLength(0);

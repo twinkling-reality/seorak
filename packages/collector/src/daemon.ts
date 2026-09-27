@@ -736,15 +736,31 @@ export async function runDaemon(): Promise<void> {
     if (WORKER_CONFIGURED) {
       await syncCaptureSettings(WORKER_URL, READ_KEY, heartbeatAbort.signal);
       if (stopping) return await stop();
-      managedInterval(
-        () =>
-          void syncCaptureSettings(
-            WORKER_URL,
-            READ_KEY,
-            heartbeatAbort.signal,
-          ),
-        SETTINGS_SYNC_MS,
-      );
+      // Re-entrancy guard, the last of the five ticks in this file to get one.
+      // This tick is network-only, so it cannot block the event loop the way a
+      // sweep can, and that is why it went without one.
+      //
+      // The hazard is RESPONSE REORDERING, and it is worth naming precisely
+      // because the obvious guess is wrong. The obvious guess is a torn file:
+      // two syncs staging through one fixed `<capture-settings>.tmp` and one
+      // renaming the other's half-written bytes into place. That cannot happen.
+      // `writeFileSync` and `renameSync` are adjacent SYNCHRONOUS calls with no
+      // await between them, so two ticks can never interleave inside the pair.
+      //
+      // What they can do is finish out of order. Two syncs in flight, the older
+      // one lands second, and the toggles left on disk are the stale ones, which
+      // silently reverts whatever the user most recently changed in whichever
+      // direction they changed it. Each overlap is also a duplicate request to a
+      // provider that is by hypothesis already slow. A guard costs one boolean.
+      let syncingCaptureSettings = false;
+      managedInterval(() => {
+        if (syncingCaptureSettings) return;
+        syncingCaptureSettings = true;
+        void syncCaptureSettings(WORKER_URL, READ_KEY, heartbeatAbort.signal)
+          .finally(() => {
+            syncingCaptureSettings = false;
+          });
+      }, SETTINGS_SYNC_MS);
     }
     await flush();
     if (stopping) return await stop();

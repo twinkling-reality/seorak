@@ -30,9 +30,9 @@ temporary execution cache.
 
 This package was renamed from `@seorak/collector` to the unscoped `seorak`, so
 that `npx seorak` resolves on the package name and the command you type names
-the product. The `npx` form above needs `seorak@0.2.0`, which is not published on
-npm pending approval; `@seorak/collector@0.1.1` is the last release under the old
-name. Until then, run it from a checkout with `npm run link:cli`.
+the product. `seorak@0.2.0` published to npm on 2026-08-16 with provenance
+attesting to `twinkling-reality/seorak`, so the `npx` form above resolves.
+`@seorak/collector@0.1.1` is the last release under the old name.
 
 ## What happens next
 
@@ -380,6 +380,57 @@ failures remain explicit. `seorak status` fails until that known capture gap is
 acknowledged and the marker is removed.
 
 The session-start hook does one extra thing: it shells out to `git` to capture a repo-scoped momentum snapshot (see below). That adds a bounded cost to session start only — each `git` call is capped by a short internal timeout, and the whole step is skippable with `SEORAK_MOMENTUM=0`. It never blocks tool calls or session end.
+
+### Not every `claude` is your session (`SEORAK_CAPTURE`)
+
+The bindings live in `~/.claude/settings.json`, which is global: they fire for
+every `claude` process on the machine, including the ones some other program
+spawns for itself. A tool that shells out to `claude -p` for its own work (a
+build step, an enrichment pass, a bot) produces perfectly real agent
+invocations that are nobody's development session, at volume: measured on one
+machine, 1,038 of the 1,202 counted sessions in a 7-day window came from a
+single such daemon.
+
+Nothing in the payload tells them apart. `SessionStart` carries only
+sessionId, cwd, transcriptPath, and a source of `"startup"` or `"resume"`, and
+a programmatic invocation reports `"startup"` exactly as an interactive one
+does. `CLAUDE_CODE_ENTRYPOINT` is present but INHERITED from the ancestor
+process, so it names what launched the ancestor rather than what this
+invocation is. The transcript would say, but it is prompt text and code, which
+this collector does not read. So the spawning program is the one that gets to
+say:
+
+- `SEORAK_CAPTURE` — set `0` in the environment of an agent you spawn, and
+  every Seorak hook that process fires exits 0 having recorded nothing. This is
+  the switch a program that spawns coding agents sets so its OWN invocations are
+  not recorded as the developer's sessions. Unset, or set to any other value,
+  captures normally (same spelling of "off" as `SEORAK_CODEX` and
+  `SEORAK_MOMENTUM`).
+- `SEORAK_LAUNCHER`: set a short label (for example `my-launcher`) in the
+  environment of an agent you launch ON the developer's behalf, when that
+  session IS their work and should be kept. The session is recorded exactly as
+  any other and counted in every stat; the SessionStart hook also records the
+  label beside it, and the Integration API reports it as `launcher` on the
+  session's summary. The label is lowercased and must be a letter or digit
+  followed by up to 63 of `a-z 0-9 . _ -`; anything else records no label and
+  still captures the session. The first label a session gets is kept. A label
+  never rides on an event, so it never leaves this machine. `SEORAK_CAPTURE=0`
+  wins over it. See ADR 007 (`docs/adr/007-native-session-resolve-and-launcher-labels.md`).
+
+The refusal is whole and silent. All six bindings check it at the same gate,
+before the payload is parsed, so a refused invocation cannot leave a session
+that never ends or tool calls belonging to no session; nothing reaches
+`events.jsonl` or `history.sqlite`, no `git` is shelled out to, and the
+collector state directory is not created. The hook exits 0 either way, because
+a hook that fails is a hook that disrupts the agent that ran it.
+
+Because it is read per invocation, it is a per-child switch, not a machine
+setting: exporting it in your own shell turns off capture for the sessions you
+start there, and `seorak status` says so on its own line
+(`• capture: off (SEORAK_CAPTURE=0 in this environment)`) so a switch set and
+forgotten reads as a switch rather than as a broken install. The daemon-side
+capture families keep their own switches (`SEORAK_CODEX`, `SEORAK_MOMENTUM`),
+since the daemon inherits nothing from a process it never launched.
 
 ## Run the daemon
 

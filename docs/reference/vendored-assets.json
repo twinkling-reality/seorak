@@ -2,7 +2,9 @@
   "schemaVersion": 1,
   "measuredAt": "2026-08-04",
   "decidedBy": "docs/adr/005-open-core-repository-and-free-ui-packaging.md",
-  "readBy": ["scripts/check-vendored-assets.mjs"],
+  "readBy": [
+    "scripts/check-vendored-assets.mjs"
+  ],
   "note": "THE PROVENANCE RECORD FOR EVERY THIRD-PARTY FILE UNDER `roots`, AND THE THING THAT MAKES IT CHECKABLE. `packages/web/THIRD_PARTY_NOTICES.md` recorded `Simple Icons v15.0.0, vendored 2026-07-06` from the day the icons landed, and nothing verified it: `simple-icons` is not a dependency in any manifest, the files were fetched by a script and committed, and a recorded version with no way to check it is a measurement that reads as current state forever. B7 found the same failure one directory up, where the thirteen vendored AI-tool marks were recorded as Simple Icons content and nine of thirteen were not. This file is the machine-readable half; `npm run vendored-assets:check` recomputes the digests, refuses a file nothing declares, and fails when the notices file and this one disagree. Adding a vendored file is an edit to this file alone.",
   "roots": [
     "packages/web/public/assets",
@@ -64,6 +66,22 @@
       "digest": "sha256:b805a27ecd36e4f9fca6e57b3cb67bf99bb317b1937e376cf70a9df50de82479",
       "why": "Stack and toolchain badges rendered in Compare and related views: descriptive identification of a detected value, not endorsement. The collection is CC0-1.0; individual logo trademarks remain with their respective owners, which the notices file states and which no digest can settle.",
       "verification": "Every one of the 72 files was fetched from raw.githubusercontent.com at tag 15.0.0 using the slug map in the resync script and compared byte for byte, ignoring a trailing newline. All 72 were identical. That is what `verifiedAgainstUpstreamOn` records; the digest is what makes any later drift from those exact bytes fail offline."
+    },
+    {
+      "id": "ambient-bed",
+      "root": "packages/web/public/assets/audio",
+      "upstream": "https://pixabay.com/music/religious-theme-agriculture-organic-farming-music-570708/",
+      "version": "Pixabay audio 570708 by monume, downloaded 2026-08-20",
+      "license": "Pixabay Content License",
+      "licenseUrl": "https://pixabay.com/service/terms/",
+      "syncedOn": "2026-08-20",
+      "verifiedAgainstUpstreamOn": "2026-08-20",
+      "resync": "node packages/web/scripts/make-loop.mjs --in <source.mp3> --out loop.wav, then the two ffmpeg lines in that script header",
+      "notices": "packages/web/THIRD_PARTY_NOTICES.md",
+      "fileCount": 2,
+      "digest": "sha256:03c59e8d7cb8bfd8777dc6ac709eef7f37a8565317b53cf2346a98aacd706d0f",
+      "why": "The marketing site ambient bed, named in TRACK_SOURCES by packages/web/src/marketing/audio/engine.ts. Served from fixed URLs rather than imported through the bundler because the <audio> element resolves them as plain hrefs, and because the engine must be able to find them absent and degrade to interface ticks.",
+      "verification": "NOT byte-identical to upstream, and the entry says so rather than implying a fetch would reproduce it. These two files are an 84-second seamless loop cut from the 3-minute original by packages/web/scripts/make-loop.mjs, which finds the loop point by waveform correlation, then encoded to AAC and MP3. The 3-minute source is not vendored; like the hero figure art, the heavy original stays out of the repository. What is verifiable here is the licence, recorded at packages/web/LICENSES/Pixabay-ambient-570708.txt, and the digest over the two shipped files."
     }
   ],
   "original": [

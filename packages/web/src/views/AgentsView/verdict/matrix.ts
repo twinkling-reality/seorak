@@ -6,7 +6,7 @@ import type { AgentRollup } from '../../../lib/apiSchemas.js';
 import { getToolMeta } from '../../../lib/toolMeta.js';
 import { count, fmtCount, formatCost, formatTokens, naturalList } from '../../../lib/voice/index.js';
 
-import { dash, text, type MatrixRow } from './cells.js';
+import { blank, text, type MatrixRow } from './cells.js';
 import { errorCoverage, rankAgents } from './metrics.js';
 
 export interface AgentsMatrix {
@@ -46,7 +46,7 @@ export function buildAgentsMatrix(byAgent: AgentRollup[]): AgentsMatrix {
       label: 'Edit lines',
       hint: 'On-machine edit-tool line counts. The fairest cross-tool compare today.',
       cells: agents.map((a) => {
-        if (a.lines == null) return dash();
+        if (a.lines == null) return blank('not reported');
         return text(`+${fmtCount(a.lines.added)} / −${fmtCount(a.lines.removed)}`);
       }),
     },
@@ -67,7 +67,7 @@ export function buildAgentsMatrix(byAgent: AgentRollup[]): AgentsMatrix {
       label: 'Estimated cost',
       hint: 'Derived estimate when the agent emits priced tokens. Never a fabricated $0.',
       cells: agents.map((a) =>
-        a.costUsd != null ? text(formatCost(a.costUsd, 2)) : dash(),
+        a.costUsd != null ? text(formatCost(a.costUsd, 2)) : blank('unpriced'),
       ),
     },
     {
@@ -75,7 +75,7 @@ export function buildAgentsMatrix(byAgent: AgentRollup[]): AgentsMatrix {
       label: 'Tokens',
       hint: 'Input + output when the agent emits tokens. Absent agents stay empty.',
       cells: agents.map((a) =>
-        a.tokensTotal > 0 ? text(formatTokens(a.tokensTotal)) : dash(),
+        a.tokensTotal > 0 ? text(formatTokens(a.tokensTotal)) : blank('not reported'),
       ),
     },
     {
@@ -84,7 +84,9 @@ export function buildAgentsMatrix(byAgent: AgentRollup[]): AgentsMatrix {
       hint: 'Errored calls over calls that reported a result. Both legs are counts, because a rate whose denominator you cannot see is not a measurement. A tool that reports on only some of its calls is disclosed under the table.',
       cells: agents.map((a) => {
         const e = a.errorRate;
-        if (!e || e.rate === null) return dash();
+        // `rate` is null exactly when `returned` is 0: no call here reported a result
+        // either way, so there is no denominator. NOT "no errors", which is a claim.
+        if (!e || e.rate === null) return blank('none reported');
         // Both legs, always. "3.6%" alone hides that the denominators differ between
         // agents, which is the whole hazard on this row.
         return text(`${ratePercent(e.rate)} (${fmtCount(e.errored)} of ${fmtCount(e.returned)})`);

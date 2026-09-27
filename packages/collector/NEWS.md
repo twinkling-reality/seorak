@@ -11,6 +11,12 @@ person, and about what changed for THEM, not what changed in the code.
 Lines must fit the entry card: keep each under about 60 characters or it
 will be clipped with an ellipsis.
 
+## 0.3.0
+
+- Current Claude models are priced now, Opus 5 included.
+- Tools can find a session they launched by its own id.
+- Launched sessions can carry the launcher's name.
+
 ## 0.2.0
 
 - One setup command now starts local capture.

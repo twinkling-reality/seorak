@@ -40,7 +40,7 @@ export default function CaptureSection({ onSettingsChange }: Props) {
   const { state, applyChange } = useSettingsSection<CaptureSettings>({
     load: fetchCaptureSettings,
     demoData: DEFAULT_CAPTURE_SETTINGS,
-    unavailableReason: 'Worker unreachable — capture controls need a running worker.',
+    unavailableReason: 'Worker unreachable. Capture controls need a running worker.',
     readOnlyNote:
       "This access token can read this worker, but it can't change capture settings. Sign in with the worker's owner token to make changes here.",
     logLabel: 'capture settings',
@@ -56,7 +56,7 @@ export default function CaptureSection({ onSettingsChange }: Props) {
       // Revert only this switch, so a second toggle made while this one was in
       // flight keeps its optimistic value.
       rollback: (latest) => ({ ...latest, [key]: !next }),
-      savedNote: 'Saved — your collector picks this up within a few minutes.',
+      savedNote: 'Saved. Your collector picks this up within a few minutes.',
     });
   }
 

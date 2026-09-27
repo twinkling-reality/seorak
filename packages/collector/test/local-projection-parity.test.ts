@@ -28,6 +28,7 @@ import { LOCAL_PLANE_SURFACES } from "../src/local-plane.ts";
 import {
   buildLocalDeveloperModel,
   buildLocalLive,
+  LocalLiveMaterializationTooLargeError,
   buildLocalOverview,
   buildLocalReplay,
   buildLocalSessionOutcome,
@@ -710,6 +711,33 @@ describe("local overview — empty history is empty, not zero-filled", () => {
 });
 
 describe("local live board", () => {
+  it("refuses a board over its materialization budget rather than truncating it", () => {
+    const dir = seeded();
+    // One live session in the fixture, so a budget of 0 is over it. The point is
+    // the SHAPE of the answer: a partial board is a wrong answer wearing a right
+    // one's shape, so this refuses the way the worker's /live does.
+    expect(() =>
+      buildLocalLive({ directory: dir, nowMs: FIXTURE_NOW, rowBudget: 0 }),
+    ).toThrow(LocalLiveMaterializationTooLargeError);
+    try {
+      buildLocalLive({ directory: dir, nowMs: FIXTURE_NOW, rowBudget: 0 });
+    } catch (error) {
+      const refusal = error as LocalLiveMaterializationTooLargeError;
+      expect(refusal.projectedRows).toBe(1);
+      expect(refusal.rowBudget).toBe(0);
+    }
+  });
+
+  it("serves a board inside its budget, and an absent budget never refuses", () => {
+    const dir = seeded();
+    expect(
+      buildLocalLive({ directory: dir, nowMs: FIXTURE_NOW, rowBudget: 10 }).live,
+    ).toHaveLength(1);
+    // Internal callers (the overview fold, the intervention sweep) pass no
+    // budget and must keep getting the true set.
+    expect(buildLocalLive({ directory: dir, nowMs: FIXTURE_NOW }).live).toHaveLength(1);
+  });
+
   it("shows only sessions still inside the live horizon", () => {
     const dir = seeded();
     const live = buildLocalLive({ directory: dir, nowMs: FIXTURE_NOW });
@@ -793,7 +821,11 @@ describe("sessions nobody ran", () => {
         (row) => row.sessionId,
       ),
     ).not.toContain("daemon-momentum");
-    expect(localHistoryCounts(dir).sessions).toBe(6);
+    // Eight, not six, since the fixture gained a measureless session in each
+    // window. They are excluded from `usage.totals.sessions` because that member
+    // counts sessions that measured something, but `localHistoryCounts`
+    // describes the DATABASE rather than the work, and these are real rows.
+    expect(localHistoryCounts(dir).sessions).toBe(8);
   });
 
   it("agrees with the hosted session count rather than over-reporting", () => {
@@ -815,22 +847,26 @@ describe("sessions nobody ran", () => {
 describe("local session page", () => {
   it("pages newest activity first and terminates", () => {
     const dir = seeded();
+    // Page size 3, not 2: the fixture gained a measureless session per window,
+    // and the page LISTS sessions rather than counting them, so the walk needs
+    // to span eight rows to still reach the end in three pages. The permanent
+    // record keeps every session; only the counts refuse the measureless ones.
     const first = buildLocalSessionPage({
       directory: dir,
-      limit: 2,
+      limit: 3,
       nowMs: FIXTURE_NOW,
     });
-    expect(first.sessions).toHaveLength(2);
+    expect(first.sessions).toHaveLength(3);
     expect(first.nextCursor).not.toBeNull();
     const second = buildLocalSessionPage({
       directory: dir,
-      limit: 2,
+      limit: 3,
       cursor: first.nextCursor,
       nowMs: FIXTURE_NOW,
     });
     const third = buildLocalSessionPage({
       directory: dir,
-      limit: 2,
+      limit: 3,
       cursor: second.nextCursor,
       nowMs: FIXTURE_NOW,
     });

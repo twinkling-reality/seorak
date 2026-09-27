@@ -46,6 +46,8 @@ test("covers every shipped product surface by default", () => {
     "packages/collector/src/terminal/view.ts": 'export const copy = "collector signal";',
     "packages/control-plane/src/html.ts": 'export const copy = "workspace signal";',
     "packages/worker/src/notification.ts": 'export const copy = "worker · notification";',
+    "packages/push/src/dispatch.ts": 'export const copy = "push signal";',
+    "packages/public-directory/src/page.ts": 'export const copy = "directory · page";',
     "apps/mobile/targets/widget/SeorakLiveActivity.swift": 'Text("lock · screen")',
     // Comment stripping, nested comments, interpolation and raw strings used to
     // be exercised on an `apps/menubar` path. That surface was removed on
@@ -68,6 +70,8 @@ test("covers every shipped product surface by default", () => {
       ["apps/mobile/targets/widget/SeorakPanel.swift", "middot"],
       ["packages/collector/src/terminal/view.ts", "signal"],
       ["packages/control-plane/src/html.ts", "signal"],
+      ["packages/public-directory/src/page.ts", "middot"],
+      ["packages/push/src/dispatch.ts", "signal"],
       ["packages/worker/src/notification.ts", "middot"],
     ],
   );
@@ -159,13 +163,43 @@ test("holds the em-dash rule on field journal prose", () => {
   );
 });
 
-test("keeps the em-dash rule off code, flags, and copy outside the scoped surfaces", () => {
+test("holds the em dash character on every scanned surface", () => {
   const root = fixture({
+    "packages/control-plane/src/html.ts":
+      'export const copy = "Signed in — welcome back.";',
+    "packages/collector/src/status.ts": "export const line = `✓ hooks — 6/6 bound`;",
+    "packages/push/src/body.ts":
+      'export const body = "Your agent has been retrying — 25 minutes.";',
+    "packages/public-directory/src/page.ts":
+      'export const empty = "No published projects — yet.";',
+    "apps/mobile/targets/widget/SeorakPanel.swift": 'Text("Working — 12m")',
+    "packages/web/src/view.css": ".plan::after { content: ' — '; }",
+  });
+
+  assert.deepEqual(
+    scanProductCopy({ repoRoot: root }).map(({ path, kind }) => [path, kind]),
+    [
+      ["apps/mobile/targets/widget/SeorakPanel.swift", "em-dash"],
+      ["packages/collector/src/status.ts", "em-dash"],
+      ["packages/control-plane/src/html.ts", "em-dash"],
+      ["packages/public-directory/src/page.ts", "em-dash"],
+      ["packages/push/src/body.ts", "em-dash"],
+      ["packages/web/src/view.css", "em-dash"],
+    ],
+  );
+});
+
+test("keeps the double-hyphen stand-in to prose, where it is knowable", () => {
+  const root = fixture({
+    // Outside the prose surfaces the same characters are a BEM modifier or a
+    // SQLite comment inside a DDL template, which are code and not copy at all.
     "packages/web/src/views/OverviewView/OverviewView.tsx":
       'export const empty = "Nothing yet -- your next session shows up here.";',
     "packages/worker/src/notification.ts": 'export const copy = "retry--loop";',
-    "packages/control-plane/src/html.ts":
-      'export const copy = "Signed in — welcome back.";',
+    "packages/control-plane/src/htmlShell.ts":
+      'export const shell = `<main class="entry-main entry-main--task"></main>`;',
+    "packages/collector/src/local-store.ts":
+      "export const schema = `CREATE TABLE local_event (\n  -- one row per captured event\n  local_seq INTEGER PRIMARY KEY\n);`;",
     // Inside pricing copy, a CSS custom property and a CLI long flag are not
     // an em-dash stand-in and must stay legal.
     "packages/web/src/marketing/pages/pricing/CopyCommand.tsx":
@@ -173,6 +207,40 @@ test("keeps the em-dash rule off code, flags, and copy outside the scoped surfac
   });
 
   assert.deepEqual(scanProductCopy({ repoRoot: root }), []);
+});
+
+test("leaves a GLSL source alone, its own comments included", () => {
+  const root = fixture({
+    "packages/web/src/marketing/IridescentSquircle.tsx": `
+      const FRAG = \`
+      // Soft gaussian bloom around an animated centre — the building block.
+      void main() {}
+      \`;
+      void FRAG;
+    `,
+    "packages/web/src/marketing/scene/HeroFigure.tsx": `
+      const VERT = \`
+      // Ashima/McEwan 3D simplex noise — WebGL1 safe (no dynamic loops).
+      void main() {}
+      \`;
+      void VERT;
+    `,
+  });
+
+  assert.deepEqual(scanProductCopy({ repoRoot: root }), []);
+});
+
+test("still flags ordinary copy in a module that also holds a shader", () => {
+  // The exemption is by declaration, so it never spreads to the whole file.
+  const root = fixture({
+    "packages/web/src/marketing/IridescentSquircle.tsx":
+      'export const caption = "A squircle — iridescent.";',
+  });
+
+  assert.deepEqual(
+    scanProductCopy({ repoRoot: root }).map(({ path, kind }) => [path, kind]),
+    [["packages/web/src/marketing/IridescentSquircle.tsx", "em-dash"]],
+  );
 });
 
 test("does not blanket-exempt marketing, titles, or arbitrary dev files", () => {

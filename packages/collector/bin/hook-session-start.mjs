@@ -3,6 +3,7 @@ import { parseClaudeCodeHook } from "../src/adapters/claude-code.ts";
 import {
   acquireHookInvocationLease,
   createHookEventAppender,
+  recordHookSessionLauncher,
 } from "../src/hook-append.ts";
 import {
   readRawHookInput,
@@ -25,6 +26,10 @@ if (input?.phase !== "start") process.exit(0);
 const start = toSessionStart(input);
 if (!start) process.exit(0);
 if (!(await appendHookEvent(start))) process.exit(0);
+
+// The launcher label a spawning program declared through SEORAK_LAUNCHER, kept
+// locally beside the session and never put on the event (ADR 007). No-op unset.
+recordHookSessionLauncher(start.sessionId);
 
 // Register this session's repo into the LOCAL daemon registry from the raw cwd
 // (which is in hand here but is NEVER emitted on the event). The daemon's timer

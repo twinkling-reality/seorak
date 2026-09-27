@@ -3,21 +3,30 @@
 Which advisories this repository's dependency graph carries, and what must stay
 true for the answer to keep being none.
 
-Measured 2026-08-08 with `npm audit` at the workspace root:
-0 critical, 0 high, 0 moderate, 0 low.
+Measured 2026-09-10 with `npm audit` at the workspace root, under the npm the
+baseline names:
+0 critical, 0 high, 3 moderate, 0 low.
 
-That is the whole finding list, and an empty baseline is the strongest state
-this document can record: there is no accepted advisory, no reachability
-argument holding one open, and no expiry to come back to. Every entry below
-describes why the graph is small rather than why a finding is tolerable.
+**The answer stopped being none on 2026-09-09, and it stopped for a development
+dependency.** Three entries, one advisory: `vitest` and the two packages it
+carries. Nothing this repository publishes is affected, and the reasoning is in
+[The 2026-09-09 vitest advisory](#the-2026-09-09-vitest-advisory) below.
 
-## The empty baseline is the policy, not a note about today
+That is the whole finding list. An empty baseline WAS the state this document
+recorded from 2026-08-08 to 2026-09-09, and it is the state to return to: no
+accepted advisory, no reachability argument holding one open, and no expiry to
+come back to. The three entries now in it are one development-only advisory with
+a fix available, so the way back is remediation rather than a standing
+acceptance. Every entry below still describes why the graph is small rather than
+why a finding is tolerable.
+
+## The near-empty baseline is the policy, not a note about today
 
 `npm run advisories:check` normalizes package edges, installed paths, GHSA
 identities, severities, ranges, and directness, then requires an exact match with
-`dependency-advisory-baseline.json`. Against an empty baseline that means **the
-first advisory to appear fails the build**, whatever its severity and wherever in
-the graph it lands.
+`dependency-advisory-baseline.json`. Against a baseline this small that means
+**the next advisory to appear fails the build**, whatever its severity and
+wherever in the graph it lands.
 
 Two fields npm reports are deliberately outside that comparison: `fixAvailable`
 and `effects`, which record npm's remediation *attribution* rather than the
@@ -35,6 +44,14 @@ worst place to learn about a dependency finding from the outside: without the
 gate the first signal is a public alert on a public repository, and nobody here
 has seen it first. "Zero today" is a measurement with no expiry condition, and
 an unwired gate cannot notice the day it stops being true.
+
+The shared gate's every-push placement was re-tiered to costly on 2026-08-22 in
+the private half after a fourth upstream-only baseline flap there (live audit
+improving while the reviewed baseline stayed put). The private half then
+accepted the five-entry claim the same day. This repository's baseline was empty
+then and carries three development-only entries now, both times for the same
+reason the tier moved: registry noise should not hold a local push hostage, and
+neither move is about accepting a finding here.
 
 The audit arguments are asserted by the gate's own suite, and they include
 `--include=dev`, `--include=optional`, and `--include=peer`. The reviewed graph
@@ -126,3 +143,56 @@ node scripts/check-dependency-advisories.mjs --write-baseline   # then accept
 A baseline refresh is an assertion that the new graph was reviewed. Write one
 only with the reasoning in this document updated in the same change: the gate
 compares a hash, and a hash nobody read is a hash nobody checked.
+
+## The 2026-09-09 vitest advisory
+
+Three entries, one root advisory, and no change to this repository's dependency
+graph. `vitest` published a path-traversal advisory (npm 1193683, with 1193684
+against `@vitest/mocker`); `@vitest/coverage-v8` and `@vitest/mocker` are carried
+edges with no finding of their own.
+
+**It reaches nothing that is published.** `vitest` is a development dependency of
+the collector and is not installed by anyone who runs `npm install seorak`.
+Measured the same day against production dependencies only, each package this
+repository publishes reports zero of every severity:
+
+```
+npm audit --omit=dev --workspace @seorak/types      0
+npm audit --omit=dev --workspace seorak             0
+npm audit --omit=dev --workspace @seorak/dashboard  0
+```
+
+The acceptance ends when `vitest` publishes a fixed release that fits the pinned
+line, which the standing remediate-over-accept rule prefers to keeping this entry.
+A fix is reported available, so this entry is a record of the measured graph
+rather than a decision to keep it.
+
+## The 2026-09-10 derivation pin
+
+The audit now runs under the npm the baseline records, rather than whatever is on
+PATH, and the baseline carries `derivedWith: { npm }` at schema version 3.
+
+The reason is that `range` on a carried edge is not a GHSA field. npm computes it
+locally, and metavuln-calculator 9.0.1 (first shipped in npm 11.5.0) began
+counting prerelease versions when deciding which carrier versions are vulnerable.
+One contiguous vulnerable run can therefore split in two depending on which npm
+asked, which made the private half's baseline green on its author's machine and
+red in CI on one field of one entry, with no dependency change between them.
+
+This half is not currently exposed to that split: all three of its entries are
+real advisories with GHSA-derived ranges rather than carried edges. The pin is
+here anyway, because the two halves share one gate implementation and a claim
+whose derivation environment is undeclared is the defect, not the specific entry
+that revealed it.
+
+When the ambient npm already is the recorded one it is used directly and nothing
+is fetched. Otherwise the gate reaches the recorded npm through `npx`, by exact
+version and with no integrity hash of its own, which is a real cost recorded here
+rather than hidden.
+
+The audit also runs in a cache directory keyed to the recorded version, and that
+is not an optimisation. `@npmcli/metavuln-calculator` writes each advisory it
+computes into the npm cache and a later npm reads it back rather than
+recomputing, so a shared cache lets whichever npm populated it decide the answer
+for every npm that follows. Pinning the binary without the cache was tried first
+and measured nothing.

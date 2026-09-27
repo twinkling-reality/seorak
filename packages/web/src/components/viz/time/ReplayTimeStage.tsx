@@ -585,7 +585,15 @@ export default function ReplayTimeStage({
                   // The lane SVG spans the full plot width so every lane, the
                   // marker rail, the axis, and the playhead share one x-mapping.
                   // Label and peak float above it rather than taking columns.
-                  <div key={item.key} className={styles.lane}>
+                  <div
+                    key={item.key}
+                    className={styles.lane}
+                    // The peak reads as a bare number in a 2xs mono corner, so the
+                    // absence has room for a word and not for the sentence that
+                    // explains it. `.lanePeak` is pointer-events:none, so the row
+                    // carries the title.
+                    title={peak > 0 ? undefined : 'No measured peak for this lane in this window'}
+                  >
                     <svg
                       className={styles.laneSvg}
                       viewBox={`0 0 ${SVG_WIDTH} ${LANE_SVG_HEIGHT}`}
@@ -619,7 +627,7 @@ export default function ReplayTimeStage({
                       <span className={styles.laneName}>{item.label}</span>
                     </span>
                     <span className={styles.lanePeak}>
-                      {peak > 0 ? Math.round((peak / Math.max(windowMax, 0.0001)) * 100) : '—'}
+                      {peak > 0 ? Math.round((peak / Math.max(windowMax, 0.0001)) * 100) : 'none'}
                     </span>
                   </div>
                 );

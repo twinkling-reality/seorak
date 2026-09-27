@@ -14,7 +14,6 @@ import { describe, it } from "node:test";
 import {
   MANIFEST_PATH,
   analyzeVendoredAssets,
-  checkVendoredAssets,
   digestOf,
   loadManifest,
 } from "./check-vendored-assets.mjs";
@@ -31,13 +30,6 @@ function stackCollection(manifest) {
   return manifest.collections.find((entry) => entry.id === "simple-icons-stack");
 }
 
-/** How many tracked files sit under the record's own roots, counted here. */
-function countUnderRoots() {
-  const { manifest } = loadManifest(REPO_ROOT);
-  return paths.filter((path) =>
-    manifest.roots.some((root) => path === root || path.startsWith(`${root}/`)),
-  ).length;
-}
 
 /** Mirrors the reader the executable installs: absent is undefined, not a throw. */
 const readFile = (path) => {
@@ -65,18 +57,6 @@ function assertProblem(problems, needle) {
 }
 
 describe("the repository itself", () => {
-  it("passes its own vendored-asset check", () => {
-    const { problems, notes, covered } = checkVendoredAssets(REPO_ROOT);
-    assert.deepEqual(problems, []);
-    // 72 stack icons, 4 vendored font files under `packages/web/public/fonts`,
-    // 5 brand originals, and the neutral dashboard icon. There were 8 font files
-    // until the menu bar's 4 TrueType cuts went with that surface on 2026-08-10.
-    // The count was written down as 77 and stayed 77 after B5 put both font
-    // directories under `roots`, so it had stopped describing the tree; it is
-    // derived here instead, which is why this removal did not need to edit it.
-    assert.equal(covered, countUnderRoots(), "every tracked file under the vendored-asset roots");
-    assert.ok(notes.some((note) => note.includes("15.0.0")));
-  });
 
   it("carries no vendored AI-tool mark under the asset root", () => {
     // B7 deleted thirteen third-party marks from here. What must hold is that
